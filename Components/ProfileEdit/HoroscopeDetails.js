@@ -1,0 +1,897 @@
+import React, { useState, useRef, useEffect } from 'react'
+import {
+    StyleSheet,
+    Text,
+    View,
+    Switch,
+    SafeAreaView,
+    ImageBackground,
+    Image,
+    ScrollView,
+    TouchableOpacity,
+    Pressable,
+    Animated,
+    TouchableWithoutFeedback,
+    TouchableHighlight,
+    Dimensions,
+    Modal,
+    TextInput,
+    Button,
+
+} from "react-native";
+import {
+    AntDesign,
+    Ionicons,
+    MaterialIcons,
+    FontAwesome,
+    FontAwesome5,
+    FontAwesome6,
+    MaterialCommunityIcons,
+} from "@expo/vector-icons";
+import { getMyHoroscopeDetails, updateProfileHoroscope } from '../../CommonApiCall/CommonApiCall'; // Import the API function
+import RNPickerSelect from 'react-native-picker-select';
+import config from "../../API/Apiurl";
+import axios from "axios";
+import { LinearGradient } from 'expo-linear-gradient';
+import Toast from 'react-native-toast-message';
+
+export const HoroscopeDetails = () => {
+
+    const [horoscopeDetails, setHoroscopeDetails] = useState(null); // State for profile details
+    const [isEditMode, setIsEditMode] = useState(false); // Toggle between view and edit mode
+    const [birthStars, setBirthStars] = useState([]);
+    const [validationErrors, setValidationErrors] = useState({});
+    const [rasiList, setRasiList] = useState([]);
+    const [lagnams, setLagnams] = useState([]);
+    const [selectedLagnam, setSelectedLagnam] = useState(null);
+    const [isFetched, setIsFetched] = useState(false);
+    const [dayOptions, setDayOptions] = useState([]);
+    const [monthOptions, setMonthOptions] = useState([]);
+    const [yearOptions, setYearOptions] = useState([]);
+    
+
+
+
+
+
+
+
+
+
+
+
+    const [formValues, setFormValues] = useState({
+        personal_bthstar_name: '',
+        personal_bth_rasi_name: '',
+        personal_lagnam_didi_name: '',
+        personal_didi: '',
+        personal_chevvai_dos: '',
+        personal_ragu_dos: '',
+        personal_nalikai: '',
+        personal_surya_goth: '',
+        personal_dasa: '',
+        personal_dasa_bal_day: '',
+        personal_dasa_bal_month: '',
+        personal_dasa_bal_year: '',
+        personal_bthstar_id: null,
+        personal_bth_rasi_id: null,
+        personal_lagnam_didi_id: null,
+        personal_horoscope_hints: '',
+    });
+
+    const chevvaiDoshamOptions = [
+        { label: 'Unknown', value: 'unknown' },
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' },
+    ];
+
+    const raguDoshamOptions = [
+        { label: 'Unknown', value: 'unknown' },
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' },
+    ];
+
+        // Function to fetch profile data
+        const fetchProfileData = async () => {
+            try {
+                const data = await getMyHoroscopeDetails();
+                console.log("data ====>",data.data);
+                setHoroscopeDetails(data.data); // Set the data in the state
+            } catch (error) {
+                console.error('Failed to load profile data', error);
+            }
+        };
+
+     
+
+    useEffect(() => {
+            fetchProfileData(); // Call the function when component mounts
+        }, []);
+
+    useEffect(() => {
+        const fetchBirthStars = async () => {
+            try {
+                const response = await axios.post(
+                    `${config.apiUrl}/auth/Get_Birth_Star/`,
+                    { personal_bthstar_name: "" }
+                );
+                const birthStarsData = Object.values(response.data).map((item) => ({
+                    label: item.birth_star,
+                    value: item.birth_id,
+                }));
+                setBirthStars(birthStarsData);
+            } catch (error) {
+                console.error("Error fetching Birth Star data:", error);
+            }
+        };
+
+        fetchBirthStars();
+    }, []);
+
+
+    useEffect(() => {
+        const fetchRasis = async () => {
+            if (!formValues.personal_bthstar_id) return;
+
+            try {
+                const response = await axios.post(
+                    `${config.apiUrl}/auth/Get_Rasi/`,
+                    {
+                        birth_id: formValues.personal_bthstar_id.toString(),
+                    }
+                );
+                const rasiData = Object.values(response.data).map((item) => ({
+                    label: item.rasi_name, // Adjust based on API response
+                    value: item.rasi_id, // Adjust based on API response
+                }));
+                setRasiList(rasiData);
+            } catch (error) {
+                console.error("Error fetching Rasi data:", error);
+            }
+        };
+
+        fetchRasis();
+    }, [formValues.personal_bthstar_id]);
+
+
+    useEffect(() => {
+        const fetchLagnams = async () => {
+            try {
+                const response = await axios.post(
+                    `${config.apiUrl}/auth/Get_Lagnam_Didi/`,
+                    {}
+                );
+                const lagnamsData = Object.values(response.data).map((item) => ({
+                    label: item.didi_description, // Adjust key based on API response
+                    value: item.didi_id,  // Adjust key based on API response
+                }));
+                setLagnams(lagnamsData);
+            } catch (error) {
+                console.error("Error fetching Lagnam data:", error);
+            }
+        };
+
+        fetchLagnams();
+    }, []);
+
+
+
+    useEffect(() => {
+        // Populate day, month and year options
+        const days = Array.from({ length: 31 }, (_, i) => ({
+            label: i.toString().padStart(2, '0'),
+            value: i.toString().padStart(2, '0'),
+          }));
+          setDayOptions(days);
+  
+          // For months: 00 to 12
+          const months = Array.from({ length: 13 }, (_, i) => ({
+            label: i.toString().padStart(2, '0'),
+            value: i.toString().padStart(2, '0'),
+          }));
+          setMonthOptions(months);
+
+        const years = Array.from({ length: 30 }, (_, i) => ({ label: `${i + 1}`, value: `${i + 1}` }));
+        setYearOptions(years);
+    }, []);
+
+    useEffect(() => {
+        // Update form values when personalDetails is fetched
+        if (horoscopeDetails && !isFetched) {
+            // Parse dasa balance value
+            let day = '', month = '', year = '';
+            if (horoscopeDetails.personal_dasa_bal) {
+                const parts = horoscopeDetails.personal_dasa_bal.split(', ');
+                parts.forEach(part => {
+                    const [key, value] = part.split(':');
+                    if (key === 'day') day = value;
+                    if (key === 'month') month = value;
+                    if (key === 'year') year = value;
+                });
+            }
+
+            setFormValues({
+                personal_bthstar_name: horoscopeDetails.personal_bthstar_name || '',
+                personal_bth_rasi_name: horoscopeDetails.personal_bth_rasi_name || '',
+                personal_lagnam_didi_name: horoscopeDetails.personal_lagnam_didi_name || '',
+                personal_didi: horoscopeDetails.personal_didi || '',
+                personal_chevvai_dos: horoscopeDetails.personal_chevvai_dos?.toLowerCase() || 'unknown',
+                personal_ragu_dos: horoscopeDetails.personal_ragu_dos?.toLowerCase() || 'unknown',
+                personal_nalikai: horoscopeDetails.personal_nalikai || '',
+                personal_surya_goth: horoscopeDetails.personal_surya_goth || '',
+                personal_dasa: horoscopeDetails.personal_dasa || '',
+                personal_dasa_bal_day: day,
+                personal_dasa_bal_month: month,
+                personal_dasa_bal_year: year,
+                personal_bthstar_id: horoscopeDetails.personal_bthstar_id || null,
+                personal_bth_rasi_id: horoscopeDetails.personal_bth_rasi_id || null,
+                personal_lagnam_didi_id: horoscopeDetails.personal_lagnam_didi_id || null,
+                personal_horoscope_hints: horoscopeDetails.personal_horoscope_hints || '',
+            });
+            setIsFetched(true);
+        }
+    }, [horoscopeDetails, isFetched]);
+
+
+    // Personal Menu
+
+
+
+
+
+    // const handleChange = (field, value) => {
+    //     setFormValues((prevValues) => ({
+            
+    //         ...prevValues,
+    //         [field]: value,
+    //     }));
+
+
+    //     // Clear the error message for the field
+    //     setValidationErrors((prevErrors) => ({
+    //         ...prevErrors,
+    //         [field]: '',
+    //     }));
+    // };
+
+    const handleChange = (field, value) => {
+        setFormValues((prevValues) => {
+            // Update the value to either the user input or empty string
+            const updatedValue = value === '' ? '' : value;
+
+            return {
+                ...prevValues,
+                [field]: updatedValue,
+            };
+        });
+        
+        // Clear the error message for the field
+        setValidationErrors((prevErrors) => ({
+            ...prevErrors,
+            [field]: '',
+        }));
+    };
+
+    const validateForm = () => {
+        const errors = {};
+
+        // Validate only the ID fields since they are the ones being sent to the API
+        if (!formValues.personal_bthstar_id) errors.personal_bthstar_id = 'Birth Star is required';
+        if (!formValues.personal_bth_rasi_id) errors.personal_bth_rasi_id = 'Birth Rasi is required';
+        if (!formValues.personal_lagnam_didi_id) errors.personal_lagnam_didi_id = 'Lagnam/Didi is required';
+        if (!formValues.personal_didi) errors.personal_didi = 'Didi is required';
+        if (!formValues.personal_chevvai_dos) errors.personal_chevvai_dos = 'Chevvai Dosam is required';
+        if (!formValues.personal_ragu_dos) errors.personal_ragu_dos = 'Rahu Dosam is required';
+        if (!formValues.personal_nalikai) errors.personal_nalikai = 'Nalikai is required';
+        if (!formValues.personal_surya_goth) errors.personal_surya_goth = 'Surya Gowthram is required';
+        if (!formValues.personal_dasa) errors.personal_dasa = 'Dasa is required';
+        if (!formValues.personal_dasa_bal_day) errors.personal_dasa_bal_day = 'Dasa Day is required';
+        if (!formValues.personal_dasa_bal_month) errors.personal_dasa_bal_month = 'Dasa Month is required';
+        if (!formValues.personal_dasa_bal_year) errors.personal_dasa_bal_year = 'Dasa Year is required';
+
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+
+    const handleSave = async () => {    
+        if (validateForm()) {
+            try {
+                console.log("formValues ====>",formValues);
+                // Convert IDs to strings and ensure no null values
+                const profileData = {
+                    birthstar_name: formValues.personal_bthstar_id ? String(formValues.personal_bthstar_id) : '',
+                    birth_rasi_name: formValues.personal_bth_rasi_id ? String(formValues.personal_bth_rasi_id) : '',
+                    lagnam_didi: formValues.personal_lagnam_didi_id ? String(formValues.personal_lagnam_didi_id) : '',
+                    chevvai_dosaham: formValues.personal_chevvai_dos || '',
+                    ragu_dosham: formValues.personal_ragu_dos || '',
+                    nalikai: formValues.personal_nalikai || '',
+                    suya_gothram: formValues.personal_surya_goth || '',
+                    dasa_name: formValues.personal_dasa || '',
+                    dasa_balance: formValues.personal_dasa_bal_day ? 
+                        `day:${formValues.personal_dasa_bal_day}, month:${formValues.personal_dasa_bal_month}, year:${formValues.personal_dasa_bal_year}` : '',
+                    horoscope_hints: formValues.personal_horoscope_hints || '',
+                    didi: formValues.personal_didi || '',
+                    amsa_kattam: '',
+                    rasi_kattam: ''
+                };
+
+                // Validate that required fields are not empty strings
+                const requiredFields = ['birthstar_name', 'birth_rasi_name', 'lagnam_didi'];
+                const emptyFields = requiredFields.filter(field => !profileData[field]);
+                
+                if (emptyFields.length > 0) {
+                    console.error('Required fields are empty:', emptyFields);
+                    setValidationErrors({
+                        submit: `Please fill in required fields: ${emptyFields.join(', ')}`
+                    });
+                    return;
+                }
+
+                console.log("Sending profileData ====>", profileData);
+                const response = await updateProfileHoroscope(profileData);
+                console.log("API Response ====>", response);
+
+                if (response && response.status === "success") {
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Success',
+                        text2: response.message || 'Horoscope Details updated successfully',
+                    });
+                    setIsEditMode(false);
+                    fetchProfileData();
+                } else {
+                    // Handle API error response with more detail
+                    const errorMessage = response?.message || 'Failed to update profile. Please try again.';
+                    console.error('API Error:', errorMessage);
+                    setValidationErrors({
+                        submit: errorMessage
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to update profile:', error);
+                // More detailed error message
+                const errorMessage = error.response?.data?.message || error.message || 'Failed to update profile. Please try again.';
+                setValidationErrors({
+                    submit: errorMessage
+                });
+            }
+        }
+    };
+
+
+
+    return (
+        <View style={styles.menuChanges}>
+            <View style={styles.editOptions}>
+                <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 15 }}>Horoscope Details</Text>
+                <TouchableWithoutFeedback onPress={() => setIsEditMode(!isEditMode)}>
+                    <Text style={styles.redText}>{isEditMode ? 'View' : 'Edit'}</Text>
+                </TouchableWithoutFeedback>
+                {isEditMode ? (
+                    <View style={styles.editOptions}>
+                        <View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Birth Star</Text>
+                        <RNPickerSelect
+                            onValueChange={(value) => handleChange('personal_bthstar_id', value)}
+                            items={birthStars}
+                            value={formValues.personal_bthstar_id}
+                            useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                            Icon={() => (
+                                <Ionicons
+                                    name="chevron-down" // Name of the icon
+                                    size={24}
+                                    color="gray"
+                                    style={{ marginTop:10}}
+                                />
+                            )}
+                            placeholder={{ label: "Select Birth Star", value: null }}
+                            style={pickerSelectStyles}
+                        />
+                        {validationErrors.personal_bthstar_id && (
+                            <Text style={styles.error}>{validationErrors.personal_bthstar_id}</Text>
+                        )}
+                    </View>
+
+                    {/* Rasi */}
+                    <View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Rasi</Text>
+                        <RNPickerSelect
+                            onValueChange={(value) => handleChange('personal_bth_rasi_id', value)}
+                            items={rasiList}
+                            value={formValues.personal_bth_rasi_id}
+                            useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                            Icon={() => (
+                                <Ionicons
+                                    name="chevron-down" // Name of the icon
+                                    size={24}
+                                    color="gray"
+                                    style={{ marginTop:10}}
+                                />
+                            )}
+                            placeholder={{ label: "Select Rasi", value: null }}
+                            style={pickerSelectStyles}
+                        />
+                        {validationErrors.personal_bth_rasi_id && (
+                            <Text style={styles.error}>{validationErrors.personal_bth_rasi_id}</Text>
+                        )}
+                    </View>
+
+                    {/* Lagnam / Didi */}
+                    <View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Lagnam/Didi</Text>
+                        <RNPickerSelect
+                            onValueChange={(value) => handleChange('personal_lagnam_didi_id', value)}
+                            items={lagnams}
+                            value={formValues.personal_lagnam_didi_id}
+                            useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                            Icon={() => (
+                                <Ionicons
+                                    name="chevron-down" // Name of the icon
+                                    size={24}
+                                    color="gray"
+                                    style={{ marginTop:10}}
+                                />
+                            )}
+                            placeholder={{ label: "Select Lagnam/Didi", value: null }}
+                            style={pickerSelectStyles}
+                        />
+                        {validationErrors.personal_lagnam_didi_id && (
+                            <Text style={styles.error}>{validationErrors.personal_lagnam_didi_id}</Text>
+                        )}
+                    </View>
+
+                    
+
+                    
+
+
+                    {/* Nalikai */}
+                    <View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Nalikai</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter Nalikai"
+                            value={formValues.personal_nalikai}
+                            onChangeText={(text) => handleChange('personal_nalikai', text)}
+                        />
+                        {validationErrors.personal_nalikai && (
+                            <Text style={styles.error}>{validationErrors.personal_nalikai}</Text>
+                        )}
+                    </View>
+
+                    {/* Surya Gowthram */}
+                    <View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Surya Gowthram</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter Surya Gowthram"
+                            value={formValues.personal_surya_goth}
+                            onChangeText={(text) => handleChange('personal_surya_goth', text)}
+                        />
+                        {validationErrors.personal_surya_goth && (
+                            <Text style={styles.error}>{validationErrors.personal_surya_goth}</Text>
+                        )}
+                    </View>
+
+                    {/* Dasa */}
+                    <View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Dasa Name</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter Dasa Name"
+                            value={formValues.personal_dasa}
+                            onChangeText={(text) => handleChange('personal_dasa', text)}
+                        />
+                        {validationErrors.personal_dasa && (
+                            <Text style={styles.error}>{validationErrors.personal_dasa}</Text>
+                        )}
+                    </View>
+
+                    
+
+                    {/* Dasa Balance */}
+                    <View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Dasa Balance</Text>
+                        <View style={styles.dropdownFlex}>
+                            {/* Day Dropdown */}
+                            <View style={styles.dropdownFit}>
+                                <RNPickerSelect
+                                    onValueChange={(value) => handleChange('personal_dasa_bal_day', value)}
+                                    items={dayOptions}
+                                    value={formValues.personal_dasa_bal_day}
+                                    useNativeAndroidPickerStyle={false}
+                                    Icon={() => (
+                                        <Ionicons
+                                            name="chevron-down"
+                                            size={24}
+                                            color="gray"
+                                            style={{ marginTop:10}}
+                                        />
+                                    )}
+                                    placeholder={{ label: "Day", value: null }}
+                                    style={pickerSelectStyles}
+                                />
+                                {validationErrors.personal_dasa_bal_day && (
+                                    <Text style={styles.error}>{validationErrors.personal_dasa_bal_day}</Text>
+                                )}
+                            </View>
+
+                            {/* Month Dropdown */}
+                            <View style={styles.dropdownFit}>
+                                <RNPickerSelect
+                                    onValueChange={(value) => handleChange('personal_dasa_bal_month', value)}
+                                    items={monthOptions}
+                                    value={formValues.personal_dasa_bal_month}
+                                    useNativeAndroidPickerStyle={false}
+                                    Icon={() => (
+                                        <Ionicons
+                                            name="chevron-down"
+                                            size={24}
+                                            color="gray"
+                                            style={{ marginTop:10}}
+                                        />
+                                    )}
+                                    placeholder={{ label: "Month", value: null }}
+                                    style={pickerSelectStyles}
+                                />
+                                {validationErrors.personal_dasa_bal_month && (
+                                    <Text style={styles.error}>{validationErrors.personal_dasa_bal_month}</Text>
+                                )}
+                            </View>
+
+                            {/* Year Dropdown */}
+                            <View style={styles.dropdownFit}>
+                                <RNPickerSelect
+                                    onValueChange={(value) => handleChange('personal_dasa_bal_year', value)}
+                                    items={yearOptions}
+                                    value={formValues.personal_dasa_bal_year}
+                                    useNativeAndroidPickerStyle={false}
+                                    Icon={() => (
+                                        <Ionicons
+                                            name="chevron-down"
+                                            size={24}
+                                            color="gray"
+                                            style={{ marginTop:10}}
+                                        />
+                                    )}
+                                    placeholder={{ label: "Year", value: null }}
+                                    style={pickerSelectStyles}
+                                />
+                                {validationErrors.personal_dasa_bal_year && (
+                                    <Text style={styles.error}>{validationErrors.personal_dasa_bal_year}</Text>
+                                )}
+                            </View>
+                        </View>
+                    </View>
+{/* Didi */}
+<View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Didi</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter Didi"
+                            value={formValues.personal_didi}
+                            onChangeText={(text) => handleChange('personal_didi', text)}
+                        />
+                        {validationErrors.personal_didi && <Text style={styles.error}>{validationErrors.personal_didi}</Text>}
+                    </View>
+                    {/* Chevvai Dosam */}
+                    <View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Chevvai Dosam</Text>
+                        <RNPickerSelect
+                            onValueChange={(value) => handleChange('personal_chevvai_dos', value)}
+                            items={chevvaiDoshamOptions}
+                            value={formValues.personal_chevvai_dos}
+                            useNativeAndroidPickerStyle={false}
+                            Icon={() => (
+                                <Ionicons
+                                    name="chevron-down"
+                                    size={24}
+                                    color="gray"
+                                    style={{ marginTop:10}}
+                                />
+                            )}
+                            placeholder={{ label: "Select Chevvai Dosam", value: null }}
+                            style={pickerSelectStyles}
+                        />
+                        {validationErrors.personal_chevvai_dos && (
+                            <Text style={styles.error}>{validationErrors.personal_chevvai_dos}</Text>
+                        )}
+                    </View>
+
+                    {/* Rahu Dosam */}
+                    <View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Rahu Dosam</Text>
+                        <RNPickerSelect
+                            onValueChange={(value) => handleChange('personal_ragu_dos', value)}
+                            items={raguDoshamOptions}
+                            value={formValues.personal_ragu_dos}
+                            useNativeAndroidPickerStyle={false}
+                            Icon={() => (
+                                <Ionicons
+                                    name="chevron-down"
+                                    size={24}
+                                    color="gray"
+                                    style={{ marginTop:10}}
+                                />
+                            )}
+                            placeholder={{ label: "Select Rahu Dosam", value: null }}
+                            style={pickerSelectStyles}
+                        />
+                        {validationErrors.personal_ragu_dos && (
+                            <Text style={styles.error}>{validationErrors.personal_ragu_dos}</Text>
+                        )}
+                    </View>
+
+                    {/* Horoscope Hints */}
+                    <View style={styles.formGroup}>
+                        <Text style={styles.labelNew}>Horoscope Hints</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter Horoscope Hints"
+                            value={formValues.personal_horoscope_hints}
+                            onChangeText={(text) => handleChange('personal_horoscope_hints', text)}
+                        />
+                        {validationErrors.personal_horoscope_hints && (
+                            <Text style={styles.error}>{validationErrors.personal_horoscope_hints}</Text>
+                        )}
+                    </View>
+
+                    {/* Save Button */}
+                    {/* <Button title="Save" onPress={handleSave} /> */}
+                    <View style={styles.formContainer1}>
+                                                <TouchableOpacity
+                                                    style={styles.btn}
+                                                    onPress={handleSave}
+                                                >
+                                                    <LinearGradient
+                                                        colors={["#BD1225", "#FF4050"]}
+                                                        start={{ x: 0, y: 0 }}
+                                                        end={{ x: 1, y: 1 }}
+                                                        useAngle={true}
+                                                        angle={92.08}
+                                                        angleCenter={{ x: 0.5, y: 0.5 }}
+                                                        style={styles.linearGradient}
+                                                    >
+                                                        <View style={styles.loginContainer}>
+                                                            <Text style={styles.login}>Save</Text>
+                                                        </View>
+                                                    </LinearGradient>
+                                                </TouchableOpacity>
+                                </View>
+                    </View>
+                ) : (
+                    <View style={styles.editOptions}>
+                        {horoscopeDetails && (
+                            <>
+                                <Text style={styles.labelNew}>Rasi : <Text style={styles.valueNew}>{horoscopeDetails.personal_bth_rasi_name}</Text></Text>
+                                <Text style={styles.labelNew}>Star - Padham : <Text style={styles.valueNew}>{horoscopeDetails.personal_bthstar_name}</Text></Text>
+                                <Text style={styles.labelNew}>Lagnam : <Text style={styles.valueNew}>{horoscopeDetails.personal_lagnam_didi_name}</Text></Text>
+                                <Text style={styles.labelNew}>Nallikai : <Text style={styles.valueNew}>{horoscopeDetails.personal_nalikai}</Text></Text>
+                                <Text style={styles.labelNew}>Suya Gothram : <Text style={styles.valueNew}>{horoscopeDetails.personal_surya_goth}</Text></Text>
+                                <Text style={styles.labelNew}>Dasa Name : <Text style={styles.valueNew}>{horoscopeDetails.personal_dasa}</Text></Text>
+                                <Text style={styles.labelNew}>Dasa Balance : <Text style={styles.valueNew}>{horoscopeDetails.personal_dasa_bal}</Text></Text>
+                                <Text style={styles.labelNew}>Didi : <Text style={styles.valueNew}>{horoscopeDetails.personal_didi}</Text></Text>
+                                <Text style={styles.labelNew}>Chevvai Dosham : <Text style={styles.valueNew}>{horoscopeDetails.personal_chevvai_dos}</Text></Text>
+                                <Text style={styles.labelNew}>Ragu Dosham : <Text style={styles.valueNew}>{horoscopeDetails.personal_ragu_dos}</Text></Text>
+                                <Text style={styles.labelNew}>Horoscope Hints : <Text style={styles.valueNew}>{horoscopeDetails.personal_horoscope_hints}</Text></Text>
+                            </>
+                        )}
+                    </View>
+                )}
+            </View>
+        </View>
+    )
+}
+
+
+
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "#fff",
+        alignItems: "center",
+        justifyContent: "flex-start",
+    },
+
+    detailsMenu: {
+        width: "100%",
+        backgroundColor: "#4F515D",
+        paddingHorizontal: 10,
+        paddingVertical: 20,
+        // paddingTop: 20,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        alignSelf: "center",
+        borderBottomWidth: 0.5,
+        borderColor: "#fff",
+    },
+
+    menuName: {
+        color: "#fff",
+        fontSize: 15,
+        fontWeight: "500",
+        fontFamily: "inter",
+        marginLeft: 5,
+    },
+
+    iconMenuFlex: {
+        flexDirection: "row",
+        justifyContent: "flex-start",
+        alignItems: "center",
+        // width: "100%",
+    },
+
+    redText: {
+        color: "#ED1E24",
+        fontSize: 14,
+        fontWeight: "700",
+        fontFamily: "inter",
+        marginVertical: 15,
+        alignSelf: "flex-start",
+        paddingHorizontal: 10,
+    },
+
+    editOptions: {
+        width: '100%',
+        backgroundColor: '#F9F9F9',
+        // padding: 16,
+        borderRadius: 8,
+        marginBottom: 16,
+    },
+
+    menuContainer: {
+        width: "100%",
+        overflow: 'hidden', // Ensure content doesn't overflow
+    },
+
+    label: {
+        color: "#535665",
+        fontSize: 14,
+        fontWeight: "700",
+        fontFamily: "inter",
+        marginBottom: 10,
+    },
+
+    value: {
+        color: "#535665",
+        fontSize: 14,
+        fontWeight: "500",
+        fontFamily: "inter",
+    },
+    input: {
+        height: 50, // Increase height
+        borderWidth: 1,
+        borderColor: '#ccc', // Light gray border
+        borderRadius: 5, // Rounded corners
+        paddingHorizontal: 10, // Horizontal padding
+        marginBottom: 15, // Space between inputs
+        fontSize: 16, // Increase font size for better readability
+    },
+    pickerSelect: {
+        inputIOS: {
+            height: 50, // Increase height
+            borderWidth: 1,
+            borderColor: '#ccc', // Light gray border
+            borderRadius: 5, // Rounded corners
+            paddingHorizontal: 10, // Horizontal padding
+            marginBottom: 15, // Space between inputs
+            fontSize: 16, // Increase font size for better readability
+        },
+        inputAndroid: {
+            height: 50, // Increase height
+            borderWidth: 1,
+            borderColor: '#ccc', // Light gray border
+            borderRadius: 5, // Rounded corners
+            paddingHorizontal: 10, // Horizontal padding
+            marginBottom: 15, // Space between inputs
+            fontSize: 16, // Increase font size for better readability
+        },
+    },
+    label: {
+        marginBottom: 5, // Space between label and input
+        fontSize: 16, // Font size for labels
+    },
+    container: {
+        marginBottom: 15, // Space between container elements
+    },
+    loginContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    login: {
+        textAlign: "center",
+        color: "white",
+        fontWeight: "600",
+        fontSize: 16,
+        letterSpacing: 1,
+        fontFamily: "inter",
+        marginRight: 5,
+    },
+    formContainer1: {
+        width: "100%",
+        paddingHorizontal: 20,
+    },
+
+    linearGradient: {
+        borderRadius: 5,
+        justifyContent: "center",
+        padding: 15,
+    },
+    btn: {
+        width: "100%",
+        alignSelf: "center",
+        borderRadius: 6,
+        marginBottom: 30,
+    },
+    menuChanges: { 
+        width: '100%', 
+        backgroundColor: '#4F515D',
+        justifyContent: 'center', 
+        alignItems: 'center'
+    },
+    editOptions: {
+        width: '90%',
+        backgroundColor: '#ffffff',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 2,
+        marginTop: 10
+    },
+    labelNew: {
+        color: '#282C3F',
+        fontSize: 15,
+        fontWeight: 'bold',
+        marginBottom: 5,
+        marginTop: 7
+    },
+    error: {
+        color: 'red',
+        fontSize: 12,
+        marginTop: 4,
+        alignSelf: 'flex-start',
+        fontWeight: 'bold',
+    },
+    valueNew: {
+        color: '#282C3F',
+        fontSize: 15,
+        fontWeight: '500',
+    },
+    dropdownFlex: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "start",
+        width: "100%",
+    },
+    dropdownFit: {
+        width: "32.33%",
+        fontFamily: "inter",
+    },
+});
+
+const pickerSelectStyles = StyleSheet.create({
+    inputIOS: {
+        fontSize: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 10,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 4,
+        color: 'black',
+        paddingRight: 30, // to ensure the text is never behind the icon
+    },
+    inputAndroid: {
+        fontSize: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 4,
+        color: 'black',
+        paddingRight: 30, // to ensure the text is never behind the icon
+    },
+});

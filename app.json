@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "VysyamalaApp",
+    "slug": "vysyamalamobile-main",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/fixed-icon-vysyamala.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.VysyamalaApp",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/fixed-icon-vysyamala.png",
+        "backgroundColor": "#ffffff"
+      },
+      "usesCleartextTraffic": true,
+      "package": "com.VysyamalaApp",
+      "runtimeVersion": "1.0.0"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a5db08e1-d627-4b63-891d-ca4d3aeda9b4"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/524bae3e-64b1-46a5-bbbc-6a0d84357d8e"
+    },
+    "plugins": [
+      "expo-build-properties"
+    ],
+    "owner": "hari-prasath-5511"
+  }
+}
