@@ -348,12 +348,12 @@ export const MyProfile = () => {
         const age = profileDetails?.personal_age;
         const starName = profileDetails?.star;
         const registrationLink = 'vysyamala.com';
-        const profession = educationalDetails?.prosession;
+        const profession = profileDetails?.prosession;
         const annualIncome = educationalDetails?.personal_ann_inc_name;
         const placeOfStay = educationalDetails?.personal_work_district || educationalDetails?.personal_work_city_name
-        const education = profileDetails?.persoanl_degree_name;
-        const companyName =  educationalDetails?.personal_company_name;
-        const businessName =  educationalDetails?.personal_business_name; 
+        const education = educationalDetails?.persoanl_degree_name;
+        const companyName = educationalDetails?.personal_company_name;
+        const businessName = educationalDetails?.personal_business_name;
         let professionLine = '💼 *Profession:* Not available\n';
 
         if (profession) {

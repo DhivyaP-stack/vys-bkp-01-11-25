@@ -118,7 +118,7 @@ export const OtherSettings = () => {
             }
         } catch (error) {
             let errorMessage = 'An error occurred while updating the password.';
-            
+
             // Handle specific API error responses
             if (error.response) {
                 // Handle specific status codes
@@ -250,10 +250,10 @@ export const OtherSettings = () => {
             try {
                 const data = await getAlertSettings();
                 console.log("Fetched alert types:", data);
-    
+
                 setEmailAlerts(data['Email Alerts'] || []);
                 setSmsAlerts(data['SMS Alerts'] || []);
-    
+
                 // Initialize checkedAlerts with false for all alerts
                 const initialChecked = {};
                 data['Email Alerts'].forEach(alert => {
@@ -263,25 +263,25 @@ export const OtherSettings = () => {
                     initialChecked[`sms_${alert.id}`] = false;
                 });
                 setCheckedAlerts(initialChecked);
-    
+
                 // Now fetch the enabled alerts from API and mark them as true
                 const enabledAlerts = await fetchAlertSettingsGet();
                 console.log("Enabled alert settings:", enabledAlerts);
-    
+
                 const updatedChecked = { ...initialChecked };
                 enabledAlerts.forEach(alert => {
                     updatedChecked[`email_${alert.id}`] = true;
                     updatedChecked[`sms_${alert.id}`] = true;
                 });
-    
+
                 setCheckedAlerts(updatedChecked);
             } catch (err) {
                 console.error('Failed to load alert settings:', err.message);
             }
         };
-    
+
         fetchAlertSettings();
-    }, []);    
+    }, []);
 
 
 
@@ -569,14 +569,14 @@ export const OtherSettings = () => {
 
         <ScrollView>
             <View style={styles.container}>
-<View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#ED1E24" />
-        </TouchableOpacity>
-        {/* <Text style={styles.headerText}>
+                <View style={styles.headerContainer}>
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                        <Ionicons name="arrow-back" size={24} color="#ED1E24" />
+                    </TouchableOpacity>
+                    {/* <Text style={styles.headerText}>
           {"Other Settings"}
         </Text> */}
-      </View>
+                </View>
                 <View style={styles.contentContainer}>
                     <Text style={styles.profileName}>Other Settings
                         <Text style={styles.profileId}> (05)</Text>
@@ -652,24 +652,24 @@ export const OtherSettings = () => {
                                 {/* Save Button */}
                                 {/* <Button title="Save" onPress={handleSave} /> */}
                                 <View style={styles.formContainer1}>
-                                                <TouchableOpacity
-                                                    style={styles.btn}
-                                                    onPress={handleSave}
-                                                >
-                                                    <LinearGradient
-                                                        colors={["#BD1225", "#FF4050"]}
-                                                        start={{ x: 0, y: 0 }}
-                                                        end={{ x: 1, y: 1 }}
-                                                        useAngle={true}
-                                                        angle={92.08}
-                                                        angleCenter={{ x: 0.5, y: 0.5 }}
-                                                        style={styles.linearGradient}
-                                                    >
-                                                        <View style={styles.loginContainer}>
-                                                            <Text style={styles.login}>Save</Text>
-                                                        </View>
-                                                    </LinearGradient>
-                                                </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={styles.btn}
+                                        onPress={handleSave}
+                                    >
+                                        <LinearGradient
+                                            colors={["#BD1225", "#FF4050"]}
+                                            start={{ x: 0, y: 0 }}
+                                            end={{ x: 1, y: 1 }}
+                                            useAngle={true}
+                                            angle={92.08}
+                                            angleCenter={{ x: 0.5, y: 0.5 }}
+                                            style={styles.linearGradient}
+                                        >
+                                            <View style={styles.loginContainer}>
+                                                <Text style={styles.login}>Save</Text>
+                                            </View>
+                                        </LinearGradient>
+                                    </TouchableOpacity>
                                 </View>
                             </View>
                         )}
@@ -765,7 +765,7 @@ export const OtherSettings = () => {
                     </Animated.View>
                 </View>
 
-                {planId !== "3" && (
+                {planId === "3" || planId === "17" && (
                     <View style={{ flex: 1 }}>
                         <TouchableWithoutFeedback onPress={() => toggleMenu(pvMenuOpen, setPvMenuOpen, animatedHeightPv, rotationPv, 900)}>
                             <View style={styles.detailsMenu}>
@@ -879,23 +879,23 @@ export const OtherSettings = () => {
                                     {/* Save Button */}
                                     {/* <Button title="Save" onPress={handleChangePassword} /> */}
                                     <View style={styles.formContainer1}>
-                                                <TouchableOpacity
-                                                    style={styles.btn}
-                                                    onPress={handleChangePassword}>
-                                                    <LinearGradient
-                                                        colors={["#BD1225", "#FF4050"]}
-                                                        start={{ x: 0, y: 0 }}
-                                                        end={{ x: 1, y: 1 }}
-                                                        useAngle={true}
-                                                        angle={92.08}
-                                                        angleCenter={{ x: 0.5, y: 0.5 }}
-                                                        style={styles.linearGradient}>
-                                                        <View style={styles.loginContainer}>
-                                                            <Text style={styles.login}>Save</Text>
-                                                        </View>
-                                                    </LinearGradient>
-                                                </TouchableOpacity>
-                                            </View>
+                                        <TouchableOpacity
+                                            style={styles.btn}
+                                            onPress={handleChangePassword}>
+                                            <LinearGradient
+                                                colors={["#BD1225", "#FF4050"]}
+                                                start={{ x: 0, y: 0 }}
+                                                end={{ x: 1, y: 1 }}
+                                                useAngle={true}
+                                                angle={92.08}
+                                                angleCenter={{ x: 0.5, y: 0.5 }}
+                                                style={styles.linearGradient}>
+                                                <View style={styles.loginContainer}>
+                                                    <Text style={styles.login}>Save</Text>
+                                                </View>
+                                            </LinearGradient>
+                                        </TouchableOpacity>
+                                    </View>
                                 </View>
                             </View>
                         )}
@@ -915,30 +915,30 @@ const styles = StyleSheet.create({
         // alignItems: "center",
         // justifyContent: "flex-start",
     },
-errorText: {
-    color: "#ED1E24",
-    fontSize: 13,
-    marginBottom: 5,
-    marginLeft: 5,
-    fontFamily: "inter",
-    fontWeight: "bold",
-    // marginTop: 10,
-},
+    errorText: {
+        color: "#ED1E24",
+        fontSize: 13,
+        marginBottom: 5,
+        marginLeft: 5,
+        fontFamily: "inter",
+        fontWeight: "bold",
+        // marginTop: 10,
+    },
     headerContainer: {
         padding: 3,
         borderBottomWidth: 1,
         borderBottomColor: "#E5E5E5",
         flexDirection: "row",
         alignItems: "center",
-        marginTop : 15,
-        marginLeft : 10,
-      },
-      headerText: {
+        marginTop: 15,
+        marginLeft: 10,
+    },
+    headerText: {
         color: "#000000",
         fontSize: 18,
         fontWeight: "bold",
         marginLeft: 10,
-      },
+    },
     contentContainer: {
         width: "100%",
         paddingHorizontal: 10,
@@ -1266,6 +1266,6 @@ errorText: {
         alignSelf: "center",
         borderRadius: 6,
         marginBottom: 30,
-        marginTop : 10,
+        marginTop: 10,
     },
 });

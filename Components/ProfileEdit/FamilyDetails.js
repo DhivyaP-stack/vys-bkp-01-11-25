@@ -28,7 +28,7 @@ import {
     FontAwesome6,
     MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import { getMyFamilyDetails,updateProfileFamily } from '../../CommonApiCall/CommonApiCall'; // Import the API function
+import { getMyFamilyDetails, updateProfileFamily } from '../../CommonApiCall/CommonApiCall'; // Import the API function
 import RNPickerSelect from 'react-native-picker-select';
 import config from "../../API/Apiurl";
 import axios from "axios";
@@ -70,8 +70,9 @@ export const FamilyDetails = () => {
         personal_father_occu_id: null,
         personal_mother_occu_id: null,
         personal_fam_sta_id: null,
-        personal_no_of_children: null
-
+        personal_no_of_children: null,
+        father_alive: '',
+        mother_alive: ''
     });
 
     // Function to fetch profile data
@@ -129,12 +130,14 @@ export const FamilyDetails = () => {
                 personal_father_occu_id: familyDetails.personal_father_occu_id || null,
                 personal_mother_occu_id: familyDetails.personal_mother_occu_id || null,
                 personal_fam_sta_id: familyDetails.personal_fam_sta_id || null,
-                personal_no_of_children: familyDetails.personal_no_of_children || null
+                personal_no_of_children: familyDetails.personal_no_of_children || null,
+                father_alive: familyDetails.father_alive || '',
+                mother_alive: familyDetails.mother_alive || '',
             });
             setIsFetched(true);  // Mark as fetched to prevent further updates
 
         }
-    }, [familyDetails,isFetched]);
+    }, [familyDetails, isFetched]);
 
 
 
@@ -305,7 +308,7 @@ export const FamilyDetails = () => {
 
 
 
-    
+
     const handleSave = async () => {
         console.log("Starting save operation...");
         if (validateForm()) {
@@ -323,9 +326,11 @@ export const FamilyDetails = () => {
                 property_details: formValues.personal_prope_det || "",
                 personal_about_fam: formValues.personal_about_fam || "",
                 no_of_children: noOfChildren === "" ? "0" : noOfChildren,
+                father_alive: formValues.father_alive || "",
+                mother_alive: formValues.mother_alive || "",
             };
             console.log("Submitting family data:", familyData);
-            
+
             try {
                 setSubmitting(true); // Show loading state
                 const response = await updateProfileFamily(familyData);
@@ -358,148 +363,88 @@ export const FamilyDetails = () => {
             }
         }
     };
-    
+
 
 
 
 
     return (
 
-    <View style={styles.menuChanges}>
-        <View style={styles.editOptions}>
-            <Text style={{ fontSize : 22, fontWeight : 'bold', marginBottom : 15 }}>Family Details</Text>
-            <TouchableWithoutFeedback onPress={() => setIsEditMode(!isEditMode)}>
-                <Text style={styles.redText}>{isEditMode ? 'View' : 'Edit'}</Text>
-            </TouchableWithoutFeedback>
-            {isEditMode ? (
-                <View style={styles.editOptions}>
-                    {/* About Family */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>About Family</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter About Family"
-                            value={formValues.personal_about_fam}
-                            onChangeText={(text) => handleChange('personal_about_fam', text)}
-                        />
-                        {validationErrors.personal_about_fam && <Text style={styles.error}>{validationErrors.personal_about_fam}</Text>}
-                    </View>
-
-                    {/* Father Name */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Father Name</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter Father Name"
-                            value={formValues.personal_father_name}
-                            onChangeText={(text) => handleChange('personal_father_name', text)}
-                        />
-                        {validationErrors.personal_father_name && <Text style={styles.error}>{validationErrors.personal_father_name}</Text>}
-                    </View>
-
-                    {/* Father Occupation */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Father Occupation</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter Father Occupation"
-                            value={formValues.personal_father_occu_name}
-                            onChangeText={(text) => handleChange('personal_father_occu_name', text)}
-                        />
-                        {validationErrors.personal_father_occu_name && <Text style={styles.error}>{validationErrors.personal_father_occu_name}</Text>}
-                    </View>
-
-                    {/* Mother Name */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Mother Name</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter Mother Name"
-                            value={formValues.personal_mother_name}
-                            onChangeText={(text) => handleChange('personal_mother_name', text)}
-                        />
-                        {validationErrors.personal_mother_name && <Text style={styles.error}>{validationErrors.personal_mother_name}</Text>}
-                    </View>
-
-                    {/* Mother Occupation */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Mother Occupation</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter Mother Occupation"
-                            value={formValues.personal_mother_occu_name}
-                            onChangeText={(text) => handleChange('personal_mother_occu_name', text)}
-                        />
-                        {validationErrors.personal_mother_occu_name && <Text style={styles.error}>{validationErrors.personal_mother_occu_name}</Text>}
-                    </View>
-
-                    {/* Family Status */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Family Status</Text>
-                        <RNPickerSelect
-                            onValueChange={(value) => handleChange('personal_fam_sta_id', value)}
-                            items={familyStatusOptions}
-                            value={formValues.personal_fam_sta_id}
-                            useNativeAndroidPickerStyle={false} // Important for custom styles on Android
-                            Icon={() => (
-                                <Ionicons
-                                    name="chevron-down" // Name of the icon
-                                    size={24}
-                                    color="gray"
-                                    style={{ marginTop: 10 }}
-                                />
-                            )}
-                            placeholder={{ label: "Select Family Status", value: null }}
-                            style={pickerSelectStyles}
-                        />
-                        {validationErrors.personal_edu_name && <Text style={styles.error}>{validationErrors.personal_edu_name}</Text>}
-                    </View>
-
-                    {/* Number of Sisters */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Number of Sisters</Text>
-                        <RNPickerSelect
-                            onValueChange={(value) => {
-                                setSelectedValue(value);
-                                if (value !== null) {
-                                    setValidationErrors((prevErrors) => ({
-                                        ...prevErrors,
-                                        selectedValue: '',
-                                    }));
-                                }
-                            }}
-                            items={[
-                                { label: '0', value: "0" },
-                                { label: '1', value: "1" },
-                                { label: '2', value: "2" },
-                                { label: '3', value: "3" },
-                                { label: '4', value: "4" },
-                                { label: '5+', value: "5+" },
-                            ]}
-                            value={selectedValue}
-                            useNativeAndroidPickerStyle={false} // Important for custom styles on Android
-                            Icon={() => (
-                                <Ionicons
-                                    name="chevron-down" // Name of the icon
-                                    size={24}
-                                    color="gray"
-                                    style={{ marginTop: 10 }}
-                                />
-                            )}
-                            placeholder={{ label: 'Select No of Sisters', value: null }}
-                            style={pickerSelectStyles}
-                        />
-                        {validationErrors.selectedValue && <Text style={styles.error}>{validationErrors.selectedValue}</Text>}
-                    </View>
-
-                    {/* Number of Sisters Married */}
-                    {selectedValue !== null && parseInt(selectedValue) >= 1 && (
+        <View style={styles.menuChanges}>
+            <View style={styles.editOptions}>
+                <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 15 }}>Family Details</Text>
+                <TouchableWithoutFeedback onPress={() => setIsEditMode(!isEditMode)}>
+                    <Text style={styles.redText}>{isEditMode ? 'View' : 'Edit'}</Text>
+                </TouchableWithoutFeedback>
+                {isEditMode ? (
+                    <View style={styles.editOptions}>
+                        {/* About Family */}
                         <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>Number of Sisters Married</Text>
+                            <Text style={styles.labelNew}>About Family</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter About Family"
+                                value={formValues.personal_about_fam}
+                                onChangeText={(text) => handleChange('personal_about_fam', text)}
+                            />
+                            {validationErrors.personal_about_fam && <Text style={styles.error}>{validationErrors.personal_about_fam}</Text>}
+                        </View>
+
+                        {/* Father Name */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Father Name</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Father Name"
+                                value={formValues.personal_father_name}
+                                onChangeText={(text) => handleChange('personal_father_name', text)}
+                            />
+                            {validationErrors.personal_father_name && <Text style={styles.error}>{validationErrors.personal_father_name}</Text>}
+                        </View>
+
+                        {/* Father Occupation */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Father Occupation</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Father Occupation"
+                                value={formValues.personal_father_occu_name}
+                                onChangeText={(text) => handleChange('personal_father_occu_name', text)}
+                            />
+                            {validationErrors.personal_father_occu_name && <Text style={styles.error}>{validationErrors.personal_father_occu_name}</Text>}
+                        </View>
+
+                        {/* Mother Name */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Mother Name</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Mother Name"
+                                value={formValues.personal_mother_name}
+                                onChangeText={(text) => handleChange('personal_mother_name', text)}
+                            />
+                            {validationErrors.personal_mother_name && <Text style={styles.error}>{validationErrors.personal_mother_name}</Text>}
+                        </View>
+
+                        {/* Mother Occupation */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Mother Occupation</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Mother Occupation"
+                                value={formValues.personal_mother_occu_name}
+                                onChangeText={(text) => handleChange('personal_mother_occu_name', text)}
+                            />
+                            {validationErrors.personal_mother_occu_name && <Text style={styles.error}>{validationErrors.personal_mother_occu_name}</Text>}
+                        </View>
+
+                        {/* Family Status */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Family Status</Text>
                             <RNPickerSelect
-                                onValueChange={handleSecondDropdownChange}
-                                items={getSistersMarriedOptions(selectedValue)}
-                                value={selectedSistersMarried}
+                                onValueChange={(value) => handleChange('personal_fam_sta_id', value)}
+                                items={familyStatusOptions}
+                                value={formValues.personal_fam_sta_id}
                                 useNativeAndroidPickerStyle={false} // Important for custom styles on Android
                                 Icon={() => (
                                     <Ionicons
@@ -509,113 +454,197 @@ export const FamilyDetails = () => {
                                         style={{ marginTop: 10 }}
                                     />
                                 )}
-                                placeholder={{ label: 'Select No of Sisters Married', value: null }}
+                                placeholder={{ label: "Select Family Status", value: null }}
                                 style={pickerSelectStyles}
                             />
-                            {validationErrors.selectedSistersMarried && (
-                                <Text style={styles.error}>{validationErrors.selectedSistersMarried}</Text>
-                            )}
+                            {validationErrors.personal_edu_name && <Text style={styles.error}>{validationErrors.personal_edu_name}</Text>}
                         </View>
-                    )}
 
-                    {/* Number of Brothers */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Number of Brothers</Text>
-                        <RNPickerSelect
-                            onValueChange={(value) => {
-                                setSelectedValueBro(value);
-                                if (value !== null) {
-                                    setValidationErrors((prevErrors) => ({
-                                        ...prevErrors,
-                                        SelectedValueBro: '',
-                                    }));
-                                }
-                            }}
-                            items={[
-                                { label: '0', value: "0" },
-                                { label: '1', value: "1" },
-                                { label: '2', value: "2" },
-                                { label: '3', value: "3" },
-                                { label: '4', value: "4" },
-                                { label: '5+', value: "5+" },
-                            ]}
-                            value={SelectedValueBro}
-                            useNativeAndroidPickerStyle={false} // Important for custom styles on Android
-                            Icon={() => (
-                                <Ionicons
-                                    name="chevron-down" // Name of the icon
-                                    size={24}
-                                    color="gray"
-                                    style={{ marginTop: 10 }}
-                                />
-                            )}
-                            placeholder={{ label: 'Select No of Brothers', value: null }}
-                            style={pickerSelectStyles}
-                        />
-                        {validationErrors.SelectedValueBro && <Text style={styles.error}>{validationErrors.SelectedValueBro}</Text>}
-                    </View>
-
-                    {/* Number of Brothers Married */}
-                    {SelectedValueBro !== null && parseInt(SelectedValueBro) >= 1 && (
+                        {/* Number of Sisters */}
                         <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>Number of Brothers Married</Text>
+                            <Text style={styles.labelNew}>Number of Sisters</Text>
                             <RNPickerSelect
-                                onValueChange={handleThirdDropdownChange}
-                                items={getBrothersMarriedOptions(SelectedValueBro)}
-                                value={selectedBrothersMarried}
-                                useNativeAndroidPickerStyle={false} // Important for custom styles on Android
-                                Icon={() => (
-                                    <Ionicons
-                                        name="chevron-down" // Name of the icon
-                                        size={24}
-                                        color="gray"
-                                        style={{ marginTop: 10 }}
-                                    />
-                                )}
-                                placeholder={{ label: 'Select No of Brothers Married', value: null }}
-                                style={pickerSelectStyles}
-                            />
-                            {validationErrors.selectedBrothersMarried && (
-                                <Text style={styles.error}>{validationErrors.selectedBrothersMarried}</Text>
-                            )}
-                        </View>
-                    )}
-
-                    {/* Property Details */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Property Details</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter Property Details"
-                            value={formValues.personal_prope_det}
-                            useNativeAndroidPickerStyle={false} // Important for custom styles on Android
-                            Icon={() => (
-                                <Ionicons
-                                    name="chevron-down" // Name of the icon
-                                    size={24}
-                                    color="gray"
-                                    style={{ marginTop: 10 }}
-                                />
-                            )}
-                            onChangeText={(text) => handleChange('personal_prope_det', text)}
-                        />
-                        {validationErrors.personal_prope_det && <Text style={styles.error}>{validationErrors.personal_prope_det}</Text>}
-                    </View>
-
-                    {['2', '3', '5'].includes(martialStatus) && (
-                        <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>No. of Children</Text>
-                            <RNPickerSelect
-                                onValueChange={(value) => setNoOfChildren(value)}
+                                onValueChange={(value) => {
+                                    setSelectedValue(value);
+                                    if (value !== null) {
+                                        setValidationErrors((prevErrors) => ({
+                                            ...prevErrors,
+                                            selectedValue: '',
+                                        }));
+                                    }
+                                }}
                                 items={[
-                                    { label: '0', value: '0' },
-                                    { label: '1', value: '1' },
-                                    { label: '2', value: '2' },
-                                    { label: '3', value: '3' },
-                                    { label: '4', value: '4' },
-                                    { label: '5', value: '5' },
+                                    { label: '0', value: "0" },
+                                    { label: '1', value: "1" },
+                                    { label: '2', value: "2" },
+                                    { label: '3', value: "3" },
+                                    { label: '4', value: "4" },
+                                    { label: '5+', value: "5+" },
                                 ]}
-                                value={noOfChildren}
+                                value={selectedValue}
+                                useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                Icon={() => (
+                                    <Ionicons
+                                        name="chevron-down" // Name of the icon
+                                        size={24}
+                                        color="gray"
+                                        style={{ marginTop: 10 }}
+                                    />
+                                )}
+                                placeholder={{ label: 'Select No of Sisters', value: null }}
+                                style={pickerSelectStyles}
+                            />
+                            {validationErrors.selectedValue && <Text style={styles.error}>{validationErrors.selectedValue}</Text>}
+                        </View>
+
+                        {/* Number of Sisters Married */}
+                        {selectedValue !== null && parseInt(selectedValue) >= 1 && (
+                            <View style={styles.formGroup}>
+                                <Text style={styles.labelNew}>Number of Sisters Married</Text>
+                                <RNPickerSelect
+                                    onValueChange={handleSecondDropdownChange}
+                                    items={getSistersMarriedOptions(selectedValue)}
+                                    value={selectedSistersMarried}
+                                    useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                    Icon={() => (
+                                        <Ionicons
+                                            name="chevron-down" // Name of the icon
+                                            size={24}
+                                            color="gray"
+                                            style={{ marginTop: 10 }}
+                                        />
+                                    )}
+                                    placeholder={{ label: 'Select No of Sisters Married', value: null }}
+                                    style={pickerSelectStyles}
+                                />
+                                {validationErrors.selectedSistersMarried && (
+                                    <Text style={styles.error}>{validationErrors.selectedSistersMarried}</Text>
+                                )}
+                            </View>
+                        )}
+
+                        {/* Number of Brothers */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Number of Brothers</Text>
+                            <RNPickerSelect
+                                onValueChange={(value) => {
+                                    setSelectedValueBro(value);
+                                    if (value !== null) {
+                                        setValidationErrors((prevErrors) => ({
+                                            ...prevErrors,
+                                            SelectedValueBro: '',
+                                        }));
+                                    }
+                                }}
+                                items={[
+                                    { label: '0', value: "0" },
+                                    { label: '1', value: "1" },
+                                    { label: '2', value: "2" },
+                                    { label: '3', value: "3" },
+                                    { label: '4', value: "4" },
+                                    { label: '5+', value: "5+" },
+                                ]}
+                                value={SelectedValueBro}
+                                useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                Icon={() => (
+                                    <Ionicons
+                                        name="chevron-down" // Name of the icon
+                                        size={24}
+                                        color="gray"
+                                        style={{ marginTop: 10 }}
+                                    />
+                                )}
+                                placeholder={{ label: 'Select No of Brothers', value: null }}
+                                style={pickerSelectStyles}
+                            />
+                            {validationErrors.SelectedValueBro && <Text style={styles.error}>{validationErrors.SelectedValueBro}</Text>}
+                        </View>
+
+                        {/* Number of Brothers Married */}
+                        {SelectedValueBro !== null && parseInt(SelectedValueBro) >= 1 && (
+                            <View style={styles.formGroup}>
+                                <Text style={styles.labelNew}>Number of Brothers Married</Text>
+                                <RNPickerSelect
+                                    onValueChange={handleThirdDropdownChange}
+                                    items={getBrothersMarriedOptions(SelectedValueBro)}
+                                    value={selectedBrothersMarried}
+                                    useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                    Icon={() => (
+                                        <Ionicons
+                                            name="chevron-down" // Name of the icon
+                                            size={24}
+                                            color="gray"
+                                            style={{ marginTop: 10 }}
+                                        />
+                                    )}
+                                    placeholder={{ label: 'Select No of Brothers Married', value: null }}
+                                    style={pickerSelectStyles}
+                                />
+                                {validationErrors.selectedBrothersMarried && (
+                                    <Text style={styles.error}>{validationErrors.selectedBrothersMarried}</Text>
+                                )}
+                            </View>
+                        )}
+
+                        {/* Property Details */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Property Details</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Property Details"
+                                value={formValues.personal_prope_det}
+                                useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                Icon={() => (
+                                    <Ionicons
+                                        name="chevron-down" // Name of the icon
+                                        size={24}
+                                        color="gray"
+                                        style={{ marginTop: 10 }}
+                                    />
+                                )}
+                                onChangeText={(text) => handleChange('personal_prope_det', text)}
+                            />
+                            {validationErrors.personal_prope_det && <Text style={styles.error}>{validationErrors.personal_prope_det}</Text>}
+                        </View>
+
+                        {['2', '3', '5'].includes(martialStatus) && (
+                            <View style={styles.formGroup}>
+                                <Text style={styles.labelNew}>No. of Children</Text>
+                                <RNPickerSelect
+                                    onValueChange={(value) => setNoOfChildren(value)}
+                                    items={[
+                                        { label: '0', value: '0' },
+                                        { label: '1', value: '1' },
+                                        { label: '2', value: '2' },
+                                        { label: '3', value: '3' },
+                                        { label: '4', value: '4' },
+                                        { label: '5', value: '5' },
+                                    ]}
+                                    value={noOfChildren}
+                                    useNativeAndroidPickerStyle={false}
+                                    Icon={() => (
+                                        <Ionicons
+                                            name="chevron-down"
+                                            size={24}
+                                            color="gray"
+                                            style={{ marginTop: 10 }}
+                                        />
+                                    )}
+                                    placeholder={{ label: 'Select No. of Children', value: null }}
+                                    style={pickerSelectStyles}
+                                />
+                                {validationErrors.noOfChildren && <Text style={styles.error}>{validationErrors.noOfChildren}</Text>}
+                            </View>
+                        )}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Father Alive</Text>
+                            <RNPickerSelect
+                                onValueChange={(value) => handleChange('father_alive', value)}
+                                items={[
+                                    { label: 'Yes', value: 'yes' },
+                                    { label: 'No', value: 'no' },
+                                ]}
+                                value={formValues.father_alive}
                                 useNativeAndroidPickerStyle={false}
                                 Icon={() => (
                                     <Ionicons
@@ -625,66 +654,90 @@ export const FamilyDetails = () => {
                                         style={{ marginTop: 10 }}
                                     />
                                 )}
-                                placeholder={{ label: 'Select No. of Children', value: null }}
+                                placeholder={{ label: "Is father alive?", value: null }}
                                 style={pickerSelectStyles}
                             />
-                            {validationErrors.noOfChildren && <Text style={styles.error}>{validationErrors.noOfChildren}</Text>}
+                            {validationErrors.personal_father_alive && <Text style={styles.error}>{validationErrors.personal_father_alive}</Text>}
                         </View>
-                    )}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Mother Alive</Text>
+                            <RNPickerSelect
+                                onValueChange={(value) => handleChange('mother_alive', value)}
+                                items={[
+                                    { label: 'Yes', value: 'yes' },
+                                    { label: 'No', value: 'no' },
+                                ]}
+                                value={formValues.mother_alive}
+                                useNativeAndroidPickerStyle={false}
+                                Icon={() => (
+                                    <Ionicons
+                                        name="chevron-down"
+                                        size={24}
+                                        color="gray"
+                                        style={{ marginTop: 10 }}
+                                    />
+                                )}
+                                placeholder={{ label: "Is mother alive?", value: null }}
+                                style={pickerSelectStyles}
+                            />
+                            {validationErrors.personal_mother_alive && <Text style={styles.error}>{validationErrors.personal_mother_alive}</Text>}
+                        </View>
 
-                    {/* Save Button */}
-                    {/* <Button title="Save" onPress={handleSave} /> */}
-                    <View style={styles.formContainer1}>
-                                                <TouchableOpacity
-                                                    style={styles.btn}
-                                                    onPress={handleSave}
-                                                >
-                                                    <LinearGradient
-                                                        colors={["#BD1225", "#FF4050"]}
-                                                        start={{ x: 0, y: 0 }}
-                                                        end={{ x: 1, y: 1 }}
-                                                        useAngle={true}
-                                                        angle={92.08}
-                                                        angleCenter={{ x: 0.5, y: 0.5 }}
-                                                        style={styles.linearGradient}
-                                                    >
-                                                        <View style={styles.loginContainer}>
-                                                            <Text style={styles.login}>{submitting ? 'Saving...' : 'Save'}</Text>
-                                                        </View>
-                                                    </LinearGradient>
-                                                </TouchableOpacity>
-                                </View>
-                </View>
+                        {/* Save Button */}
+                        {/* <Button title="Save" onPress={handleSave} /> */}
+                        <View style={[styles.formContainer1, { marginTop: 25 }]}>
+                            <TouchableOpacity
+                                style={styles.btn}
+                                onPress={handleSave}
+                            >
+                                <LinearGradient
+                                    colors={["#BD1225", "#FF4050"]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    useAngle={true}
+                                    angle={92.08}
+                                    angleCenter={{ x: 0.5, y: 0.5 }}
+                                    style={styles.linearGradient}
+                                >
+                                    <View style={styles.loginContainer}>
+                                        <Text style={styles.login}>{submitting ? 'Saving...' : 'Save'}</Text>
+                                    </View>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
 
-            ) : (
+                ) : (
 
-                <View style={styles.editOptions}>
-                    {/* View Mode */}
-                    {familyDetails && (
-                        <>
-                            <Text style={styles.labelNew}>About My Family : <Text style={styles.valueNew}>{familyDetails.personal_about_fam}</Text></Text>
-                            <Text style={styles.labelNew}>Father Name : <Text style={styles.valueNew}>{familyDetails.personal_father_name}</Text></Text>
-                            <Text style={styles.labelNew}>Father's Occupation : <Text style={styles.valueNew}>{familyDetails.personal_father_occu_name}</Text></Text>
-                            <Text style={styles.labelNew}>Mother Name : <Text style={styles.valueNew}>{familyDetails.personal_mother_name}</Text></Text>
-                            <Text style={styles.labelNew}>Mother's Occupation : <Text style={styles.valueNew}>{familyDetails.personal_mother_occu_name}</Text></Text>
-                            <Text style={styles.labelNew}>Family Status : <Text style={styles.valueNew}>{familyDetails.personal_fam_sta_name}</Text></Text>
-                            <Text style={styles.labelNew}>Sisters : <Text style={styles.valueNew}>{familyDetails.personal_sis}</Text></Text>
-                            <Text style={styles.labelNew}>Sisters Married : <Text style={styles.valueNew}>{familyDetails.personal_sis_married}</Text></Text>
-                            <Text style={styles.labelNew}>Brothers : <Text style={styles.valueNew}>{familyDetails.personal_bro}</Text></Text>
-                            <Text style={styles.labelNew}>Brothers Married : <Text style={styles.valueNew}>{familyDetails.personal_bro_married}</Text></Text>
-                            <Text style={styles.labelNew}>Property Details : <Text style={styles.valueNew}>{familyDetails.personal_prope_det}</Text></Text>
-                            {(martialStatus === "2" || martialStatus === "3" || martialStatus === "5") && (
-                                <Text style={styles.labelNew}>
-                                    No of Children : <Text style={styles.valueNew}>{familyDetails.personal_no_of_children}</Text>
-                                </Text>
-                            )}
-                        </>
-                    )}
-                </View>
-            )}
+                    <View style={styles.editOptions}>
+                        {/* View Mode */}
+                        {familyDetails && (
+                            <>
+                                <Text style={styles.labelNew}>About My Family : <Text style={styles.valueNew}>{familyDetails.personal_about_fam}</Text></Text>
+                                <Text style={styles.labelNew}>Father Name : <Text style={styles.valueNew}>{familyDetails.personal_father_name}</Text></Text>
+                                <Text style={styles.labelNew}>Father's Occupation : <Text style={styles.valueNew}>{familyDetails.personal_father_occu_name}</Text></Text>
+                                <Text style={styles.labelNew}>Mother Name : <Text style={styles.valueNew}>{familyDetails.personal_mother_name}</Text></Text>
+                                <Text style={styles.labelNew}>Mother's Occupation : <Text style={styles.valueNew}>{familyDetails.personal_mother_occu_name}</Text></Text>
+                                <Text style={styles.labelNew}>Family Status : <Text style={styles.valueNew}>{familyDetails.personal_fam_sta_name}</Text></Text>
+                                <Text style={styles.labelNew}>Sisters : <Text style={styles.valueNew}>{familyDetails.personal_sis}</Text></Text>
+                                <Text style={styles.labelNew}>Sisters Married : <Text style={styles.valueNew}>{familyDetails.personal_sis_married}</Text></Text>
+                                <Text style={styles.labelNew}>Brothers : <Text style={styles.valueNew}>{familyDetails.personal_bro}</Text></Text>
+                                <Text style={styles.labelNew}>Brothers Married : <Text style={styles.valueNew}>{familyDetails.personal_bro_married}</Text></Text>
+                                <Text style={styles.labelNew}>Property Details : <Text style={styles.valueNew}>{familyDetails.personal_prope_det}</Text></Text>
+                                <Text style={styles.labelNew}>Father Alive : <Text style={styles.valueNew}>{familyDetails.father_alive}</Text></Text>
+                                <Text style={styles.labelNew}>Mother Alive : <Text style={styles.valueNew}>{familyDetails.mother_alive}</Text></Text>
+                                {(martialStatus === "2" || martialStatus === "3" || martialStatus === "5") && (
+                                    <Text style={styles.labelNew}>
+                                        No of Children : <Text style={styles.valueNew}>{familyDetails.personal_no_of_children}</Text>
+                                    </Text>
+                                )}
+                            </>
+                        )}
+                    </View>
+                )}
+            </View>
         </View>
-    </View>
 
     )
 }
@@ -834,10 +887,10 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         marginBottom: 30,
     },
-    menuChanges: { 
-        width: '100%', 
+    menuChanges: {
+        width: '100%',
         backgroundColor: '#4F515D',
-        justifyContent: 'center', 
+        justifyContent: 'center',
         alignItems: 'center'
     },
     error: {

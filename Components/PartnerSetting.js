@@ -21,7 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import config from "../API/Apiurl";
 import { updatePartnerPreferences, fetchPartnerProfile } from '../CommonApiCall/CommonApiCall'; // Adjust the path as needed
 import Toast from 'react-native-toast-message'; // Import the toast library
-
+import MatchingStars from '../Components/MatchingStars/MatchingStars';
 
 
 
@@ -51,6 +51,12 @@ const schema = z.object({
     annualIncomeMin: z.string().optional(),
     annualIncomeMax: z.string().optional(),
     foreignInterest: z.string().optional(),
+    matchingStars: z.array(z.object({
+        id: z.any(), // Using any() for flexibility on ID type
+        rasi: z.any(),
+        star: z.any(),
+        label: z.string(),
+    })).optional(),
 });
 
 
@@ -96,6 +102,7 @@ export const PartnerSettings = () => {
             chevvai: '',
             rehu: '',
             workLocation: '',
+            matchingStars: [],
         },
     });
     const maritalStatusSelected = watch("maritalStatus") || [];
@@ -106,15 +113,29 @@ export const PartnerSettings = () => {
 
     const [selectedIncomeMinIds, setSelectedIncomeMinIds] = useState(''); // Store selected IDs as a string
     const [selectedIncomeMaxIds, setSelectedIncomeMaxIds] = useState('');
+    const [matchingStarsData, setMatchingStarsData] = useState([]); // Holds grouped star data for rendering
+    const [allStarOptions, setAllStarOptions] = useState([]); // Holds a flat list of all stars for pre-selection
+    console.log('allStarOptions', allStarOptions);
+    const [selectedStarIds, setSelectedStarIds] = useState([]);
 
     useEffect(() => {
         fetchMaritalStatus();
         fetchProfessionOptions();
         fetchHighestEdu();
         fetchAnnualIncome();
+        //fetchMatchingStars();
         // fetchMatchList();
         //fetchMatchStars();
     }, []);
+
+    const handleCheckboxChange = (updatedIds) => {
+        setSelectedStarIds(updatedIds);
+        // Add this line to update the form's value
+        setValue('matchingStars', updatedIds, { shouldValidate: true });
+
+        // You now have access to rasi and star information as well
+        console.log('Updated Selected Stars:', updatedIds);
+    };
 
     const fetchMaritalStatus = async () => {
         try {
@@ -171,6 +192,375 @@ export const PartnerSettings = () => {
         }
     };
 
+    // const fetchMatchingStars = async () => {
+    //     try {
+    //         const birthstar = await AsyncStorage.getItem("birthStarValue");
+    //         const gender = await AsyncStorage.getItem("gender");
+    //         const birthstarid = await AsyncStorage.getItem("birthStaridValue");
+    //         console.log("birthstar =====>", birthstar);
+    //         console.log("gender =====>", gender);
+    //         console.log("birthstarid =====>", birthstarid);
+
+    //         const response = await axios.post(`${config.apiUrl}/auth/Get_Matchstr_Pref/`, {
+    //             // birth_star_id: "10",
+    //             // gender: "female",
+    //             birth_star_id: birthstar,
+    //             gender: gender,
+    //             birth_rasi_id: birthstarid
+    //         });
+    //         // console.log("partner settings matching stsr response ", response)
+    //         const data = response.data;
+    //         // Assuming data is an object like: { "15": [star1, ...], "10": [star2, ...], "0": [star3, ...] }
+
+    //         let flatOptions = [];
+    //         const processedData = Object.keys(data).map(key => {
+    //             const stars = data[key];
+    //             // Add all stars to a flat list for easy lookup later
+    //             flatOptions = [...flatOptions, ...stars];
+    //             return {
+    //                 matchCount: parseInt(key, 10),
+    //                 stars: stars
+    //             };
+    //         }).sort((a, b) => b.matchCount - a.matchCount); // Sort by match count
+
+    //         setMatchingStarsData(processedData);
+    //         setAllStarOptions(flatOptions); // Save the flat list
+
+    //     } catch (error) {
+    //         console.error("Error fetching matching stars:", error);
+    //     }
+    // };
+    useEffect(() => {
+        const fetchProfileData = async () => {
+            try {
+                const partnerProfileData = await fetchPartnerProfile();
+                console.log("partnerProfileData", partnerProfileData)
+
+                // Set the form values using the data returned from the API
+                setValue('ageDifference', partnerProfileData.fromAge);
+                setValue('heightFrom', partnerProfileData.fromHeight);
+                setValue('heightTo', partnerProfileData.toHeight);
+                setValue('education', partnerProfileData.education);
+                setValue('maritalStatus', partnerProfileData.maritalStatus);
+                setValue('profession', partnerProfileData.profession);
+                setValue('rehu', partnerProfileData.rahuKetuDhosam);
+                setValue('chevvai', partnerProfileData.chevvaiDhosam);
+                setValue('foreignInterest', partnerProfileData.foreignInterest);
+
+                // Handle annual income min...
+                if (partnerProfileData.income !== undefined && partnerProfileData.income !== null) {
+                    const minIncome = String(partnerProfileData.income);
+                    setValue('annualIncomeMin', minIncome);
+                    setSelectedIncomeMinIds(minIncome);
+                }
+                // ...and max
+                if (partnerProfileData.incomeStatusMax !== undefined && partnerProfileData.incomeStatusMax !== null) {
+                    const maxIncome = String(partnerProfileData.incomeStatusMax);
+                    setValue('annualIncomeMax', maxIncome);
+                    setSelectedIncomeMaxIds(maxIncome);
+                }
+
+                // NOTE: Star selection is now handled in the initializeStarSelection useEffect above
+                // This ensures proper initialization with either saved preferences or defaults
+
+            } catch (error) {
+                console.error('Error setting form values:', error);
+            }
+        };
+
+        fetchProfileData();
+    }, [setValue]); // Remove allStarOptions dependency since stars are handled separately
+
+    // Enhanced star initialization with all conditions
+    useEffect(() => {
+        const initializeStarSelection = async () => {
+            const birthstar = await AsyncStorage.getItem("birthStarValue");
+            const gender = await AsyncStorage.getItem("gender");
+            const birthstarid = await AsyncStorage.getItem("birthStaridValue");
+            const profileId = await AsyncStorage.getItem("profile_id_new"); // Get profile ID from AsyncStorage
+
+            let hasExistingData = false;
+
+            // Check if user has existing partner preference data from Get_save_details endpoint
+            if (profileId) {
+                try {
+                    const requestData = {
+                        profile_id: profileId,
+                        page_id: 6,
+                    };
+
+                    const response = await axios.post(
+                        `${config.apiUrl}/auth/Get_save_details/`,
+                        requestData
+                    );
+
+                    const profileData = response.data.data;
+
+                    // Check if user has existing star preferences
+                    if (profileData.pref_porutham_star && profileData.pref_porutham_star.trim() !== '') {
+                        hasExistingData = true;
+
+                        // Parse existing data and set it temporarily
+                        const poruthamStarIds = profileData.pref_porutham_star
+                            .split(",")
+                            .map(id => id.trim());
+
+                        // Set temporary selection with basic structure
+                        const tempSelections = poruthamStarIds.map(id => ({
+                            id,
+                            rasi: "",
+                            star: "",
+                            label: "",
+                        }));
+
+                        setSelectedStarIds(tempSelections);
+                        setValue('matchingStars', tempSelections);
+                    }
+                } catch (error) {
+                    console.error("Error fetching profile data:", error);
+                }
+            }
+
+            // Fetch matching stars and set proper data structure
+            if (birthstar && gender && birthstarid) {
+                try {
+                    const response = await axios.post(`${config.apiUrl}/auth/Get_Matchstr_Pref/`, {
+                        birth_star_id: birthstar,
+                        gender: gender,
+                        birth_rasi_id: birthstarid
+                    });
+
+                    // Sort the match count arrays by match_count in descending order
+                    const matchCountArrays = Object.values(response.data)
+                        .map(matchCount => matchCount)
+                        .sort((a, b) => b[0].match_count - a[0].match_count);
+
+                    console.log("Sorted matchCountArrays =====>", matchCountArrays);
+                    setMatchingStarsData(matchCountArrays);
+
+                    // Create a flat list of all stars
+                    const allAvailableStars = matchCountArrays.flatMap(matchCountArray =>
+                        matchCountArray.map(star => ({
+                            id: star.id.toString(),
+                            rasi: star.dest_rasi_id.toString(),
+                            star: star.dest_star_id.toString(),
+                            label: `${star.matching_starname} - ${star.matching_rasiname}`,
+                            match_count: star.match_count
+                        }))
+                    );
+
+                    setAllStarOptions(allAvailableStars);
+
+                    // If no existing data was found, set default selections (exclude porutham 0)
+                    if (!hasExistingData) {
+                        const defaultSelectedIds = allAvailableStars
+                            .filter(item => item.match_count !== 0)
+                            .map(item => ({
+                                id: item.id.toString(),
+                                rasi: item.rasi,
+                                star: item.star,
+                                label: item.label,
+                            }));
+
+                        setSelectedStarIds(defaultSelectedIds);
+                        setValue('matchingStars', defaultSelectedIds);
+                    } else {
+                        // If we had existing data, now we can map it to the full star objects
+                        const savedStarIds = selectedStarIds.map(item => item.id);
+                        const fullStarSelections = allAvailableStars
+                            .filter(star => savedStarIds.includes(star.id))
+                            .map(star => ({
+                                id: star.id,
+                                rasi: star.rasi,
+                                star: star.star,
+                                label: star.label,
+                            }));
+
+                        // Only update if we found matching stars
+                        if (fullStarSelections.length > 0) {
+                            setSelectedStarIds(fullStarSelections);
+                            setValue('matchingStars', fullStarSelections);
+                        }
+                    }
+
+                    console.log("Stars with porutham 0 (excluded):",
+                        allAvailableStars.filter(item => item.match_count === 0).length);
+                    console.log("Selected stars count:", selectedStarIds.length);
+
+                } catch (error) {
+                    console.error('Error fetching matching star options:', error);
+                }
+            }
+        };
+
+        initializeStarSelection();
+    }, [setValue]);
+
+    // useEffect(() => {
+    //     const initializeStarSelection = async () => {
+    //         const birthstar = await AsyncStorage.getItem("birthStarValue");
+    //         const gender = await AsyncStorage.getItem("gender");
+    //         const birthstarid = await AsyncStorage.getItem("birthStaridValue");
+
+    //         // Return early if essential data for fetching is missing
+    //         if (!birthstar || !gender || !birthstarid) return;
+
+    //         try {
+    //             // 1. Fetch the master list of all possible matching stars
+    //             const response = await axios.post(`${config.apiUrl}/auth/Get_Matchstr_Pref/`, {
+    //                 birth_star_id: birthstar,
+    //                 gender: gender,
+    //                 birth_rasi_id: birthstarid
+    //             });
+
+    //             const matchCountArrays = Object.values(response.data);
+    //             console.log("matchCountArrays =====>", matchCountArrays);
+
+    //             // For rendering grouped stars in UI
+    //             setMatchingStarsData(matchCountArrays);
+
+    //             // Flatten the groups of stars into a single "master list" for easy lookup
+    //             const allAvailableStars = matchCountArrays.flatMap(matchCountArray =>
+    //                 matchCountArray.map(star => ({
+    //                     id: star.id.toString(),
+    //                     rasi: star.dest_rasi_id.toString(),
+    //                     star: star.dest_star_id.toString(),
+    //                     label: `${star.matching_starname} - ${star.matching_rasiname}`,
+    //                     match_count: star.match_count
+    //                 }))
+    //             );
+
+    //             setAllStarOptions(allAvailableStars);
+
+    //             // 2. Fetch the user's saved partner preferences
+    //             try {
+    //                 const partnerProfileData = await fetchPartnerProfile();
+    //                 console.log("partnerProfileData", partnerProfileData);
+
+    //                 // 3. Check if the user has previously saved star preferences
+    //                 if (partnerProfileData && partnerProfileData.partner_porutham_ids && partnerProfileData.partner_porutham_ids.trim() !== '') {
+    //                     console.log("Found saved star preferences:", partnerProfileData.partner_porutham_ids);
+
+    //                     // Split the comma-separated string of saved IDs into an array
+    //                     const savedStarIds = partnerProfileData.partner_porutham_ids
+    //                         .split(",")
+    //                         .map(id => id.trim());
+
+    //                     // Map over the saved IDs and find the full star object from our master list
+    //                     const apiSelectedItems = savedStarIds
+    //                         .map(savedId => {
+    //                             // Find the complete star object in our master list that matches the saved ID
+    //                             const matchingStar = allAvailableStars.find(
+    //                                 star => star.id.toString() === savedId
+    //                             );
+
+    //                             // If found, construct the object needed for the state
+    //                             if (matchingStar) {
+    //                                 return {
+    //                                     id: matchingStar.id.toString(),
+    //                                     rasi: matchingStar.rasi,
+    //                                     star: matchingStar.star,
+    //                                     label: matchingStar.label,
+    //                                 };
+    //                             }
+    //                             // If an old ID is not in the current master list, it will be ignored
+    //                             return null;
+    //                         })
+    //                         .filter(item => item !== null); // Filter out any nulls
+
+    //                     // Set the state with the preferences loaded from the API
+    //                     setSelectedStarIds(apiSelectedItems);
+    //                     setValue('matchingStars', apiSelectedItems);
+
+    //                 } else {
+    //                     // 4. FALLBACK: If there's no saved profile data, set the default selections
+    //                     console.log("No saved preferences found. Setting default star selections.");
+    //                     setDefaultSelections(allAvailableStars);
+    //                 }
+
+    //             } catch (profileError) {
+    //                 console.error("Error fetching partner profile:", profileError);
+    //                 // If profile fetch fails, set default selections
+    //                 setDefaultSelections(allAvailableStars);
+    //             }
+
+    //         } catch (error) {
+    //             console.error("Error fetching matching stars:", error);
+    //         }
+    //     };
+
+    //     // Helper function to set default selections
+    //     const setDefaultSelections = (allStars) => {
+    //         const defaultSelectedIds = allStars
+    //             .filter(item => item.match_count > 0) // Select all with at least one match
+    //             .map(item => ({
+    //                 id: item.id.toString(),
+    //                 rasi: item.rasi,
+    //                 star: item.star,
+    //                 label: item.label,
+    //             }));
+
+    //         setSelectedStarIds(defaultSelectedIds);
+    //         setValue('matchingStars', defaultSelectedIds);
+    //     };
+
+    //     initializeStarSelection();
+    // }, [setValue]);
+
+
+    // useEffect(() => {
+    //     const fetchMatchingStars = async () => {
+    //         const birthstar = await AsyncStorage.getItem("birthStarValue");
+    //         const gender = await AsyncStorage.getItem("gender");
+    //         const birthstarid = await AsyncStorage.getItem("birthStaridValue");
+    //         console.log("birthstar =====>", birthstar);
+    //         console.log("gender =====>", gender);
+    //         console.log("birthstarid =====>", birthstarid);
+    //         try {
+    //             const response = await axios.post(`${config.apiUrl}/auth/Get_Matchstr_Pref/`, {
+    //                 birth_star_id: birthstar,
+    //                 gender: gender,
+    //                 birth_rasi_id: birthstarid
+    //             });
+
+    //             const matchCountArrays = Object.values(response.data);
+    //             console.log("matchCountArrays =====>", matchCountArrays);
+    //             setMatchingStarsData(matchCountArrays);
+
+    //             // 1. Create a flat list of ALL star options for later lookup
+    //             const allStarsFlat = matchCountArrays.flatMap(matchCountArray =>
+    //                 matchCountArray.map(star => ({
+    //                     id: star.id.toString(),
+    //                     rasi: star.dest_rasi_id.toString(),
+    //                     star: star.dest_star_id.toString(),
+    //                     label: `${star.matching_starname} - ${star.matching_rasiname}`,
+    //                     match_count: star.match_count
+    //                     // You can add other star properties if needed
+    //                 }))
+    //             );
+    //             setAllStarOptions(allStarsFlat); // <-- This is important
+
+    //             // 2. Initialize `initialSelected` excluding stars with 0 poruthams
+    //             const initialSelected = allStarsFlat
+    //                 .filter(star => star.match_count !== 0) // Exclude stars with 0 poruthams
+    //                 .map(star => ({ // Map to the structure needed
+    //                     id: star.id,
+    //                     rasi: star.rasi,
+    //                     star: star.star,
+    //                     label: star.label
+    //                 }));
+
+    //             // 3. Set BOTH the state and the form's default value
+    //             setSelectedStarIds(initialSelected);
+    //             setValue('matchingStars', initialSelected); // <-- Set default form value
+
+    //             console.log('Response from server:', matchCountArrays);
+    //         } catch (error) {
+    //             console.error('Error fetching matching star options:', error);
+    //         }
+    //     };
+    //     fetchMatchingStars();
+    // }, [setValue]); // Keep dependency as [setValue]
 
     const onSubmit = async (data) => {
         try {
@@ -179,17 +569,32 @@ export const PartnerSettings = () => {
             if (data.annualIncomeMin) incomeValues.push(data.annualIncomeMin);
             if (data.annualIncomeMax) incomeValues.push(data.annualIncomeMax);
 
+            const starArray = selectedStarIds.map(item => item.id);
+            const rasiArray = selectedStarIds.map(item => item.rasi);
+            const starRasiArray = selectedStarIds.map(item => `${item.star}-${item.rasi}`);
+
+            // Create a comma-separated string for each array
+            const StarString = starArray.join(',');
+            const RasiString = rasiArray.join(',');
+            const combinedString = starRasiArray.join(',');
+
+            console.log(StarString);
+            console.log(combinedString);
+
             const formattedData = {
                 pref_age_differences: data.ageDifference || '',
                 pref_height_from: data.heightFrom || '',
                 pref_height_to: data.heightTo || '',
-                pref_marital_status1: data.maritalStatus ? data.maritalStatus.join(',') : '',
-                pref_profession1: data.profession ? data.profession.join(',') : '',
-                pref_education1: data.education ? data.education.join(',') : '',
-                pref_anual_income1: [data.annualIncomeMin, data.annualIncomeMax].filter(Boolean).join(','),
+                pref_marital_status: data.maritalStatus ? data.maritalStatus.join(',') : '',
+                pref_profession: data.profession ? data.profession.join(',') : '',
+                pref_education: data.education ? data.education.join(',') : '',
+                pref_anual_income: data.annualIncomeMin || '',
+                pref_anual_income_max: data.annualIncomeMax || '',
                 pref_chevvai: data.chevvai || '',
                 pref_ragukethu: data.rehu || '',
                 pref_foreign_intrest: data.foreignInterest || '',
+                pref_porutham_star: StarString, // Star IDs as a comma-separated string
+                pref_porutham_star_rasi: combinedString, // Combined star-rasi as a comma-separated string
             };
 
             console.log("Post Data:", formattedData);
@@ -226,10 +631,15 @@ export const PartnerSettings = () => {
 
 
     useEffect(() => {
-
         const fetchProfileData = async () => {
+            // Wait until allStarOptions is populated
+            if (allStarOptions.length === 0) {
+                return;
+            }
+
             try {
                 const partnerProfileData = await fetchPartnerProfile();
+                console.log("partnerProfileData", partnerProfileData)
 
                 // Set the form values using the data returned from the API
                 setValue('ageDifference', partnerProfileData.fromAge);
@@ -242,30 +652,50 @@ export const PartnerSettings = () => {
                 setValue('chevvai', partnerProfileData.chevvaiDhosam);
                 setValue('foreignInterest', partnerProfileData.foreignInterest);
 
-                // Handle annual income min and max with proper null checks
+                // Handle annual income min...
                 if (partnerProfileData.income !== undefined && partnerProfileData.income !== null) {
-                    const incomeData = String(partnerProfileData.income);
-                    if (incomeData.length > 0) {
-                        const incomeArray = incomeData.split(',');
-                        if (incomeArray.length >= 2) {
-                            setValue('annualIncomeMin', incomeArray[0]);
-                            setValue('annualIncomeMax', incomeArray[1]);
-                            setSelectedIncomeMinIds(incomeArray[0]);
-                            setSelectedIncomeMaxIds(incomeArray[1]);
-                        } else if (incomeArray.length === 1) {
-                            setValue('annualIncomeMin', incomeArray[0]);
-                            setSelectedIncomeMinIds(incomeArray[0]);
-                        }
-                    }
+                    const minIncome = String(partnerProfileData.income);
+                    setValue('annualIncomeMin', minIncome);
+                    setSelectedIncomeMinIds(minIncome);
                 }
+                // ...and max
+                if (partnerProfileData.incomeStatusMax !== undefined && partnerProfileData.incomeStatusMax !== null) {
+                    const maxIncome = String(partnerProfileData.incomeStatusMax);
+                    setValue('annualIncomeMax', maxIncome);
+                    setSelectedIncomeMaxIds(maxIncome);
+                }
+
+                // *** THIS IS THE UPDATED LOGIC FOR STARS ***
+                const savedStarIds = partnerProfileData.partner_porutham_ids;
+
+                // Only override the default if savedStarIds is NOT an empty string
+                if (savedStarIds) {
+                    const selectedIds = savedStarIds.split(',');
+
+                    // Find the full star objects from our complete list
+                    const selectedStarObjects = allStarOptions
+                        .filter(option => selectedIds.includes(option.id.toString()))
+                        .map(item => ({ // Re-create the object structure
+                            id: item.id,
+                            rasi: item.rasi,
+                            star: item.star,
+                            label: item.label,
+                        }));
+
+                    // Set both the form value and the visual state
+                    setValue('matchingStars', selectedStarObjects);
+                    setSelectedStarIds(selectedStarObjects);
+                }
+                // ELSE: If savedStarIds is "", do nothing.
+                // The default (all non-zero) set by fetchMatchingStars will be used.
+
             } catch (error) {
                 console.error('Error setting form values:', error);
             }
         };
 
         fetchProfileData();
-    }, [setValue]);
-
+    }, [setValue, allStarOptions]); // <-- Add allStarOptions as a dependency
 
     return (
         <SafeAreaView style={styles.container}>
@@ -553,7 +983,7 @@ export const PartnerSettings = () => {
                                             <Ionicons name="checkmark" size={14} color="white" />
                                         )}
                                     </Pressable>
-                                    <Pressable onPress={() => { 
+                                    <Pressable onPress={() => {
                                         const newValue = value.includes(professionOpt.value)
                                             ? value.filter((item) => item !== professionOpt.value)
                                             : [...value, professionOpt.value];
@@ -710,7 +1140,7 @@ export const PartnerSettings = () => {
 
             {/* Rehu Dropdown */}
             <View style={styles.searchContainer}>
-                <Text style={styles.redText}>Rehu</Text>
+                <Text style={styles.redText}> Rahu/Ketu Dhosam</Text>
                 <View style={styles.formContainer}>
                     <View style={styles.inputContainer}>
                         <Controller
@@ -776,7 +1206,35 @@ export const PartnerSettings = () => {
 
 
             {/* Work Location */}
+            <View style={styles.checkContainer}>
+                {matchingStarsData.length > 0 ? (
+                    matchingStarsData
+                        .sort((a, b) => b[0].match_count - a[0].match_count) // Sort by match_count
+                        .map((matchCountArray, index) => {
+                            const starAndRasi = matchCountArray.map(star => ({
+                                id: star.id.toString(),
+                                matching_starId: star.dest_star_id.toString(),
+                                matching_starname: star.matching_starname,
+                                matching_rasiId: star.dest_rasi_id.toString(),
+                                matching_rasiname: star.matching_rasiname,
+                            }));
 
+                            const matchCountValue = matchCountArray[0].match_count;
+
+                            return (
+                                <MatchingStars
+                                    key={`${index}`}
+                                    matchCountValue={matchCountValue} // Pass matchCountValue
+                                    starAndRasi={starAndRasi}
+                                    selectedStarIds={selectedStarIds}
+                                    onCheckboxChange={handleCheckboxChange}
+                                />
+                            );
+                        })
+                ) : (
+                    <Text>No match stars available</Text>
+                )}
+            </View>
 
             {/* Find Match Button */}
             <View style={styles.formContainer}>
@@ -799,6 +1257,7 @@ export const PartnerSettings = () => {
                     </LinearGradient>
                 </TouchableOpacity>
             </View>
+
         </SafeAreaView>
     );
 };

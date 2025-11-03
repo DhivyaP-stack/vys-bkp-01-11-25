@@ -112,7 +112,10 @@ export const LoginPage = () => {
           plan_limits,
           marital_status,
           cur_plan_id,
-          valid_till
+          valid_till,
+          gender,
+          birth_star_id,
+          birth_rasi_id,
         } = response.data;
 
         console.log("Login Success:");
@@ -122,6 +125,9 @@ export const LoginPage = () => {
         console.log("Marital Status:", marital_status);
         console.log("Current Plan ID:", cur_plan_id);
         console.log("vaid date:", valid_till);
+        console.log("login gender", gender);
+        console.log("login birth star id", birth_star_id);
+        console.log("login birth star id", birth_rasi_id);
 
         await AsyncStorage.setItem("loginuser_profileId", profile_id);
         await AsyncStorage.setItem("profile_id_new", profile_id);
@@ -130,6 +136,9 @@ export const LoginPage = () => {
         await AsyncStorage.setItem("martial_status", marital_status?.toString() || "");
         await AsyncStorage.setItem("current_plan_id", cur_plan_id?.toString() || "");
         await AsyncStorage.setItem("valid_till_date", valid_till?.toString() || "");
+        await AsyncStorage.setItem("gender", gender?.toString() || "");
+        await AsyncStorage.setItem("birthStarValue", birth_star_id?.toString() || "");
+        await AsyncStorage.setItem("birthStaridValue", birth_rasi_id?.toString() || "");
 
         Toast.show({
           type: "success",

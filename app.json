@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "VysyamalaApp",
-    "slug": "vysyamalamobile-main",
+    "slug": "vysyamala",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/fixed-icon-vysyamala.png",
@@ -35,7 +35,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "a5db08e1-d627-4b63-891d-ca4d3aeda9b4"
+        "projectId": "ec179e54-62e0-4044-ae3b-11e485cc4d43"
       }
     },
     "updates": {
@@ -44,6 +44,6 @@
     "plugins": [
       "expo-build-properties"
     ],
-    "owner": "hari-prasath-5511"
+    "owner": "dhivya_p98"
   }
 }
