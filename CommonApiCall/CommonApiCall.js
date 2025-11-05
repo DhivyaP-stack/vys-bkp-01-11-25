@@ -18,14 +18,12 @@ const BASE_URL = "https://vsysmalamat-ejh3ftcdbnezhhfv.westus2-01.azurewebsites.
 
 // Retrieve Profile ID from session storage
 const retrieveProfileId = async () => {
-    try {
-        const profileId = await AsyncStorage.getItem("loginuser_profileId");
-        // console.log(profileId);
-        return profileId;
-    } catch (error) {
-        console.error("Error retrieving data from session:", error);
-        return null;
+    let profileId = await AsyncStorage.getItem("loginuser_profileId");
+    if (!profileId) {
+        // Fallback to another key if not found
+        profileId = await AsyncStorage.getItem("profile_id_new");
     }
+    return profileId;
 };
 
 // Fetch profiles API call
@@ -1604,8 +1602,26 @@ export const fetchImages = async (profileData) => {
     }
 };
 
+//remove image in myprofile
+export const removeProfileImage = async (formData) => {
+    try {
+        const response = await axios.post(`${BASE_URL}/Remove_profile_img/`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
 
-
+        const result = response.data;
+        
+        if (result.success === 1) {
+            return { success: true, message: result.message };
+        } else {
+            throw new Error(result.message || 'Failed to remove image');
+        }
+    } catch (error) {
+        throw new Error(error.response?.data?.message || error.message || 'Network error occurred');
+    }
+};
 
 export const downloadPdf = async (idparam) => {
     console.log("idparam ==>", idparam)
@@ -2513,44 +2529,61 @@ export const verifyPayment = async (profileID, razorpayOrderId, razorpayPaymentI
     }
 };
 
-// Save plan package API call
-export const savePlanPackage = async (profileId, selectedPlanId, selectedAddons, totalAmount) => {
+//save plan and packages api
+export const savePlanPackage = async (
+    profileId,
+    selectedPlanId,
+    selectedAddons,
+    totalAmount,
+    gpay_online // Make it optional (no default value)
+) => {
     try {
         const packageids = selectedAddons.join(",");
 
+        // Create request body dynamically
+        const requestBody = {
+            profile_id: profileId,
+            plan_id: selectedPlanId,
+            addon_package_id: packageids,
+            total_amount: totalAmount
+        };
+
+        // Only add gpay_online to request if it's provided
+        if (gpay_online !== undefined) {
+            requestBody.gpay_online = gpay_online;
+        }
+
+        console.log("Saving plan package with data:", JSON.stringify(requestBody, null, 2));
+
         const response = await axios.post(
             `${BASE_URL}/Save_plan_package/`,
-            {
-                profile_id: profileId,
-                plan_id: selectedPlanId,
-                addon_package_id: packageids,
-                total_amount: totalAmount,
-                // gpay_online: "1",
-            },
+            requestBody,
             {
                 headers: {
                     "Content-Type": "application/json",
                 },
             }
         );
-        console.log("response  ====>", response)
-        if (response.data.status === "success") {
+
+        console.log("Save plan package response:", response.data);
+
+        if (response.data.status === "success" || response.data.Status === 1) {
             return {
                 success: true,
-                message: response.data.message
+                message: response.data.message || "Plan package saved successfully",
             };
         } else {
-            console.error("Error saving plan package:", JSON.stringify(response));
+            console.error("Error saving plan package:", JSON.stringify(response.data));
             return {
                 success: false,
-                message: response.data.message
+                message: response.data.message || "Failed to save plan package",
             };
         }
     } catch (error) {
-        console.error("Error saving plan package:", error);
+        console.error("Error saving plan package:", error.response?.data || error.message);
         return {
             success: false,
-            message: "Error saving plan package. Please try again."
+            message: error.response?.data?.message || "Error saving plan package. Please try again.",
         };
     }
 };

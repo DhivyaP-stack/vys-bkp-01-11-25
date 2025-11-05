@@ -80,7 +80,7 @@ export const TabNavigation = () => {
           //   tabBarActiveTintColor: "#FF0000",
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Message"
         component={Message}
         options={{
@@ -96,7 +96,7 @@ export const TabNavigation = () => {
           headerShown: true,
           //   tabBarActiveTintColor: "#FF0000",
         }}
-      />
+      /> */}
       <Tab.Screen
         name="Menu"
         component={Menu}

@@ -190,48 +190,48 @@ export const DashBoard = () => {
                 />
               </View> */}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 10, marginBottom: 10 }}>
-              <Text style={styles.matchingNumbers}>
-                {dashboardData?.matching_profile_count || 0}
-              </Text>
+                <Text style={styles.matchingNumbers}>
+                  {dashboardData?.matching_profile_count || 0}
+                </Text>
 
-              <View style={{ flexDirection: 'row' }}>
-                {imageUrls.slice(0, 4).map((url, idx) => (
-                  <Image
-                    key={idx}
-                    source={{ uri: url }}
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                      borderWidth: 2,
-                      borderColor: '#fff',
-                      marginLeft: idx === 0 ? 0 : -10, // overlap effect
-                      backgroundColor: '#eee',
-                    }}
-                  />
-                ))}
+                <View style={{ flexDirection: 'row' }}>
+                  {imageUrls.slice(0, 4).map((url, idx) => (
+                    <Image
+                      key={idx}
+                      source={{ uri: url }}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                        marginLeft: idx === 0 ? 0 : -10, // overlap effect
+                        backgroundColor: '#eee',
+                      }}
+                    />
+                  ))}
 
-                {imageUrls.length > 4 && (
-                  <View
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                      backgroundColor: '#ccc',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      marginLeft: -10,
-                      borderWidth: 2,
-                      borderColor: '#fff',
-                    }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
-                      +{imageUrls.length - 4}
-                    </Text>
-                  </View>
-                )}
+                  {imageUrls.length > 4 && (
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        backgroundColor: '#ccc',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginLeft: -10,
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                      }}
+                    >
+                      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+                        +{imageUrls.length - 4}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </View>
-            </View>
 
 
             </View>
@@ -341,7 +341,7 @@ export const DashBoard = () => {
 
         </ScrollView>
 
-        
+
 
         {/* cards indicator */}
         <View style={styles.whiteCards}>
@@ -501,7 +501,7 @@ export const DashBoard = () => {
             <TouchableOpacity
               onPress={() => {
                 navigation.navigate("GalleryResults");
-              }} 
+              }}
               style={styles.flexCardsFirst}
             >
               <View>
@@ -536,8 +536,8 @@ export const DashBoard = () => {
           {/* Profile */}
           <View style={styles.updateProfileContainer}>
             <TouchableOpacity style={styles.imgIconFlex} onPress={() => {
-      navigation.navigate("MyProfile");
-  }}>
+              navigation.navigate("MyProfile");
+            }}>
               <Image
                 source={{ uri: dashboardData?.profile_details?.profile_image }}
                 style={styles.profileImage}
@@ -563,70 +563,70 @@ export const DashBoard = () => {
               >
                 <Text style={styles.goldText}>Gold</Text>
               </LinearGradient> */}
-              {/* <Text style={styles.date}>
+            {/* <Text style={styles.date}>
                 Valid Upto: {dashboardData?.profile_details?.package_validity || "16-Mar-2025"}
               </Text> */}
             {/* </View> */}
 
             <View
-          // onPress={() => {
-          //   if (parseInt(dashboardData?.profile_details?.completion_per, 10) !== 100) {
-          //     navigation.navigate("ProfileCompletionForm");
-          //   }
-          // }}
-          disabled={parseInt(dashboardData?.profile_details?.completion_per, 10) === 100} // Disable when 100%
-          style={[
-            styles.sandalProfileContainer,
-            parseInt(dashboardData?.profile_details?.completion_per, 10) === 100 && { opacity: 0.5 } // Dim UI when disabled
-          ]}
-        >
-          {parseInt(dashboardData?.profile_details?.completion_per, 10) === 100 ? (
-            // ✅ Show this if profile completion is 100%
-            <View style={styles.sandalProfileContainer}>
-              <Text style={styles.profilePercentage}>
-                Your profile is now {dashboardData?.profile_details?.completion_per || " "} % complete
-              </Text>
-            </View>
-          ) : (
-            // ❌ Show this if profile completion is NOT 100%
-            <TouchableOpacity style={styles.sandalProfileContainer} 
-            onPress={() => {
-            if (parseInt(dashboardData?.profile_details?.completion_per, 10) !== 100) {
-              navigation.navigate("ProfileCompletionForm");
-            }
-          }}
-          >
-              <CircularProgress
-                value={parseInt(dashboardData?.profile_details?.completion_per, 10) || 0}
-                valueSuffix={"%"}
-                radius={35}
-                duration={2000}
-                activeStrokeWidth={8}
-                inActiveStrokeWidth={8}
-                progressValueColor={"#535665"}
-                progressValueStyle={{ fontSize: 14, fontWeight: "500" }}
-                titleFontSize={16}
-                maxValue={100}
-                titleColor={"white"}
-                titleStyle={{ fontWeight: "bold" }}
-                activeStrokeColor={"#2FBD12"}
-                inActiveStrokeColor={"#2FBD12"}
-                inActiveStrokeOpacity={0.2}
-              />
-              <Text style={styles.profilePercentage}>
-                Your profile is now {dashboardData?.profile_details?.completion_per || " "} % complete
-              </Text>
-              <Text style={styles.percentageText}>
-                Complete your profile we will suggest profiles based on your preference
-              </Text>
+              // onPress={() => {
+              //   if (parseInt(dashboardData?.profile_details?.completion_per, 10) !== 100) {
+              //     navigation.navigate("ProfileCompletionForm");
+              //   }
+              // }}
+              disabled={parseInt(dashboardData?.profile_details?.completion_per, 10) === 100} // Disable when 100%
+              style={[
+                styles.sandalProfileContainer,
+                parseInt(dashboardData?.profile_details?.completion_per, 10) === 100 && { opacity: 0.5 } // Dim UI when disabled
+              ]}
+            >
+              {parseInt(dashboardData?.profile_details?.completion_per, 10) === 100 ? (
+                // ✅ Show this if profile completion is 100%
+                <View style={styles.sandalProfileContainer}>
+                  <Text style={styles.profilePercentage}>
+                    Your profile is now  {dashboardData?.profile_details?.completion_per || " "} % complete
+                  </Text>
+                </View>
+              ) : (
+                // ❌ Show this if profile completion is NOT 100%
+                <TouchableOpacity style={styles.sandalProfileContainer}
+                  onPress={() => {
+                    if (parseInt(dashboardData?.profile_details?.completion_per, 10) !== 100) {
+                      navigation.navigate("ProfileCompletionForm");
+                    }
+                  }}
+                >
+                  <CircularProgress
+                    value={parseInt(dashboardData?.profile_details?.completion_per, 10) || 0}
+                    valueSuffix={"%"}
+                    radius={35}
+                    duration={2000}
+                    activeStrokeWidth={8}
+                    inActiveStrokeWidth={8}
+                    progressValueColor={"#535665"}
+                    progressValueStyle={{ fontSize: 14, fontWeight: "500" }}
+                    titleFontSize={16}
+                    maxValue={100}
+                    titleColor={"white"}
+                    titleStyle={{ fontWeight: "bold" }}
+                    activeStrokeColor={"#2FBD12"}
+                    inActiveStrokeColor={"#2FBD12"}
+                    inActiveStrokeOpacity={0.2}
+                  />
+                  <Text style={styles.profilePercentage}>
+                    Your profile is now {dashboardData?.profile_details?.completion_per || " "} % complete
+                  </Text>
+                  <Text style={styles.percentageText}>
+                    Complete your profile we will suggest profiles based on your preference
+                  </Text>
 
-              <View style={styles.completeTextFlex}>
-                <Text style={styles.completeText}>Complete Your Profile</Text>
-                <Ionicons name="arrow-forward" size={18} color="#ED1E24" />
-              </View>
-            </TouchableOpacity>
-          )}
-</View>
+                  <View style={styles.completeTextFlex}>
+                    <Text style={styles.completeText}>Complete Your Profile</Text>
+                    <Ionicons name="arrow-forward" size={18} color="#ED1E24" />
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
 
           </View>
         </View>

@@ -26,7 +26,7 @@ import CircularProgress from "react-native-circular-progress-indicator";
 import { useNavigation } from "@react-navigation/native";
 // import { Rasi } from '../../Components/Rasi';
 import { DetailsEdit, ProfileDetailsEdit } from '../../Components/MenuTab/ProfileDetailsEdit';
-import { getProfileDetailsMatch, uploadImageToServer, fetchImages, downloadPdfPorutham, downloadPdf, downloadPdfmyprofile, getMyProfilePersonal } from '../../CommonApiCall/CommonApiCall'; // Import the API function
+import { getProfileDetailsMatch, uploadImageToServer, removeProfileImage, fetchImages, downloadPdfPorutham, downloadPdf, downloadPdfmyprofile, getMyProfilePersonal } from '../../CommonApiCall/CommonApiCall'; // Import the API function
 import config from '../../API/Apiurl';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from "react-native-toast-message";
@@ -126,151 +126,197 @@ export const MyProfile = () => {
     };
 
     // Upload a new image
+    // const uploadImage = async (id) => {
+    //     launchImageLibrary({}, async (response) => {
+    //         if (response.didCancel) {
+    //             console.log('User cancelled image picker');
+    //         } else if (response.error) {
+    //             console.log('ImagePicker Error: ', response.error);
+    //         } else if (response.assets) {
+    //             const file = response.assets[0];
+    //             console.log("response  ===>  ", response)
+    //             const formData = new FormData();
+
+    //             // Check if the image has an ID (i.e., if we're replacing it)
+    //             if (id !== null) {
+    //                 const imageToReplace = data.find(item => item.id === id); // Find the image by ID
+    //                 if (imageToReplace) {
+    //                     formData.append("replace_image_ids", imageToReplace.id.toString());
+    //                     // formData.append("replace_image_files", file, file.fileName);
+    //                     formData.append("replace_image_files", {
+    //                         uri: response.assets[0].uri,
+    //                         type: 'image/jpeg',
+    //                         name: response.assets[0].fileName,
+    //                     });
+    //                 }
+    //             } else {
+    //                 // If the image doesn't have an ID, upload it as a new image
+    //                 formData.append("new_image_files", {
+    //                     uri: response.assets[0].uri,
+    //                     type: 'image/jpeg',
+    //                     name: response.assets[0].fileName,
+    //                 });
+    //             }
+
+    //             try {
+    //                 console.log("upload image my profile formdata ==>", formData)
+    //                 // Call the common API function
+    //                 const response = await uploadImageToServer(formData);
+    //                 console.log("Image processed successfully:", response);
+    //                 // alert("Image uploaded successfully");
+    //                 Toast.show({
+    //                     type: "success",
+    //                     text1: "Profile Viewed",
+    //                     text2: `Image uploaded successfully.`,
+    //                     position: "bottom",
+    //                 });
+
+    //                 // Update the data state with the new image URL (if successful)
+    //                 if (id !== null) {
+    //                     // Update the replaced image
+    //                     const newData = [...data];
+    //                     const updatedIndex = newData.findIndex(item => item.id === id);
+    //                     if (updatedIndex !== -1) {
+    //                         newData[updatedIndex].url = response.imageUrl; // assuming the response contains the new image URL
+    //                     }
+    //                     setData(newData);
+    //                 } else {
+    //                     // For new image, add a new entry (if required)
+    //                     setData(prevData => [
+    //                         ...prevData,
+    //                         { id: response.newImageId, url: response.imageUrl },
+    //                     ]);
+    //                 }
+    //                 fetchAndSetImages();
+    //             } catch (error) {
+    //                 // alert(error.message); // Show error message from API call
+    //                 Toast.show({
+    //                     type: "error",
+    //                     text1: "Search Error",
+    //                     text2: error.message,
+    //                     position: "bottom",
+    //                 });
+    //             }
+    //         }
+    //     });
+    // };
+
     const uploadImage = async (id) => {
-        launchImageLibrary({}, async (response) => {
+        launchImageLibrary({
+            mediaType: 'photo',
+            quality: 1,
+        }, async (response) => {
             if (response.didCancel) {
                 console.log('User cancelled image picker');
-            } else if (response.error) {
-                console.log('ImagePicker Error: ', response.error);
-            } else if (response.assets) {
-                const file = response.assets[0];
-                console.log("response  ===>  ", response)
-                const formData = new FormData();
+                return;
+            }
 
-                // Check if the image has an ID (i.e., if we're replacing it)
+            if (response.error) {
+                console.log('ImagePicker Error: ', response.error);
+                return;
+            }
+
+            if (response.assets && response.assets[0]) {
+                const file = response.assets[0];
+                const profileId = await AsyncStorage.getItem("loginuser_profileId");
+
+                if (!profileId) {
+                    Toast.show({
+                        type: "error",
+                        text1: "Error",
+                        text2: "Profile ID not found",
+                        position: "bottom",
+                    });
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("profile_id", profileId);
+
+                // If id is provided, we're replacing an image
                 if (id !== null) {
-                    const imageToReplace = data.find(item => item.id === id); // Find the image by ID
-                    if (imageToReplace) {
-                        formData.append("replace_image_ids", imageToReplace.id.toString());
-                        // formData.append("replace_image_files", file, file.fileName);
-                        formData.append("replace_image_files", {
-                            uri: response.assets[0].uri,
-                            type: 'image/jpeg',
-                            name: response.assets[0].fileName,
-                        });
-                    }
+                    formData.append("replace_image_ids", id.toString());
+                    formData.append("replace_image_files", {
+                        uri: file.uri,
+                        type: file.type || 'image/jpeg',
+                        name: file.fileName || `image_${Date.now()}.jpg`,
+                    });
                 } else {
-                    // If the image doesn't have an ID, upload it as a new image
+                    // If id is null, we're adding a new image
                     formData.append("new_image_files", {
-                        uri: response.assets[0].uri,
-                        type: 'image/jpeg',
-                        name: response.assets[0].fileName,
+                        uri: file.uri,
+                        type: file.type || 'image/jpeg',
+                        name: file.fileName || `image_${Date.now()}.jpg`,
                     });
                 }
 
                 try {
-                    console.log("image formdata ==>", formData)
-                    // Call the common API function
+                    setLoading(true);
                     const response = await uploadImageToServer(formData);
                     console.log("Image processed successfully:", response);
-                    // alert("Image uploaded successfully");
+
                     Toast.show({
                         type: "success",
-                        text1: "Profile Viewed",
-                        text2: `Image uploaded successfully.`,
+                        text1: "Success",
+                        text2: id ? "Image replaced successfully" : "Image uploaded successfully",
                         position: "bottom",
                     });
 
-                    // Update the data state with the new image URL (if successful)
-                    if (id !== null) {
-                        // Update the replaced image
-                        const newData = [...data];
-                        const updatedIndex = newData.findIndex(item => item.id === id);
-                        if (updatedIndex !== -1) {
-                            newData[updatedIndex].url = response.imageUrl; // assuming the response contains the new image URL
-                        }
-                        setData(newData);
-                    } else {
-                        // For new image, add a new entry (if required)
-                        setData(prevData => [
-                            ...prevData,
-                            { id: response.newImageId, url: response.imageUrl },
-                        ]);
-                    }
-                    fetchAndSetImages();
+                    // Refresh images
+                    await fetchAndSetImages();
                 } catch (error) {
-                    // alert(error.message); // Show error message from API call
+                    console.error("Upload error:", error);
                     Toast.show({
                         type: "error",
-                        text1: "Search Error",
-                        text2: error.message,
+                        text1: "Upload Error",
+                        text2: error.message || "Failed to upload image",
                         position: "bottom",
                     });
+                } finally {
+                    setLoading(false);
                 }
             }
         });
     };
 
-    // const uploadImage = async (id) => {
-    //     launchImageLibrary(
-    //         { selectionLimit: 10, mediaType: 'photo' }, // Enable multiple selection and limit to 10 images
-    //         async (response) => {
-    //             if (response.didCancel) {
-    //                 console.log('User cancelled image picker');
-    //                 return;
-    //             }
-    //             if (response.error) {
-    //                 console.error('ImagePicker Error:', response.error);
-    //                 return;
-    //             }
-
-    //             if (response.assets) {
-    //                 // Check if the user selected more than 10 images
-    //                 if (response.assets.length > 10) {
-    //                     alert('You can select up to 10 images only.');
-    //                     return;
-    //                 }
-
-    //                 console.log("Selected files:", response.assets);
-
-    //                 const formData = new FormData();
-    //                 // formData.append("profile_id", await retrieveProfileId());
-
-    //                 response.assets.forEach((file) => {
-    //                     if (id !== null) {
-    //                         const imageToReplace = data.find(item => item.id === id);
-    //                         if (imageToReplace) {
-    //                             formData.append("replace_image_ids", imageToReplace.id.toString());
-    //                             formData.append("replace_image_files", {
-    //                                 uri: file.uri,
-    //                                 type: file.type || 'image/jpeg',
-    //                                 name: file.fileName || `image_${Date.now()}.jpg`,
-    //                             });
-    //                         }
-    //                     } else {
-    //                         formData.append("new_image_files[]", {
-    //                             uri: file.uri,
-    //                             type: file.type || 'image/jpeg',
-    //                             name: file.fileName || `image_${Date.now()}.jpg`,
-    //                         });
-    //                     }
-    //                 });
-
-    //                 console.log("Form data before upload:", formData);
-
-    //                 try {
-    //                     const response = await uploadImageToServer(formData);
-    //                     console.log("Images processed successfully:", response);
-    //                     alert("Images uploaded successfully");
-    //                 } catch (error) {
-    //                     console.error("Upload failed:", error.message);
-    //                     alert(error.message);
-    //                 }
-    //             }
-    //         }
-    //     );
-    // };
-
     // Remove the selected image
-    const removeImage = (id) => {
-        const newData = [...data];
-        const updatedIndex = newData.findIndex(item => item.id === id);  // Find the image by id
-        if (updatedIndex !== -1) {
-            newData[updatedIndex] = {
-                ...newData[updatedIndex],
-                url: '', // Remove the image URL (or set to a default placeholder image URL)
-            };
-            setData(newData);
+    const removeImage = async (id) => {
+        try {
+            setLoading(true);
+
+            const profileId = await AsyncStorage.getItem("loginuser_profileId");
+            if (!profileId) {
+                throw new Error('Profile ID not found');
+            }
+
+            const formData = new FormData();
+            formData.append('profile_id', profileId);
+            formData.append('image_id', id.toString());
+
+            const result = await removeProfileImage(formData);
+
+            if (result.success) {
+                Toast.show({
+                    type: "success",
+                    text1: "Success",
+                    text2: "Image removed successfully",
+                    position: "bottom",
+                });
+
+                // Remove the image from local state
+                const newData = data.filter(item => item.id !== id);
+                setData(newData);
+            }
+            fetchAndSetImages();
+        } catch (error) {
+            Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: error.message || "Failed to remove image",
+                position: "bottom",
+            });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -289,28 +335,69 @@ export const MyProfile = () => {
         fetchProfileDetails();
     }, []);
 
+    // const renderItem = ({ item, index }) => (
+    //     <View style={styles.itemContainer} key={item.id}>
+    //         <TouchableOpacity
+    //             style={styles.imageWrapper}
+    //         // onPress={() => console.log(`Image with ID ${item.id} pressed`)}
+    //         >
+    //             <Image
+    //                 source={{ uri: item.url || 'https://via.placeholder.com/150' }} // Add a fallback image if url is empty
+    //                 style={styles.image}
+    //                 onError={() => console.log(`Failed to load image at index with ID: ${item.id}`)}
+    //             />
+    //         </TouchableOpacity>
+
+    //         <MaterialIcons
+    //             name="edit"
+    //             size={24}
+    //             color="red"
+    //             style={styles.editIcon}
+    //             onPress={() => handleImageUpload(item.id)} // Pass the image id here
+    //         />
+    //     </View>
+    // );
+
     const renderItem = ({ item, index }) => (
         <View style={styles.itemContainer} key={item.id}>
-            <TouchableOpacity
-                style={styles.imageWrapper}
-            // onPress={() => console.log(`Image with ID ${item.id} pressed`)}
-            >
+            <TouchableOpacity style={styles.imageWrapper}>
                 <Image
-                    source={{ uri: item.url || 'https://via.placeholder.com/150' }} // Add a fallback image if url is empty
+                    source={{ uri: item.url || 'https://via.placeholder.com/150' }}
                     style={styles.image}
                     onError={() => console.log(`Failed to load image at index with ID: ${item.id}`)}
                 />
             </TouchableOpacity>
 
-            <MaterialIcons
-                name="edit"
-                size={24}
-                color="red"
-                style={styles.editIcon}
-                onPress={() => handleImageUpload(item.id)} // Pass the image id here
-            />
+            {/* Container for both icons */}
+            <View style={styles.iconContainer}>
+                {/* Plus icon for adding new image */}
+                <TouchableOpacity
+                    style={styles.addIconWrapper}
+                    onPress={() => handleAddNewImage()}
+                >
+                    <MaterialIcons
+                        name="add-circle"
+                        size={24}
+                        color="red"
+                    />
+                </TouchableOpacity>
+
+                {/* Edit icon for replacing current image */}
+                <MaterialIcons
+                    name="edit"
+                    size={24}
+                    color="red"
+                    style={styles.editIcon}
+                    onPress={() => handleImageUpload(item.id)}
+                />
+            </View>
         </View>
     );
+
+    const handleAddNewImage = () => {
+        uploadImage(null); // Pass null to indicate it's a new image
+    };
+
 
     const handleDownloadPdf = async () => {
         // Proceed with the download if permission is granted
@@ -417,8 +504,6 @@ export const MyProfile = () => {
             setShareModalVisible(false);
         }
     };
-
-
 
     return (
         <ScrollView>
@@ -1011,5 +1096,58 @@ const styles = StyleSheet.create({
         padding: 5,
         // borderRadius: 5,
         borderTopLeftRadius: 5,
-    }
+    },
+    // Add these new styles to your existing styles object
+    iconContainer: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    addIconWrapper: {
+        backgroundColor: '#fff',
+        padding: 5,
+        borderTopLeftRadius: 5,
+        marginRight: 5,
+    },
+    itemContainer: {
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    imageWrapper: {
+        width: '100%',
+        height: '100%',
+    },
+
+    image: {
+        width: "100%",
+        height: "100%",
+        resizeMode: "cover",
+    },
+
+    iconContainer: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 1,
+        padding: 5,
+        gap: 5,
+    },
+
+    addIconWrapper: {
+        padding: 0,
+    },
+
+    editIcon: {
+        padding: 0,
+    },
 });

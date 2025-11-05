@@ -5,13 +5,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios"; // Import axios
 import config from "../API/Apiurl";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FontAwesome } from '@expo/vector-icons'; // For icons like `FaCheck`
+import { FontAwesome } from '@expo/vector-icons'; // For icons like `FaCheck
+import Toast from "react-native-toast-message";
 
-export const MembershipPlan = ({ navigation }) => {
+export const MembershipPlan = ({ navigation, route }) => {
 
   const [plans, setPlans] = useState({});
   const [selectedCard, setSelectedCard] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState({ id: null, price: null, name: null });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(route.params?.fromLogin || false);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -47,8 +50,54 @@ export const MembershipPlan = ({ navigation }) => {
     }
   };
 
-  const handleSkipPress = () => {
-    navigation.navigate('ThankYouReg'); // Navigate to the ThankYouReg screen
+  // const handleSkipPress = () => {
+  //   navigation.navigate('ThankYouReg'); // Navigate to the ThankYouReg screen
+  // };
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const token = await AsyncStorage.getItem("auth_token");
+        setIsLoggedIn(!!token); // Set to true if token exists
+      } catch (error) {
+        console.error("Error checking login status", error);
+        setIsLoggedIn(false); // Set to false if there's an error
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
+
+  const handleSkipPress = async () => {
+    if (isLoggedIn) {
+      // User came from login - navigate directly
+      navigation.navigate('ThankYouReg');
+    } else {
+      // User is registering - call Free Packages API
+      setIsLoading(true);
+      try {
+        const profile_id = await AsyncStorage.getItem("profile_id_new");
+        const response = await axios.post(
+          "https://vsysmalamat-ejh3ftcdbnezhhfv.westus2-01.azurewebsites.net/auth/Free_packages/",
+          { profile_id: profile_id },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        Toast.show({
+          type: "success",
+          text1: "Success",
+          text2: "Free packages updated successfully",
+          position: "bottom",
+          visibilityTime: 4000,
+        });
+
+        navigation.navigate('ThankYouReg');
+      } catch (error) {
+        console.error("Error calling Free Packages API", error);
+        navigation.navigate('ThankYouReg');
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   return (
@@ -60,9 +109,17 @@ export const MembershipPlan = ({ navigation }) => {
         responses. Here are some key benefits
       </Text>
 
-      <View style={styles.freePlanFlex}>
+      {/* <View style={styles.freePlanFlex}>
         <TouchableOpacity onPress={handleSkipPress}>
           <Text style={styles.freeplantext}>Skip For Free Plan</Text>
+        </TouchableOpacity>
+        <Ionicons name="arrow-forward" size={18} color="red" />
+      </View> */}
+      <View style={styles.freePlanFlex}>
+        <TouchableOpacity onPress={handleSkipPress} disabled={isLoading}>
+          <Text style={styles.freeplantext}>
+            {isLoading ? "Processing..." : "Skip For Free Plan"}
+          </Text>
         </TouchableOpacity>
         <Ionicons name="arrow-forward" size={18} color="red" />
       </View>

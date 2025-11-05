@@ -23,7 +23,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import CircularProgress from "react-native-circular-progress-indicator";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { fetchDashboardData, getMyProfilePersonal } from "../CommonApiCall/CommonApiCall";
+import { fetchDashboardData, getMyProfilePersonal, getMyEducationalDetails} from "../CommonApiCall/CommonApiCall";
 import Toast from "react-native-toast-message";
 
 // Get device dimensions
@@ -52,6 +52,7 @@ export const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [profileDetails, setProfileDetails] = useState(null);
+  const [educationalDetails, setEducationalDetails] = useState(null);
   const [buttonText, setButtonText] = useState("Upgrade");
 
   useEffect(() => {
@@ -137,6 +138,22 @@ export const Menu = () => {
     return unsubscribe;
   }, [navigation]); // Runs every time navigation focus changes
 
+
+  const fetchProfileData = async () => {
+    try {
+      const data = await getMyEducationalDetails();
+      console.log("data educational details ===>", data);
+      setEducationalDetails(data.data); // Set the data in the state
+    } catch (error) {
+      console.error('Failed to load profile data', error);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchProfileData(); // Call the function when component mounts
+  }, []);
+
   const handleLogout = async () => {
     try {
       // Clear user session data from AsyncStorage
@@ -199,7 +216,28 @@ export const Menu = () => {
       const age = dashboardData?.profile_details?.age || 'Not available';
       const starName = dashboardData?.profile_details?.star_name || 'Not available';
       // const baseUrl = 'https://vysyamaladevnew-aehaazdxdzegasfb.westus2-01.azurewebsites.net';
-      const baseUrl = 'https://vsysmalamat-ejh3ftcdbnezhhfv.westus2-01.azurewebsites.net';
+      const baseUrl = 'vysyamala.com';
+      const profession = profileDetails?.prosession;
+      const annualIncome = educationalDetails?.personal_ann_inc_name;
+      const placeOfStay = educationalDetails?.personal_work_district || educationalDetails?.personal_work_city_name
+      const education = educationalDetails?.persoanl_degree_name;
+      const companyName = educationalDetails?.personal_company_name;
+      const businessName = educationalDetails?.personal_business_name;
+      let professionLine = '💼 *Profession:* Not available\n';
+
+      if (profession) {
+        if (profession.toLowerCase() === 'employed' && companyName) {
+          professionLine = `💼 *Profession:* Employed at ${companyName}\n`;
+        } else if (profession.toLowerCase() === 'business' && businessName) {
+          professionLine = `💼 *Profession:* Business at ${businessName}\n`;
+        } else if (profession.toLowerCase() === 'employed/business' && businessName) {
+          professionLine = `💼 *Profession:* ${profession}-Employed at ${companyName}, Business at ${businessName}\n`;
+        } else if (profession.toLowerCase() === 'goverment/ psu' && companyName) {
+          professionLine = `💼 *Profession:* Government/ PSU at ${companyName}\n`;
+        } else {
+          professionLine = `💼 *Profession:* ${profession}\n`;
+        }
+      }
 
       // Construct the share URL with proper encoding
       const shareUrl = `${baseUrl}/auth/profile/${encodeURIComponent(profileId)}/`;
@@ -210,10 +248,15 @@ export const Menu = () => {
         `🆔 *Profile ID:* ${profileId}\n` +
         `👤 *Profile Name:* ${profileName}\n` +
         `🎂 *Age:* ${age} years\n` +
-        `✨ *Star Name:* ${starName}\n\n` +
+        `✨ *Star Name:* ${starName}\n` +
+        `💰 *Annual Income:* ${annualIncome || 'Not available'}\n` +
+        `🎓 *Education:* ${education || 'Not available'}\n` +
+        // `💼 *Profession:* ${profession || 'Not available'}${companyName || businessName ? ` at ${companyName || businessName}` : ''}\n` +4
+        professionLine +
+        `📍 *Place of Stay:* ${placeOfStay || 'Not available'}\n\n` +
+        `🌟 *For More Details:* ${shareUrl}\n` +
         `-------------------------------------------\n` +
-        `Click here to visit your matrimony profile on Vysyamala -\n` +
-        `Vysyamala matrimony website:\n` +
+        `Click here to register your profile on Vysyamala:\n` +
         `${baseUrl}`;
 
       const encodedMessage = encodeURIComponent(message);
@@ -251,7 +294,28 @@ export const Menu = () => {
       const age = dashboardData?.profile_details?.age || 'Not available';
       const starName = dashboardData?.profile_details?.star_name || 'Not available';
       // const baseUrl = 'https://vysyamaladevnew-aehaazdxdzegasfb.westus2-01.azurewebsites.net';
-      const baseUrl = 'https://vsysmalamat-ejh3ftcdbnezhhfv.westus2-01.azurewebsites.net';
+      const baseUrl = 'vysyamala.com';
+      const profession = profileDetails?.prosession;
+      const annualIncome = educationalDetails?.personal_ann_inc_name;
+      const placeOfStay = educationalDetails?.personal_work_district || educationalDetails?.personal_work_city_name
+      const education = educationalDetails?.persoanl_degree_name;
+      const companyName = educationalDetails?.personal_company_name;
+      const businessName = educationalDetails?.personal_business_name;
+      let professionLine = '💼 *Profession:* Not available\n';
+
+      if (profession) {
+        if (profession.toLowerCase() === 'employed' && companyName) {
+          professionLine = `💼 *Profession:* Employed at ${companyName}\n`;
+        } else if (profession.toLowerCase() === 'business' && businessName) {
+          professionLine = `💼 *Profession:* Business at ${businessName}\n`;
+        } else if (profession.toLowerCase() === 'employed/business' && businessName) {
+          professionLine = `💼 *Profession:* ${profession}-Employed at ${companyName}, Business at ${businessName}\n`;
+        } else if (profession.toLowerCase() === 'goverment/ psu' && companyName) {
+          professionLine = `💼 *Profession:* Government/ PSU at ${companyName}\n`;
+        } else {
+          professionLine = `💼 *Profession:* ${profession}\n`;
+        }
+      }
 
       // Construct the share URL with proper encoding
       const shareUrl = `${baseUrl}/auth/profile_view/${encodeURIComponent(profileId)}/`;
@@ -262,10 +326,15 @@ export const Menu = () => {
         `🆔 *Profile ID:* ${profileId}\n` +
         `👤 *Profile Name:* ${profileName}\n` +
         `🎂 *Age:* ${age} years\n` +
-        `✨ *Star Name:* ${starName}\n\n` +
+        `✨ *Star Name:* ${starName}\n` +
+        `💰 *Annual Income:* ${annualIncome || 'Not available'}\n` +
+        `🎓 *Education:* ${education || 'Not available'}\n` +
+        // `💼 *Profession:* ${profession || 'Not available'}${companyName || businessName ? ` at ${companyName || businessName}` : ''}\n` +4
+        professionLine +
+        `📍 *Place of Stay:* ${placeOfStay || 'Not available'}\n\n` +
+        `🌟 *For More Details:* ${shareUrl}\n` +
         `-------------------------------------------\n` +
-        `Click here to visit your matrimony profile on Vysyamala -\n` +
-        `Vysyamala matrimony website:\n` +
+        `Click here to register your profile on Vysyamala:\n` +
         `${baseUrl}`;
 
       const encodedMessage = encodeURIComponent(message);

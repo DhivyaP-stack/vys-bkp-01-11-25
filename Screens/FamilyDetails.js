@@ -20,9 +20,6 @@ import config from "../API/Apiurl";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Tooltip, Icon } from "react-native-elements"; // Install react-native-elements for the Tooltip component if not already installed
 
-
-
-
 const bloodGroupOptions = [
   { label: 'A+', value: 'A+' },
   { label: 'A-', value: 'A-' },
@@ -76,6 +73,8 @@ export const FamilyDetails = () => {
     weight: z.string().optional(),
     suyaGothram: z.string().min(1, "suyaGothram is required"),
     noOfChildren: z.string().optional(), // <-- Add noOfChildren to schema
+    fatherAlive: z.string().optional(), // Add fatherAlive to schema
+    motherAlive: z.string().optional(), // Add motherAlive to schema
   })
   // .refine((data) => {
   //   // Check if brotherValue is greater than or equal to 1, then brotherMarriedValue must be required
@@ -133,7 +132,9 @@ export const FamilyDetails = () => {
       weight: "",  // Set initial value to an empty string or "0"
       bodytype: "",  // Set initial value to an empty string or "0"
       eyewear: "",  // Set initial value to an empty string or "0"
-      noOfChildren: "", // <-- Add default value for noOfChildren
+      noOfChildren: "",
+      fatherAlive: "yes",
+      motherAlive: "yes",
     },
   });
 
@@ -156,9 +157,6 @@ export const FamilyDetails = () => {
   const [isTooltipVisible, setTooltipVisible] = useState(false); // Manage Tooltip visibility
   const [submitting, setSubmitting] = useState(false); // Add state to track submission
   const [maritalStatus, setMaritalStatus] = useState(""); // <-- Add state for marital status
-
-
-
 
   useEffect(() => {
     retrieveDataFromSession();
@@ -195,8 +193,6 @@ export const FamilyDetails = () => {
     }
   };
 
-
-
   const fetchParentOccupations = async () => {
     try {
       const response = await axios.post(`${config.apiUrl}/auth/Get_Parent_Occupation/`);
@@ -211,8 +207,6 @@ export const FamilyDetails = () => {
     }
   };
 
-
-
   const fetchPropertyworth = async () => {
     try {
       const response = await axios.post(`${config.apiUrl}/auth/Get_Property_Worth/`);
@@ -225,7 +219,6 @@ export const FamilyDetails = () => {
       console.error("Error fetching Property Worth:", error);
     }
   };
-
 
   const fetchFamilyType = async () => {
     try {
@@ -299,9 +292,57 @@ export const FamilyDetails = () => {
     }
   };
 
+  const fetchExistingFamilyData = async () => {
+    try {
+      const profileId = await AsyncStorage.getItem("profile_id_new");
+      if (!profileId) return;
 
+      const response = await axios.post(`${config.apiUrl}/auth/Get_Family_Details/`, {
+        profile_id: profileId
+      });
 
+      if (response.data.Status === 1 && response.data.family_details) {
+        const familyData = response.data.family_details;
+        setExistingFamilyData(familyData);
 
+        // Pre-fill form with existing data
+        setValue("fatherName", familyData.father_name || "");
+        setValue("foValue", familyData.father_occupation || "");
+        setValue("motherName", familyData.mother_name || "");
+        setValue("moValue", familyData.mother_occupation || "");
+        setValue("familyName", familyData.family_name || "");
+        setValue("suyaGothram", familyData.suya_gothram || "");
+        setValue("myhobbies", familyData.hobbies || "");
+        setValue("AboutMyself", familyData.about_self || "");
+        setValue("bloodGroup", familyData.blood_group || "");
+        setValue("weight", familyData.weight ? familyData.weight.toString() : "");
+        setValue("bodytype", familyData.bodytype || "");
+        setValue("eyewear", familyData.eyewear || "");
+        setValue("brotherValue", familyData.no_of_brother ? familyData.no_of_brother.toString() : "0");
+        setValue("brotherMarriedValue", familyData.no_of_bro_married ? familyData.no_of_bro_married.toString() : "0");
+        setValue("sisterValue", familyData.no_of_sister ? familyData.no_of_sister.toString() : "0");
+        setValue("sisterMarriedValue", familyData.no_of_sis_married ? familyData.no_of_sis_married.toString() : "0");
+        setValue("ftValue", familyData.family_type || "");
+        setValue("fvValue", familyData.family_value || "");
+        setValue("fsValue", familyData.family_status || "");
+        setValue("propertyWorth", familyData.property_worth || "");
+        setValue("uncleGothram", familyData.uncle_gothram || "");
+        setValue("ancestorOrigin", familyData.ancestor_origin || "");
+        setValue("aboutFamily", familyData.about_family || "");
+        setValue("noOfChildren", familyData.no_of_children ? familyData.no_of_children.toString() : "");
+
+        // Set father and mother alive status
+        setValue("fatherAlive", familyData.father_alive === "no" ? "no" : "yes");
+        setValue("motherAlive", familyData.mother_alive === "no" ? "no" : "yes");
+
+        // Set physically challenged
+        setPhysicallyChallenged(familyData.Pysically_changed === "yes" ? "yes" : "no");
+        setShowPhysicallyChallengedDetails(familyData.Pysically_changed === "yes");
+      }
+    } catch (error) {
+      console.error("Error fetching existing family data:", error);
+    }
+  };
 
   const onSubmit = async (data) => {
     console.log("hii");
@@ -340,6 +381,8 @@ export const FamilyDetails = () => {
         eyewear: data.eyewear,
         // Include other fields as necessary
         no_of_children: data.noOfChildren || undefined, // <-- Add no_of_children if present
+        father_alive: data.fatherAlive || "yes", // Add father_alive
+        mother_alive: data.motherAlive || "yes", // Add mother_alive
       };
 
       console.log("Formatted Data:", formattedData);
@@ -644,7 +687,14 @@ export const FamilyDetails = () => {
                 >
                   {physicallyChallenged === 'yes' && <View style={styles.innerCircle} />}
                 </TouchableOpacity>
-                <Text style={styles.radioLabel}>Yes</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setPhysicallyChallenged('yes');
+                    setShowPhysicallyChallengedDetails(true);
+                  }}
+                >
+                  <Text style={styles.radioLabel}>Yes</Text>
+                </TouchableOpacity>
               </View>
 
               <View style={styles.radioContainer}>
@@ -660,7 +710,14 @@ export const FamilyDetails = () => {
                 >
                   {physicallyChallenged === 'no' && <View style={styles.innerCircle} />}
                 </TouchableOpacity>
-                <Text style={styles.radioLabel}>No</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setPhysicallyChallenged('no');
+                    setShowPhysicallyChallengedDetails(false);
+                  }}
+                >
+                  <Text style={styles.radioLabel}>No</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -686,6 +743,95 @@ export const FamilyDetails = () => {
             </View>
           )}
 
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Father Alive</Text>
+            <Controller
+              control={control}
+              name="fatherAlive"
+              render={({ field: { onChange, value } }) => (
+                <View style={styles.radioButtonContainer}>
+                  <View style={styles.radioContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.radioButton,
+                        value === 'yes' && styles.radioButtonSelected,
+                      ]}
+                      onPress={() => onChange('yes')}
+                    >
+                      {value === 'yes' && <View style={styles.innerCircle} />}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => onChange('yes')}
+                    >
+                      <Text style={styles.radioLabel}>Yes</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.radioContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.radioButton,
+                        value === 'no' && styles.radioButtonSelected,
+                      ]}
+                      onPress={() => onChange('no')}
+                    >
+                      {value === 'no' && <View style={styles.innerCircle} />}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => onChange('no')}
+                    >
+                      <Text style={styles.radioLabel}>No</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Mother Alive</Text>
+            <Controller
+              control={control}
+              name="motherAlive"
+              render={({ field: { onChange, value } }) => (
+                <View style={styles.radioButtonContainer}>
+                  <View style={styles.radioContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.radioButton,
+                        value === 'yes' && styles.radioButtonSelected,
+                      ]}
+                      onPress={() => onChange('yes')}
+                    >
+                      {value === 'yes' && <View style={styles.innerCircle} />}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => onChange('yes')}
+                    >
+                      <Text style={styles.radioLabel}>Yes</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.radioContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.radioButton,
+                        value === 'no' && styles.radioButtonSelected,
+                      ]}
+                      onPress={() => onChange('no')}
+                    >
+                      {value === 'no' && <View style={styles.innerCircle} />}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => onChange('no')}
+                    >
+                      <Text style={styles.radioLabel}>No</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            />
+          </View>
 
           {/* Weight Field */}
           <View style={styles.inputContainer}>
@@ -1173,28 +1319,28 @@ export const FamilyDetails = () => {
           <View style={styles.inputContainer}>
             <View style={styles.labelWrapper}>
               <Text style={styles.label}>Property Details
-              {/* Tooltip for the note icon */}
+                {/* Tooltip for the note icon */}
 
-              <Tooltip
-                popover={
-                  <Text style={styles.tooltipContent}>
-                    Residential, Commercial, Shopping Complex, Farm House, Shop, Agriculture land, Multistorage building
-                  </Text>
-                }
-                backgroundColor="#fff"
-                overlayColor="rgba(0, 0, 0, 0.5)"
-                width={250}
-                height={120} // Increase the height of the tooltip
-                placement="bottom"
-              >
-                <Icon
-                  name="info"
-                  type="material"
-                  size={16}
-                  color="#555"
-                  style={styles.infoIcon}
-                />
-              </Tooltip>
+                <Tooltip
+                  popover={
+                    <Text style={styles.tooltipContent}>
+                      Residential, Commercial, Shopping Complex, Farm House, Shop, Agriculture land, Multistorage building
+                    </Text>
+                  }
+                  backgroundColor="#fff"
+                  overlayColor="rgba(0, 0, 0, 0.5)"
+                  width={250}
+                  height={120} // Increase the height of the tooltip
+                  placement="bottom"
+                >
+                  <Icon
+                    name="info"
+                    type="material"
+                    size={16}
+                    color="#555"
+                    style={styles.infoIcon}
+                  />
+                </Tooltip>
               </Text>
             </View>
 
@@ -1220,27 +1366,27 @@ export const FamilyDetails = () => {
 
               <Text style={styles.label}>Property Worth
 
-              <Tooltip style={styles.tooltipContent}
-                popover={
-                  <Text style={styles.tooltipContent}>
-                    Approx 1c, 5c, 50c, 30L, 80L, etc.,
-                  </Text>
-                }
-                backgroundColor="#fff"
-                overlayColor="rgba(0, 0, 0, 0.5)"
-                width={250}
-                height={120} // Increase the height of the tooltip
-                placement="bottom"              >
-                <Icon
-                  name="info"
-                  type="material"
-                  size={16}
-                  color="#555"
-                  style={styles.infoIcon}
-                />
-              </Tooltip>
+                <Tooltip style={styles.tooltipContent}
+                  popover={
+                    <Text style={styles.tooltipContent}>
+                      Approx 1c, 5c, 50c, 30L, 80L, etc.,
+                    </Text>
+                  }
+                  backgroundColor="#fff"
+                  overlayColor="rgba(0, 0, 0, 0.5)"
+                  width={250}
+                  height={120} // Increase the height of the tooltip
+                  placement="bottom"              >
+                  <Icon
+                    name="info"
+                    type="material"
+                    size={16}
+                    color="#555"
+                    style={styles.infoIcon}
+                  />
+                </Tooltip>
               </Text>
-              
+
             </View>
 
 
@@ -1335,10 +1481,10 @@ export const FamilyDetails = () => {
             )} */}
           </View>
 
-          
+
 
           {/* Next Button */}
-          <TouchableOpacity style={styles.btn} onPress={handleSubmit(onSubmit, onError)}   disabled={submitting} // Disable button when submitting
+          <TouchableOpacity style={styles.btn} onPress={handleSubmit(onSubmit, onError)} disabled={submitting} // Disable button when submitting
           >
             <LinearGradient
               colors={["#BD1225", "#FF4050"]}
@@ -1570,8 +1716,8 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     alignItems: "center",
     justifyContent: "center",
-    height: 24,
-    width: 24,
+    height: 15,
+    width: 15,
     // marginRight: 8,
   },
 

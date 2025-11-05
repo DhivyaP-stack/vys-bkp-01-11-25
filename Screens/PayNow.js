@@ -231,6 +231,7 @@ export const PayNow = () => {
         description: "Purchase Credits",
         image: 'https://vysyamaladev2025.blob.core.windows.net/vysyamala/VysyamalaLogo-i_e8O9Ou.png',
         currency: "INR",
+        //key: "rzp_test_bR07kHwjYrmOHm", 
         key: "rzp_live_HYCeDsho3jhHRt", // Make sure this is your correct key
         amount: Math.round(totalPriceNew * 100), // Amount in paise
         order_id: order_id,
@@ -377,13 +378,97 @@ export const PayNow = () => {
     );
   };
 
+  // Add this new function inside your PayNow component
+  const handleGPaySave = async () => {
+    try {
+      setIsPaymentLoading(true);
+      const profileId = await AsyncStorage.getItem("profile_id_new");
+      const selectedAddons = Object.keys(checkedState).filter(
+        (pkgId) => checkedState[pkgId]
+      );
+
+      console.log("=== GPay Save Debug Info ===");
+      console.log("profileId:", profileId);
+      console.log("selectedPlanId:", selectedPlanId);
+      console.log("selectedAddons:", selectedAddons);
+      console.log("totalPriceNew:", totalPriceNew);
+      console.log("gpay_online:", 1);
+      console.log("=============================");
+
+      // Pass gpay_online = 1 for GPay
+      const result = await savePlanPackage(
+        profileId,
+        selectedPlanId,
+        selectedAddons,
+        totalPriceNew,
+        1 // gpay_online parameter
+      );
+
+      console.log("Save plan package result:", result);
+
+
+      if (result.success) {
+        // Show success toast
+        // Toast.show({
+        //   type: "success",
+        //   text1: "Plans and Packages updated successfully",
+        //   position: "bottom",
+        //   visibilityTime: 4000,
+        // });
+
+        // Show alert
+        Alert.alert(
+          "Thank You",
+          "Thank you for choosing Vysyamala for your soulmate search. Our customer support team will connect with you shortly. In the meantime, please share your payment screenshot via WhatsApp at 9944851550.",
+          [
+            {
+              text: "OK",
+              // 2. This code runs ONLY AFTER the user presses OK
+              //    and the alert is dismissed.
+              onPress: () => {
+                // 3. Now, show the success toast
+                Toast.show({
+                  type: "success",
+                  text1: "Plans and Packages updated successfully",
+                  position: "bottom",
+                  visibilityTime: 2000,
+                });
+
+                // 4. Now, start the 5-second timer to navigate
+                setTimeout(() => {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: "HomeWithToast" }],
+                  });
+                }, 1000); // 5000 milliseconds = 5 seconds
+              },
+            },
+          ]
+        );
+
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: result.message,
+        });
+      }
+    } catch (error) {
+      console.error("Error in handleGPaySave:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to save plan package. Please try again.",
+      });
+    } finally {
+      setIsPaymentLoading(false);
+    }
+  };
+
+  // Replace your old handleGpaySubmit with this
   const handleGpaySubmit = () => {
-    setGpayModalVisible(false);
-    Alert.alert(
-      "Thank You",
-      "Thank you for choosing Vysyamala for your soulmate search. Our customer support team will connect with you shortly. In the meantime, please share your payment screenshot via WhatsApp at 9944851550.",
-      [{ text: "OK" }]
-    );
+    setGpayModalVisible(false); // Close the modal
+    handleGPaySave(); // Call the new save function
   };
 
   if (error) {
