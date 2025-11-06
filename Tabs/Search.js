@@ -16,7 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import { getAdvanceSearchResults } from '../CommonApiCall/CommonApiCall'; // Adjust the import path as needed
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { Search_By_profileId, logProfileVisit } from "../CommonApiCall/CommonApiCall";  // Import the function
+import { Search_By_profileId, logProfileVisit, handleBookmark, fetchProfileDataCheck } from "../CommonApiCall/CommonApiCall";  // Import the function
 import ProfileNotFound from "../Components/ProfileNotFound/ProfileNotFound";
 import Toast from "react-native-toast-message";
 import { useForm, Controller } from "react-hook-form";
@@ -57,7 +57,63 @@ export const Search = () => {
   const [selectedFieldofStudyIds, setSelectedFieldofStudyIds] = useState('');
   const [chevvaiDhosam, setChevvaiDhosam] = useState(null);
   const [rahuKetuDhosam, setRahuKetuDhosam] = useState(null);
+  const [bookmarkedProfiles, setBookmarkedProfiles] = useState(new Set());
 
+  const handleSavePress = async (viewedProfileId) => {
+    const newStatus = bookmarkedProfiles.has(viewedProfileId) ? "0" : "1";
+    const success = await handleBookmark(viewedProfileId, newStatus);
+    console.log("bookmark success", success)
+    if (success) {
+      const updatedBookmarkedProfiles = new Set(bookmarkedProfiles);
+      if (newStatus === "1") {
+        updatedBookmarkedProfiles.add(viewedProfileId);
+        Toast.show({
+          type: "success",
+          text1: "Saved",
+          text2: "Profile has been saved to bookmarks.",
+          position: "bottom",
+        });
+      } else {
+        updatedBookmarkedProfiles.delete(viewedProfileId);
+        Toast.show({
+          type: "info",
+          text1: "Unsaved",
+          text2: "Profile has been removed from bookmarks.",
+          position: "bottom",
+        });
+      }
+      setBookmarkedProfiles(updatedBookmarkedProfiles);
+
+      // Update the profiles state to reflect the bookmark change
+      setProfiles(prevProfiles =>
+        prevProfiles.map(profile =>
+          profile.profile_id === viewedProfileId
+            ? { ...profile, wish_list: newStatus === "1" ? 1 : 0 }
+            : profile
+        )
+      );
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to update bookmark status.",
+        position: "bottom",
+      });
+    }
+  };
+
+
+  useEffect(() => {
+    if (profiles && profiles.length > 0) {
+      const bookmarkedIds = new Set();
+      profiles.forEach(profile => {
+        if (profile.wish_list === 1) {
+          bookmarkedIds.add(profile.profile_id);
+        }
+      });
+      setBookmarkedProfiles(prev => new Set([...prev, ...bookmarkedIds]));
+    }
+  }, [profiles]);
 
   const getImageSource = (image) => {
     if (!image) return { uri: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fstock.adobe.com%2Fsearch%2Fimages%3Fk%3Ddefault%2Bimage&psig=AOvVaw28Px6jC5wsx4TWxwOrHJT2&ust=1726388184602000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCMCfpqb_wYgDFQAAAAAdAAAAABAE' }; // Fallback image
@@ -415,6 +471,20 @@ export const Search = () => {
 
 
   const handleProfileClick = async (viewedProfileId) => {
+    const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+    console.log('profile view msg', profileCheckResponse)
+
+    // 2. Check if the API returned any failure
+    if (profileCheckResponse?.status === "failure") {
+      Toast.show({
+        type: "error",
+        // text1: "Profile Error", // You can keep this general
+        text1: profileCheckResponse.message, // <-- This displays the exact API message
+        position: "bottom",
+      });
+      return; // Stop the function
+    }
+
     const success = await logProfileVisit(viewedProfileId);
 
     if (success) {
@@ -517,7 +587,17 @@ export const Search = () => {
                       source={getImageSource(profile.profile_img)}
                       style={styles.profileImage}
                     />
-
+                    <TouchableOpacity
+                      onPress={() => handleSavePress(profile.profile_id)}
+                      style={styles.saveIconContainer}
+                    >
+                      <MaterialIcons
+                        name={bookmarkedProfiles.has(profile.profile_id) ? 'bookmark' : 'bookmark-border'}
+                        size={20}
+                        color="red"
+                        style={styles.saveIcon}
+                      />
+                    </TouchableOpacity>
                     <View style={styles.profileContent}>
                       <Text style={styles.profileName}>
                         {profile.profile_name}{" "}
@@ -540,9 +620,7 @@ export const Search = () => {
             </View>
           )}
         </View>
-
       ) : (
-
         <>
           <View style={{ flexDirection: 'row' }}>
             <Text style={styles.searchAdvanced}>Advanced Search</Text>
@@ -598,8 +676,6 @@ export const Search = () => {
                 </View>
               </View>
             </View>
-
-
 
             <View style={styles.checkContainer}>
               <Text style={styles.checkRedText}>Marital Status</Text>

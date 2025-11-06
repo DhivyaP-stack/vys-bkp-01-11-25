@@ -48,7 +48,7 @@ export const HoroscopeDetails = () => {
     const [dayOptions, setDayOptions] = useState([]);
     const [monthOptions, setMonthOptions] = useState([]);
     const [yearOptions, setYearOptions] = useState([]);
-    
+
 
 
 
@@ -91,22 +91,22 @@ export const HoroscopeDetails = () => {
         { label: 'No', value: 'no' },
     ];
 
-        // Function to fetch profile data
-        const fetchProfileData = async () => {
-            try {
-                const data = await getMyHoroscopeDetails();
-                console.log("data ====>",data.data);
-                setHoroscopeDetails(data.data); // Set the data in the state
-            } catch (error) {
-                console.error('Failed to load profile data', error);
-            }
-        };
+    // Function to fetch profile data
+    const fetchProfileData = async () => {
+        try {
+            const data = await getMyHoroscopeDetails();
+            console.log("data ====>", data.data);
+            setHoroscopeDetails(data.data); // Set the data in the state
+        } catch (error) {
+            console.error('Failed to load profile data', error);
+        }
+    };
 
-     
+
 
     useEffect(() => {
-            fetchProfileData(); // Call the function when component mounts
-        }, []);
+        fetchProfileData(); // Call the function when component mounts
+    }, []);
 
     useEffect(() => {
         const fetchBirthStars = async () => {
@@ -181,15 +181,15 @@ export const HoroscopeDetails = () => {
         const days = Array.from({ length: 31 }, (_, i) => ({
             label: i.toString().padStart(2, '0'),
             value: i.toString().padStart(2, '0'),
-          }));
-          setDayOptions(days);
-  
-          // For months: 00 to 12
-          const months = Array.from({ length: 13 }, (_, i) => ({
+        }));
+        setDayOptions(days);
+
+        // For months: 00 to 12
+        const months = Array.from({ length: 13 }, (_, i) => ({
             label: i.toString().padStart(2, '0'),
             value: i.toString().padStart(2, '0'),
-          }));
-          setMonthOptions(months);
+        }));
+        setMonthOptions(months);
 
         const years = Array.from({ length: 30 }, (_, i) => ({ label: `${i + 1}`, value: `${i + 1}` }));
         setYearOptions(years);
@@ -241,7 +241,7 @@ export const HoroscopeDetails = () => {
 
     // const handleChange = (field, value) => {
     //     setFormValues((prevValues) => ({
-            
+
     //         ...prevValues,
     //         [field]: value,
     //     }));
@@ -264,7 +264,7 @@ export const HoroscopeDetails = () => {
                 [field]: updatedValue,
             };
         });
-        
+
         // Clear the error message for the field
         setValidationErrors((prevErrors) => ({
             ...prevErrors,
@@ -294,10 +294,10 @@ export const HoroscopeDetails = () => {
     };
 
 
-    const handleSave = async () => {    
+    const handleSave = async () => {
         if (validateForm()) {
             try {
-                console.log("formValues ====>",formValues);
+                console.log("formValues ====>", formValues);
                 // Convert IDs to strings and ensure no null values
                 const profileData = {
                     birthstar_name: formValues.personal_bthstar_id ? String(formValues.personal_bthstar_id) : '',
@@ -308,7 +308,7 @@ export const HoroscopeDetails = () => {
                     nalikai: formValues.personal_nalikai || '',
                     suya_gothram: formValues.personal_surya_goth || '',
                     dasa_name: formValues.personal_dasa || '',
-                    dasa_balance: formValues.personal_dasa_bal_day ? 
+                    dasa_balance: formValues.personal_dasa_bal_day ?
                         `day:${formValues.personal_dasa_bal_day}, month:${formValues.personal_dasa_bal_month}, year:${formValues.personal_dasa_bal_year}` : '',
                     horoscope_hints: formValues.personal_horoscope_hints || '',
                     didi: formValues.personal_didi || '',
@@ -319,7 +319,7 @@ export const HoroscopeDetails = () => {
                 // Validate that required fields are not empty strings
                 const requiredFields = ['birthstar_name', 'birth_rasi_name', 'lagnam_didi'];
                 const emptyFields = requiredFields.filter(field => !profileData[field]);
-                
+
                 if (emptyFields.length > 0) {
                     console.error('Required fields are empty:', emptyFields);
                     setValidationErrors({
@@ -371,301 +371,294 @@ export const HoroscopeDetails = () => {
                 {isEditMode ? (
                     <View style={styles.editOptions}>
                         <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Birth Star</Text>
-                        <RNPickerSelect
-                            onValueChange={(value) => handleChange('personal_bthstar_id', value)}
-                            items={birthStars}
-                            value={formValues.personal_bthstar_id}
-                            useNativeAndroidPickerStyle={false} // Important for custom styles on Android
-                            Icon={() => (
-                                <Ionicons
-                                    name="chevron-down" // Name of the icon
-                                    size={24}
-                                    color="gray"
-                                    style={{ marginTop:10}}
-                                />
-                            )}
-                            placeholder={{ label: "Select Birth Star", value: null }}
-                            style={pickerSelectStyles}
-                        />
-                        {validationErrors.personal_bthstar_id && (
-                            <Text style={styles.error}>{validationErrors.personal_bthstar_id}</Text>
-                        )}
-                    </View>
-
-                    {/* Rasi */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Rasi</Text>
-                        <RNPickerSelect
-                            onValueChange={(value) => handleChange('personal_bth_rasi_id', value)}
-                            items={rasiList}
-                            value={formValues.personal_bth_rasi_id}
-                            useNativeAndroidPickerStyle={false} // Important for custom styles on Android
-                            Icon={() => (
-                                <Ionicons
-                                    name="chevron-down" // Name of the icon
-                                    size={24}
-                                    color="gray"
-                                    style={{ marginTop:10}}
-                                />
-                            )}
-                            placeholder={{ label: "Select Rasi", value: null }}
-                            style={pickerSelectStyles}
-                        />
-                        {validationErrors.personal_bth_rasi_id && (
-                            <Text style={styles.error}>{validationErrors.personal_bth_rasi_id}</Text>
-                        )}
-                    </View>
-
-                    {/* Lagnam / Didi */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Lagnam/Didi</Text>
-                        <RNPickerSelect
-                            onValueChange={(value) => handleChange('personal_lagnam_didi_id', value)}
-                            items={lagnams}
-                            value={formValues.personal_lagnam_didi_id}
-                            useNativeAndroidPickerStyle={false} // Important for custom styles on Android
-                            Icon={() => (
-                                <Ionicons
-                                    name="chevron-down" // Name of the icon
-                                    size={24}
-                                    color="gray"
-                                    style={{ marginTop:10}}
-                                />
-                            )}
-                            placeholder={{ label: "Select Lagnam/Didi", value: null }}
-                            style={pickerSelectStyles}
-                        />
-                        {validationErrors.personal_lagnam_didi_id && (
-                            <Text style={styles.error}>{validationErrors.personal_lagnam_didi_id}</Text>
-                        )}
-                    </View>
-
-                    
-
-                    
-
-
-                    {/* Nalikai */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Nalikai</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter Nalikai"
-                            value={formValues.personal_nalikai}
-                            onChangeText={(text) => handleChange('personal_nalikai', text)}
-                        />
-                        {validationErrors.personal_nalikai && (
-                            <Text style={styles.error}>{validationErrors.personal_nalikai}</Text>
-                        )}
-                    </View>
-
-                    {/* Surya Gowthram */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Surya Gowthram</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter Surya Gowthram"
-                            value={formValues.personal_surya_goth}
-                            onChangeText={(text) => handleChange('personal_surya_goth', text)}
-                        />
-                        {validationErrors.personal_surya_goth && (
-                            <Text style={styles.error}>{validationErrors.personal_surya_goth}</Text>
-                        )}
-                    </View>
-
-                    {/* Dasa */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Dasa Name</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter Dasa Name"
-                            value={formValues.personal_dasa}
-                            onChangeText={(text) => handleChange('personal_dasa', text)}
-                        />
-                        {validationErrors.personal_dasa && (
-                            <Text style={styles.error}>{validationErrors.personal_dasa}</Text>
-                        )}
-                    </View>
-
-                    
-
-                    {/* Dasa Balance */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Dasa Balance</Text>
-                        <View style={styles.dropdownFlex}>
-                            {/* Day Dropdown */}
-                            <View style={styles.dropdownFit}>
-                                <RNPickerSelect
-                                    onValueChange={(value) => handleChange('personal_dasa_bal_day', value)}
-                                    items={dayOptions}
-                                    value={formValues.personal_dasa_bal_day}
-                                    useNativeAndroidPickerStyle={false}
-                                    Icon={() => (
-                                        <Ionicons
-                                            name="chevron-down"
-                                            size={24}
-                                            color="gray"
-                                            style={{ marginTop:10}}
-                                        />
-                                    )}
-                                    placeholder={{ label: "Day", value: null }}
-                                    style={pickerSelectStyles}
-                                />
-                                {validationErrors.personal_dasa_bal_day && (
-                                    <Text style={styles.error}>{validationErrors.personal_dasa_bal_day}</Text>
+                            <Text style={styles.labelNew}>Birth Star</Text>
+                            <RNPickerSelect
+                                onValueChange={(value) => handleChange('personal_bthstar_id', value)}
+                                items={birthStars}
+                                value={formValues.personal_bthstar_id}
+                                useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                Icon={() => (
+                                    <Ionicons
+                                        name="chevron-down" // Name of the icon
+                                        size={24}
+                                        color="gray"
+                                        style={{ marginTop: 10 }}
+                                    />
                                 )}
-                            </View>
+                                placeholder={{ label: "Select Birth Star", value: null }}
+                                style={pickerSelectStyles}
+                            />
+                            {validationErrors.personal_bthstar_id && (
+                                <Text style={styles.error}>{validationErrors.personal_bthstar_id}</Text>
+                            )}
+                        </View>
 
-                            {/* Month Dropdown */}
-                            <View style={styles.dropdownFit}>
-                                <RNPickerSelect
-                                    onValueChange={(value) => handleChange('personal_dasa_bal_month', value)}
-                                    items={monthOptions}
-                                    value={formValues.personal_dasa_bal_month}
-                                    useNativeAndroidPickerStyle={false}
-                                    Icon={() => (
-                                        <Ionicons
-                                            name="chevron-down"
-                                            size={24}
-                                            color="gray"
-                                            style={{ marginTop:10}}
-                                        />
-                                    )}
-                                    placeholder={{ label: "Month", value: null }}
-                                    style={pickerSelectStyles}
-                                />
-                                {validationErrors.personal_dasa_bal_month && (
-                                    <Text style={styles.error}>{validationErrors.personal_dasa_bal_month}</Text>
+                        {/* Rasi */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Rasi</Text>
+                            <RNPickerSelect
+                                onValueChange={(value) => handleChange('personal_bth_rasi_id', value)}
+                                items={rasiList}
+                                value={formValues.personal_bth_rasi_id}
+                                useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                Icon={() => (
+                                    <Ionicons
+                                        name="chevron-down" // Name of the icon
+                                        size={24}
+                                        color="gray"
+                                        style={{ marginTop: 10 }}
+                                    />
                                 )}
-                            </View>
+                                placeholder={{ label: "Select Rasi", value: null }}
+                                style={pickerSelectStyles}
+                            />
+                            {validationErrors.personal_bth_rasi_id && (
+                                <Text style={styles.error}>{validationErrors.personal_bth_rasi_id}</Text>
+                            )}
+                        </View>
 
-                            {/* Year Dropdown */}
-                            <View style={styles.dropdownFit}>
-                                <RNPickerSelect
-                                    onValueChange={(value) => handleChange('personal_dasa_bal_year', value)}
-                                    items={yearOptions}
-                                    value={formValues.personal_dasa_bal_year}
-                                    useNativeAndroidPickerStyle={false}
-                                    Icon={() => (
-                                        <Ionicons
-                                            name="chevron-down"
-                                            size={24}
-                                            color="gray"
-                                            style={{ marginTop:10}}
-                                        />
-                                    )}
-                                    placeholder={{ label: "Year", value: null }}
-                                    style={pickerSelectStyles}
-                                />
-                                {validationErrors.personal_dasa_bal_year && (
-                                    <Text style={styles.error}>{validationErrors.personal_dasa_bal_year}</Text>
+                        {/* Lagnam / Didi */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Lagnam/Didi</Text>
+                            <RNPickerSelect
+                                onValueChange={(value) => handleChange('personal_lagnam_didi_id', value)}
+                                items={lagnams}
+                                value={formValues.personal_lagnam_didi_id}
+                                useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                Icon={() => (
+                                    <Ionicons
+                                        name="chevron-down" // Name of the icon
+                                        size={24}
+                                        color="gray"
+                                        style={{ marginTop: 10 }}
+                                    />
                                 )}
+                                placeholder={{ label: "Select Lagnam/Didi", value: null }}
+                                style={pickerSelectStyles}
+                            />
+                            {validationErrors.personal_lagnam_didi_id && (
+                                <Text style={styles.error}>{validationErrors.personal_lagnam_didi_id}</Text>
+                            )}
+                        </View>
+
+                        {/* Nalikai */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Nalikai</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Nalikai"
+                                value={formValues.personal_nalikai}
+                                onChangeText={(text) => handleChange('personal_nalikai', text)}
+                            />
+                            {validationErrors.personal_nalikai && (
+                                <Text style={styles.error}>{validationErrors.personal_nalikai}</Text>
+                            )}
+                        </View>
+
+                        {/* Surya Gowthram */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Surya Gowthram</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Surya Gowthram"
+                                value={formValues.personal_surya_goth}
+                                onChangeText={(text) => handleChange('personal_surya_goth', text)}
+                            />
+                            {validationErrors.personal_surya_goth && (
+                                <Text style={styles.error}>{validationErrors.personal_surya_goth}</Text>
+                            )}
+                        </View>
+
+                        {/* Dasa */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Dasa Name</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Dasa Name"
+                                value={formValues.personal_dasa}
+                                onChangeText={(text) => handleChange('personal_dasa', text)}
+                            />
+                            {validationErrors.personal_dasa && (
+                                <Text style={styles.error}>{validationErrors.personal_dasa}</Text>
+                            )}
+                        </View>
+
+                        {/* Dasa Balance */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Dasa Balance</Text>
+                            <View style={styles.dropdownFlex}>
+                                {/* Day Dropdown */}
+                                <View style={styles.dropdownFit}>
+                                    <RNPickerSelect
+                                        onValueChange={(value) => handleChange('personal_dasa_bal_day', value)}
+                                        items={dayOptions}
+                                        value={formValues.personal_dasa_bal_day}
+                                        useNativeAndroidPickerStyle={false}
+                                        Icon={() => (
+                                            <Ionicons
+                                                name="chevron-down"
+                                                size={24}
+                                                color="gray"
+                                                style={{ marginTop: 10 }}
+                                            />
+                                        )}
+                                        placeholder={{ label: "Day", value: null }}
+                                        style={pickerSelectStyles}
+                                    />
+                                    {validationErrors.personal_dasa_bal_day && (
+                                        <Text style={styles.error}>{validationErrors.personal_dasa_bal_day}</Text>
+                                    )}
+                                </View>
+
+                                {/* Month Dropdown */}
+                                <View style={styles.dropdownFit}>
+                                    <RNPickerSelect
+                                        onValueChange={(value) => handleChange('personal_dasa_bal_month', value)}
+                                        items={monthOptions}
+                                        value={formValues.personal_dasa_bal_month}
+                                        useNativeAndroidPickerStyle={false}
+                                        Icon={() => (
+                                            <Ionicons
+                                                name="chevron-down"
+                                                size={24}
+                                                color="gray"
+                                                style={{ marginTop: 10 }}
+                                            />
+                                        )}
+                                        placeholder={{ label: "Month", value: null }}
+                                        style={pickerSelectStyles}
+                                    />
+                                    {validationErrors.personal_dasa_bal_month && (
+                                        <Text style={styles.error}>{validationErrors.personal_dasa_bal_month}</Text>
+                                    )}
+                                </View>
+
+                                {/* Year Dropdown */}
+                                <View style={styles.dropdownFit}>
+                                    <RNPickerSelect
+                                        onValueChange={(value) => handleChange('personal_dasa_bal_year', value)}
+                                        items={yearOptions}
+                                        value={formValues.personal_dasa_bal_year}
+                                        useNativeAndroidPickerStyle={false}
+                                        Icon={() => (
+                                            <Ionicons
+                                                name="chevron-down"
+                                                size={24}
+                                                color="gray"
+                                                style={{ marginTop: 10 }}
+                                            />
+                                        )}
+                                        placeholder={{ label: "Year", value: null }}
+                                        style={pickerSelectStyles}
+                                    />
+                                    {validationErrors.personal_dasa_bal_year && (
+                                        <Text style={styles.error}>{validationErrors.personal_dasa_bal_year}</Text>
+                                    )}
+                                </View>
                             </View>
                         </View>
-                    </View>
-{/* Didi */}
-<View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Didi</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter Didi"
-                            value={formValues.personal_didi}
-                            onChangeText={(text) => handleChange('personal_didi', text)}
-                        />
-                        {validationErrors.personal_didi && <Text style={styles.error}>{validationErrors.personal_didi}</Text>}
-                    </View>
-                    {/* Chevvai Dosam */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Chevvai Dosam</Text>
-                        <RNPickerSelect
-                            onValueChange={(value) => handleChange('personal_chevvai_dos', value)}
-                            items={chevvaiDoshamOptions}
-                            value={formValues.personal_chevvai_dos}
-                            useNativeAndroidPickerStyle={false}
-                            Icon={() => (
-                                <Ionicons
-                                    name="chevron-down"
-                                    size={24}
-                                    color="gray"
-                                    style={{ marginTop:10}}
-                                />
+                        {/* Didi */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Didi</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Didi"
+                                value={formValues.personal_didi}
+                                onChangeText={(text) => handleChange('personal_didi', text)}
+                            />
+                            {validationErrors.personal_didi && <Text style={styles.error}>{validationErrors.personal_didi}</Text>}
+                        </View>
+                        {/* Chevvai Dosam */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Chevvai Dosam</Text>
+                            <RNPickerSelect
+                                onValueChange={(value) => handleChange('personal_chevvai_dos', value)}
+                                items={chevvaiDoshamOptions}
+                                value={formValues.personal_chevvai_dos}
+                                useNativeAndroidPickerStyle={false}
+                                Icon={() => (
+                                    <Ionicons
+                                        name="chevron-down"
+                                        size={24}
+                                        color="gray"
+                                        style={{ marginTop: 10 }}
+                                    />
+                                )}
+                                placeholder={{ label: "Select Chevvai Dosam", value: null }}
+                                style={pickerSelectStyles}
+                            />
+                            {validationErrors.personal_chevvai_dos && (
+                                <Text style={styles.error}>{validationErrors.personal_chevvai_dos}</Text>
                             )}
-                            placeholder={{ label: "Select Chevvai Dosam", value: null }}
-                            style={pickerSelectStyles}
-                        />
-                        {validationErrors.personal_chevvai_dos && (
-                            <Text style={styles.error}>{validationErrors.personal_chevvai_dos}</Text>
-                        )}
-                    </View>
+                        </View>
 
-                    {/* Rahu Dosam */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Rahu Dosam</Text>
-                        <RNPickerSelect
-                            onValueChange={(value) => handleChange('personal_ragu_dos', value)}
-                            items={raguDoshamOptions}
-                            value={formValues.personal_ragu_dos}
-                            useNativeAndroidPickerStyle={false}
-                            Icon={() => (
-                                <Ionicons
-                                    name="chevron-down"
-                                    size={24}
-                                    color="gray"
-                                    style={{ marginTop:10}}
-                                />
+                        {/* Rahu Dosam */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Rahu Dosam</Text>
+                            <RNPickerSelect
+                                onValueChange={(value) => handleChange('personal_ragu_dos', value)}
+                                items={raguDoshamOptions}
+                                value={formValues.personal_ragu_dos}
+                                useNativeAndroidPickerStyle={false}
+                                Icon={() => (
+                                    <Ionicons
+                                        name="chevron-down"
+                                        size={24}
+                                        color="gray"
+                                        style={{ marginTop: 10 }}
+                                    />
+                                )}
+                                placeholder={{ label: "Select Rahu Dosam", value: null }}
+                                style={pickerSelectStyles}
+                            />
+                            {validationErrors.personal_ragu_dos && (
+                                <Text style={styles.error}>{validationErrors.personal_ragu_dos}</Text>
                             )}
-                            placeholder={{ label: "Select Rahu Dosam", value: null }}
-                            style={pickerSelectStyles}
-                        />
-                        {validationErrors.personal_ragu_dos && (
-                            <Text style={styles.error}>{validationErrors.personal_ragu_dos}</Text>
-                        )}
-                    </View>
+                        </View>
 
-                    {/* Horoscope Hints */}
-                    <View style={styles.formGroup}>
-                        <Text style={styles.labelNew}>Horoscope Hints</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Enter Horoscope Hints"
-                            value={formValues.personal_horoscope_hints}
-                            onChangeText={(text) => handleChange('personal_horoscope_hints', text)}
-                        />
-                        {validationErrors.personal_horoscope_hints && (
-                            <Text style={styles.error}>{validationErrors.personal_horoscope_hints}</Text>
-                        )}
-                    </View>
+                        {/* Horoscope Hints */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Horoscope Hints</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Horoscope Hints"
+                                value={formValues.personal_horoscope_hints}
+                                onChangeText={(text) => handleChange('personal_horoscope_hints', text)}
+                            />
+                            {validationErrors.personal_horoscope_hints && (
+                                <Text style={styles.error}>{validationErrors.personal_horoscope_hints}</Text>
+                            )}
+                        </View>
 
-                    {/* Save Button */}
-                    {/* <Button title="Save" onPress={handleSave} /> */}
-                    <View style={styles.formContainer1}>
-                                                <TouchableOpacity
-                                                    style={styles.btn}
-                                                    onPress={handleSave}
-                                                >
-                                                    <LinearGradient
-                                                        colors={["#BD1225", "#FF4050"]}
-                                                        start={{ x: 0, y: 0 }}
-                                                        end={{ x: 1, y: 1 }}
-                                                        useAngle={true}
-                                                        angle={92.08}
-                                                        angleCenter={{ x: 0.5, y: 0.5 }}
-                                                        style={styles.linearGradient}
-                                                    >
-                                                        <View style={styles.loginContainer}>
-                                                            <Text style={styles.login}>Save</Text>
-                                                        </View>
-                                                    </LinearGradient>
-                                                </TouchableOpacity>
-                                </View>
+                        {/* Save Button */}
+                        {/* <Button title="Save" onPress={handleSave} /> */}
+                        <View style={styles.formContainer1}>
+                            <TouchableOpacity
+                                style={styles.btn}
+                                onPress={handleSave}
+                            >
+                                <LinearGradient
+                                    colors={["#BD1225", "#FF4050"]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    useAngle={true}
+                                    angle={92.08}
+                                    angleCenter={{ x: 0.5, y: 0.5 }}
+                                    style={styles.linearGradient}
+                                >
+                                    <View style={styles.loginContainer}>
+                                        <Text style={styles.login}>Save</Text>
+                                    </View>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 ) : (
                     <View style={styles.editOptions}>
                         {horoscopeDetails && (
                             <>
+                                <Text style={styles.labelNew}>Birth Star : <Text style={styles.valueNew}>{horoscopeDetails.personal_bthstar_name}</Text></Text>
                                 <Text style={styles.labelNew}>Rasi : <Text style={styles.valueNew}>{horoscopeDetails.personal_bth_rasi_name}</Text></Text>
-                                <Text style={styles.labelNew}>Star - Padham : <Text style={styles.valueNew}>{horoscopeDetails.personal_bthstar_name}</Text></Text>
                                 <Text style={styles.labelNew}>Lagnam : <Text style={styles.valueNew}>{horoscopeDetails.personal_lagnam_didi_name}</Text></Text>
                                 <Text style={styles.labelNew}>Nallikai : <Text style={styles.valueNew}>{horoscopeDetails.personal_nalikai}</Text></Text>
                                 <Text style={styles.labelNew}>Suya Gothram : <Text style={styles.valueNew}>{horoscopeDetails.personal_surya_goth}</Text></Text>
@@ -828,10 +821,10 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         marginBottom: 30,
     },
-    menuChanges: { 
-        width: '100%', 
+    menuChanges: {
+        width: '100%',
         backgroundColor: '#4F515D',
-        justifyContent: 'center', 
+        justifyContent: 'center',
         alignItems: 'center'
     },
     editOptions: {

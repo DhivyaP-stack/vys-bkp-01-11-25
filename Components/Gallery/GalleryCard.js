@@ -16,6 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import {
   logProfileVisit,
   getGalleryList,
+  fetchProfileDataCheck
 } from "../../CommonApiCall/CommonApiCall";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ProfileNotFound } from "../ProfileNotFound";
@@ -34,60 +35,60 @@ export const GalleryCard = () => {
   const navigation = useNavigation();
 
   const loadProfiles = async (page = 1, isInitialLoad = false) => {
-      console.log("Loading profiles:", { page, isInitialLoad });
-      if ((isLoading && isInitialLoad) || (isLoadingMore && !isInitialLoad))
-        return;
-  
-      if (isInitialLoad) {
-        setIsLoading(true);
-      } else {
-        setIsLoadingMore(true);
-      }
-  
-      try {
-        const perPage = 10;
-        const response = await getGalleryList(perPage, page);
-        console.log(
-          "Api response.data.image_data ==>",
-          JSON.stringify(response)
-        );
-        if (response && response.data && response.data.image_data) {
-          if (isInitialLoad) {
-            setProfiles(response.data.image_data || []);
-          } else {
-            setProfiles((prevProfiles) => [
-              ...prevProfiles,
-              ...(response.data.image_data || []),
-            ]);
-          }
-          // Update profile IDs mapping
-          const profileIds = response.data.image_data.reduce((acc, profile, index) => {
-            const globalIndex = (page - 1) * 10 + index; // Calculate global index based on page
-            acc[globalIndex] = profile.profile_id;
-            return acc;
-          }, {});
-        
-          setAllProfileIds(prev => ({
-            ...prev,
-            ...profileIds
-          }));
-          setTotalPages(response.data.total_pages || 1);
-          setTotalRecords(response.data.total_records || 0);
-          setCurrentPage(page);
+    console.log("Loading profiles:", { page, isInitialLoad });
+    if ((isLoading && isInitialLoad) || (isLoadingMore && !isInitialLoad))
+      return;
+
+    if (isInitialLoad) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
+
+    try {
+      const perPage = 10;
+      const response = await getGalleryList(perPage, page);
+      console.log(
+        "Api response.data.image_data ==>",
+        JSON.stringify(response)
+      );
+      if (response && response.data && response.data.image_data) {
+        if (isInitialLoad) {
+          setProfiles(response.data.image_data || []);
         } else {
-          console.log("No profiles found or error in response.", profiles);
-          setProfiles([]);
-          setError("No profiles found or error in response.");
+          setProfiles((prevProfiles) => [
+            ...prevProfiles,
+            ...(response.data.image_data || []),
+          ]);
         }
-        console.log(
-          "Api response.data.image_data ==>",
-          JSON.stringify(response)
-        );
-      } finally {
+        // Update profile IDs mapping
+        const profileIds = response.data.image_data.reduce((acc, profile, index) => {
+          const globalIndex = (page - 1) * 10 + index; // Calculate global index based on page
+          acc[globalIndex] = profile.profile_id;
+          return acc;
+        }, {});
+
+        setAllProfileIds(prev => ({
+          ...prev,
+          ...profileIds
+        }));
+        setTotalPages(response.data.total_pages || 1);
+        setTotalRecords(response.data.total_records || 0);
+        setCurrentPage(page);
+      } else {
+        console.log("No profiles found or error in response.", profiles);
+        setProfiles([]);
+        setError("No profiles found or error in response.");
+      }
+      console.log(
+        "Api response.data.image_data ==>",
+        JSON.stringify(response)
+      );
+    } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-    };
+  };
 
   // const loadProfiles = async (page = 1, isInitialLoad = false) => {
   //   if ((isLoading && isInitialLoad) || (isLoadingMore && !isInitialLoad)) return;
@@ -119,14 +120,14 @@ export const GalleryCard = () => {
   //       }
   //       // Update current page only if the API call was successful
   //       setCurrentPage(page);
-        
+
   //       // Update profile IDs mapping
   //       const profileIds = response.data.image_data.reduce((acc, profile, index) => {
   //         const globalIndex = (page - 1) * 10 + index; // Calculate global index based on page
   //         acc[globalIndex] = profile.profile_id;
   //         return acc;
   //       }, {});
-      
+
   //       setAllProfileIds(prev => ({
   //         ...prev,
   //         ...profileIds
@@ -162,11 +163,50 @@ export const GalleryCard = () => {
     }
   };
 
+  // const handleProfileClick = async (viewedProfileId) => {
+  //   const success = await logProfileVisit(viewedProfileId);
+
+  //   if (success) {
+  //     navigation.navigate("ProfileDetails", { viewedProfileId, allProfileIds });
+  //   } else {
+  //     Toast.show({
+  //       type: "error",
+  //       text1: "Error",
+  //       text2: "Failed to log profile visit.",
+  //       position: "bottom",
+  //     });
+  //   }
+  // };
+
   const handleProfileClick = async (viewedProfileId) => {
+    const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+    console.log('profile view msg', profileCheckResponse)
+
+    // 2. Check if the API returned any failure
+    if (profileCheckResponse?.status === "failure") {
+      Toast.show({
+        type: "error",
+        // text1: "Profile Error", // You can keep this general
+        text1: profileCheckResponse.message, // <-- This displays the exact API message
+        position: "bottom",
+      });
+      return; // Stop the function
+    }
+
     const success = await logProfileVisit(viewedProfileId);
 
     if (success) {
-      navigation.navigate("ProfileDetails", { viewedProfileId, allProfileIds });
+      Toast.show({
+        type: "success",
+        text1: "Profile Viewed",
+        text2: `You have viewed profile ${viewedProfileId}.`,
+        position: "bottom",
+      });
+      // navigation.navigate("ProfileDetails", { id });
+      navigation.navigate("ProfileDetails", {
+        viewedProfileId,
+        allProfileIds,
+      });
     } else {
       Toast.show({
         type: "error",
@@ -176,6 +216,7 @@ export const GalleryCard = () => {
       });
     }
   };
+
 
   const getImageSource = (image) => {
     if (!image)
@@ -228,13 +269,13 @@ export const GalleryCard = () => {
     );
   };
 
- if (isLoading && profiles.length === 0) {
-     return (
-       <View style={styles.loadingContainer}>
-         <ActivityIndicator size="large" color="#0000ff" />
-       </View>
-     );
-   }
+  if (isLoading && profiles.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
     // <View style={styles.listContent}>

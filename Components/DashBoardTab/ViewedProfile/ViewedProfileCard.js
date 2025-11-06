@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { fetchViewedProfiles, markProfileWishlist } from "../../../CommonApiCall/CommonApiCall";
+import { fetchViewedProfiles, markProfileWishlist, logProfileVisit, fetchProfileDataCheck } from "../../../CommonApiCall/CommonApiCall";
 import { useNavigation } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
@@ -94,12 +94,23 @@ export const ViewedProfileCard = ({ sortBy = "datetime" }) => {
                 setTotalPages(1);
                 setTotalRecords(0);
                 setCurrentPage(1);
+                setBookmarkedProfiles(new Set());
             } else if (response && response.data) {
                 const newProfiles = response.data.profiles || [];
+
+                const bookmarkedIds = new Set();
+                newProfiles.forEach(profile => {
+                    if (profile.visited_profile_wishlist === 1) {
+                        bookmarkedIds.add(profile.visited_profileid);
+                    }
+                });
+
                 if (isInitialLoad) {
                     setProfiles(newProfiles);
+                    setBookmarkedProfiles(bookmarkedIds);
                 } else {
                     setProfiles((prevProfiles) => [...prevProfiles, ...newProfiles]);
+                    setBookmarkedProfiles(prev => new Set([...prev, ...bookmarkedIds]));
                 }
 
                 const profileIds = newProfiles.reduce((acc, profile, index) => {
@@ -161,12 +172,52 @@ export const ViewedProfileCard = ({ sortBy = "datetime" }) => {
         return { uri: image }; // Direct URL case
     };
 
+    // const handleProfileClick = async (viewedProfileId) => {
+    //     navigation.navigate("ProfileDetails", {
+    //         viewedProfileId,
+    //         allProfileIds,
+    //     });
+    // }
+
     const handleProfileClick = async (viewedProfileId) => {
-        navigation.navigate("ProfileDetails", {
-            viewedProfileId,
-            allProfileIds,
-        });
-    }
+        const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+        console.log('profile view msg', profileCheckResponse)
+
+        // 2. Check if the API returned any failure
+        if (profileCheckResponse?.status === "failure") {
+            Toast.show({
+                type: "error",
+                // text1: "Profile Error", // You can keep this general
+                text1: profileCheckResponse.message, // <-- This displays the exact API message
+                position: "bottom",
+            });
+            return; // Stop the function
+        }
+
+        const success = await logProfileVisit(viewedProfileId);
+
+        if (success) {
+            Toast.show({
+                type: "success",
+                text1: "Profile Viewed",
+                text2: `You have viewed profile ${viewedProfileId}.`,
+                position: "bottom",
+            });
+            // navigation.navigate("ProfileDetails", { id });
+            navigation.navigate("ProfileDetails", {
+                viewedProfileId,
+                allProfileIds,
+            });
+        } else {
+            Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: "Failed to log profile visit.",
+                position: "bottom",
+            });
+        }
+    };
+
 
     const renderItem = ({ item: profile }) => (
         <TouchableOpacity
@@ -194,7 +245,7 @@ export const ViewedProfileCard = ({ sortBy = "datetime" }) => {
                     </Text>
                     <Text style={styles.profileAge}>
                         {profile.visited_profile_age} Yrs <Text style={styles.line}>|</Text>
-                        {profile.visited_height} Cms
+                        {profile.visited_height} cms
                     </Text>
                     <Text style={styles.zodiac}>{profile.visited_star}</Text>
                     <Text style={styles.employed}>{profile.visited_profession}</Text>

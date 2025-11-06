@@ -10,14 +10,14 @@ import {
 } from "react-native";
 import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { fetchPersonalNotes } from "../../../CommonApiCall/CommonApiCall";
+import { fetchPersonalNotes, handleBookmark, logProfileVisit, fetchProfileDataCheck } from "../../../CommonApiCall/CommonApiCall";
 import { useNavigation } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
 
 export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
   const navigation = useNavigation();
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  // const [isBookmarked, setIsBookmarked] = useState(false);
   const [profiles, setProfiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -25,6 +25,7 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [bookmarkedProfiles, setBookmarkedProfiles] = useState(new Set());
 
   const loadPersonalNotes = async (page = 1, isInitialLoad = false) => {
     if ((isLoading && isInitialLoad) || (isLoadingMore && !isInitialLoad))
@@ -48,32 +49,50 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
         setTotalPages(1);
         setTotalRecords(0);
         setCurrentPage(1);
+        setBookmarkedProfiles(new Set());
       } else if (response && response.data) {
+        const newProfiles = response.data.profiles || [];
+
+        // Extract bookmarked profiles from API response
+        const bookmarkedIds = new Set();
+        newProfiles.forEach(profile => {
+          if (profile.notes_profile_wishlist === 1) {
+            bookmarkedIds.add(profile.notes_profileid);
+          }
+        });
+
         if (isInitialLoad) {
-          setProfiles(response.data.profiles || []);
+          setProfiles(newProfiles);
+          setBookmarkedProfiles(bookmarkedIds);
         } else {
           setProfiles((prevProfiles) => [
             ...prevProfiles,
-            ...(response.data.profiles || []),
+            ...newProfiles,
           ]);
+          setBookmarkedProfiles(prev => new Set([...prev, ...bookmarkedIds]));
         }
 
         setTotalPages(response.data.total_pages || 1);
         setTotalRecords(response.data.total_records || 0);
         setCurrentPage(page);
+
+        console.log("Bookmarked profiles from notes API:", Array.from(bookmarkedIds));
       } else {
         setError("No profiles found or error in response.");
         setProfiles([]);
+        setBookmarkedProfiles(new Set());
       }
     } catch (err) {
       setError("Failed to load personal notes. Please try again later.");
       console.error("Error loading personal notes:", err);
       setProfiles([]);
+      setBookmarkedProfiles(new Set());
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
   };
+
 
   const handleEndReached = () => {
     if (!isLoadingMore && currentPage < totalPages) {
@@ -85,16 +104,47 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
     loadPersonalNotes(1, true);
   }, [sortBy]);
 
-  const handleSavePress = () => {
-    setIsBookmarked(!isBookmarked);
-    Toast.show({
-      type: isBookmarked ? "info" : "success",
-      text1: isBookmarked ? "Unsaved" : "Saved",
-      text2: isBookmarked
-        ? "Profile has been removed from bookmarks."
-        : "Profile has been saved to bookmarks.",
-      position: "bottom",
-    });
+  const handleSavePress = async (profileId) => {
+    const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";
+    const success = await handleBookmark(profileId, newStatus);
+
+    if (success) {
+      const updatedBookmarkedProfiles = new Set(bookmarkedProfiles);
+      if (newStatus === "1") {
+        updatedBookmarkedProfiles.add(profileId);
+        Toast.show({
+          type: "success",
+          text1: "Saved",
+          text2: "Profile has been saved to bookmarks.",
+          position: "bottom",
+        });
+      } else {
+        updatedBookmarkedProfiles.delete(profileId);
+        Toast.show({
+          type: "info",
+          text1: "Unsaved",
+          text2: "Profile has been removed from bookmarks.",
+          position: "bottom",
+        });
+      }
+      setBookmarkedProfiles(updatedBookmarkedProfiles);
+
+      // Update the profiles state to reflect the bookmark change
+      setProfiles(prevProfiles =>
+        prevProfiles.map(profile =>
+          profile.notes_profileid === profileId
+            ? { ...profile, notes_profile_wishlist: newStatus === "1" ? 1 : 0 }
+            : profile
+        )
+      );
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to update bookmark status.",
+        position: "bottom",
+      });
+    }
   };
 
   const getImageSource = (image) => {
@@ -104,8 +154,47 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
     return { uri: image };
   };
 
+  // const handleProfileClick = async (viewedProfileId) => {
+  //   navigation.navigate("ProfileDetails", { viewedProfileId });
+  // };
+
   const handleProfileClick = async (viewedProfileId) => {
-    navigation.navigate("ProfileDetails", { viewedProfileId });
+    const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+    console.log('profile view msg', profileCheckResponse)
+
+    // 2. Check if the API returned any failure
+    if (profileCheckResponse?.status === "failure") {
+      Toast.show({
+        type: "error",
+        // text1: "Profile Error", // You can keep this general
+        text1: profileCheckResponse.message, // <-- This displays the exact API message
+        position: "bottom",
+      });
+      return; // Stop the function
+    }
+
+    const success = await logProfileVisit(viewedProfileId);
+
+    if (success) {
+      Toast.show({
+        type: "success",
+        text1: "Profile Viewed",
+        text2: `You have viewed profile ${viewedProfileId}.`,
+        position: "bottom",
+      });
+      // navigation.navigate("ProfileDetails", { id });
+      navigation.navigate("ProfileDetails", {
+        viewedProfileId,
+        // profileId: allProfileIds,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to log profile visit.",
+        position: "bottom",
+      });
+    }
   };
 
   const renderItem = ({ item: profile }) => (
@@ -115,20 +204,26 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
     >
       <View style={styles.cardContainer}>
         <View style={styles.profileContainer}>
-          <Image
-            source={getImageSource(profile.notes_Profile_img)}
-            style={styles.profileImage}
-          />
-          <TouchableOpacity
-            onPress={() => handleSavePress(profile.notes_profileid)}
-          >
-            <MaterialIcons
-              name={isBookmarked ? "bookmark" : "bookmark-border"}
-              size={20}
-              color="#fff"
-              style={styles.saveIcon}
+          <View style={styles.imageContainer}>
+            <Image
+              source={getImageSource(profile.notes_Profile_img)}
+              style={styles.profileImage}
             />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.saveIcon} // This style will be updated below
+              onPress={() => handleSavePress(profile.notes_profileid)}
+            >
+              <MaterialIcons
+                name={
+                  bookmarkedProfiles.has(profile.notes_profileid)
+                    ? "bookmark"         // Correct: Filled icon when bookmarked
+                    : "bookmark-border"  // Correct: Outline icon when not
+                }
+                size={24} // Increased size slightly
+                color="red"
+              />
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.profileContent}>
             <View>
@@ -155,7 +250,7 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
           </Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </TouchableOpacity >
   );
 
   const renderFooter = () => {
@@ -249,15 +344,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 
-  saveIcon: {
-    position: "absolute",
-    left: -25,
-    top: 5,
-  },
+  // saveIcon: {
+  //   position: "absolute",
+  //   left: -25,
+  //   top: 5,
+  // },
 
-  profileContent: {
-    paddingLeft: 10,
-  },
+  // profileContent: {
+  //   paddingLeft: 10,
+  // },
 
   profileName: {
     fontSize: 16,
@@ -332,5 +427,26 @@ const styles = StyleSheet.create({
   footerText: {
     color: "#666",
     marginTop: 5,
+  },
+  profileContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "flex-start",
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: "#fff",
+  },
+  imageContainer: {
+    width: 100,   // Should match your profileImage width
+    height: 100,  // Should match your profileImage height
+  },
+  saveIcon: {
+    position: "absolute",
+    top: 0,
+    right: 5, // Positions it 5px from the left, like your image
+  },
+  profileContent: {
+    paddingLeft: 10,
+    flex: 1, // Add flex: 1 to allow content to fill remaining space
   },
 });

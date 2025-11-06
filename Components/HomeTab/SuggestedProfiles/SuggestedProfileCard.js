@@ -8,17 +8,57 @@ import {
     FlatList,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { fetchSuggestedProfiles } from '../../../CommonApiCall/CommonApiCall'; // Make sure this function is correctly implemented to fetch data
+import { fetchSuggestedProfiles, logProfileVisit, fetchProfileDataCheck } from '../../../CommonApiCall/CommonApiCall'; // Make sure this function is correctly implemented to fetch data
 
 export const SuggestedProfileCard = ({ profiles }) => {
     const navigation = useNavigation();
-    
+
     // Add validation check
     const validProfiles = Array.isArray(profiles) ? profiles.filter(profile => profile && profile.profile_id) : [];
-    
+
+    // const handleProfileClick = async (viewedProfileId) => {
+    //     navigation.navigate("ProfileDetails", { viewedProfileId });
+    // };
+
     const handleProfileClick = async (viewedProfileId) => {
-        navigation.navigate("ProfileDetails", { viewedProfileId });
+        const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+        console.log('profile view msg', profileCheckResponse)
+
+        // 2. Check if the API returned any failure
+        if (profileCheckResponse?.status === "failure") {
+            Toast.show({
+                type: "error",
+                // text1: "Profile Error", // You can keep this general
+                text1: profileCheckResponse.message, // <-- This displays the exact API message
+                position: "bottom",
+            });
+            return; // Stop the function
+        }
+
+        const success = await logProfileVisit(viewedProfileId);
+
+        if (success) {
+            Toast.show({
+                type: "success",
+                text1: "Profile Viewed",
+                text2: `You have viewed profile ${viewedProfileId}.`,
+                position: "bottom",
+            });
+            // navigation.navigate("ProfileDetails", { id });
+            navigation.navigate("ProfileDetails", {
+                viewedProfileId,
+                // profileId: allProfileIds,
+            });
+        } else {
+            Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: "Failed to log profile visit.",
+                position: "bottom",
+            });
+        }
     };
+
 
     const renderProfile = ({ item: profile }) => (
         <TouchableOpacity
@@ -28,11 +68,11 @@ export const SuggestedProfileCard = ({ profiles }) => {
                 <View style={styles.cardContainer}>
                     <Image
                         style={styles.SuggestedProfileImg}
-                        source={{ 
-                            uri: typeof profile.profile_img === 'string' 
-                                ? profile.profile_img 
-                                : Array.isArray(profile.profile_img) 
-                                    ? profile.profile_img[0] 
+                        source={{
+                            uri: typeof profile.profile_img === 'string'
+                                ? profile.profile_img
+                                : Array.isArray(profile.profile_img)
+                                    ? profile.profile_img[0]
                                     : 'https://your-default-image-url.com/placeholder.jpg'
                         }}
                     />

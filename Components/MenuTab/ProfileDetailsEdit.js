@@ -320,20 +320,20 @@ export const ProfileDetailsEdit = () => {
         const errors = {};
         // Validate each field
         if (!formValues.personal_profile_name) errors.personal_profile_name = 'Name is required';
-        if (!formValues.personal_gender) errors.personal_gender = 'Gender is required';
-        if (!formValues.personal_age) errors.personal_age = 'Age is required';
+        // if (!formValues.personal_gender) errors.personal_gender = 'Gender is required';
+        // if (!formValues.personal_age) errors.personal_age = 'Age is required';
         if (!formValues.personal_profile_dob) errors.personal_profile_dob = 'Date of birth is required';
-        if (!formValues.personal_place_of_birth) errors.personal_place_of_birth = 'Place of birth is required';
-        if (!formValues.personal_time_of_birth) errors.personal_time_of_birth = 'Time of birth is required';
-        if (!formValues.personal_weight) errors.personal_weight = 'Weight is required';
+        // if (!formValues.personal_place_of_birth) errors.personal_place_of_birth = 'Place of birth is required';
+        // if (!formValues.personal_time_of_birth) errors.personal_time_of_birth = 'Time of birth is required';
+        // if (!formValues.personal_weight) errors.personal_weight = 'Weight is required';
         if (!formValues.personal_profile_height) errors.personal_profile_height = 'Height is required';
         if (!formValues.personal_profile_marital_status_id) errors.personal_profile_marital_status_id = 'Marital status is required';
-        if (!formValues.personal_blood_group) errors.personal_blood_group = 'Blood group is required';
-        if (!formValues.personal_about_self) errors.personal_about_self = 'About yourself is required';
+        // if (!formValues.personal_blood_group) errors.personal_blood_group = 'Blood group is required';
+        // if (!formValues.personal_about_self) errors.personal_about_self = 'About yourself is required';
         if (!formValues.personal_profile_complexion_id) errors.personal_profile_complexion_id = 'Complexion is required';
         if (!formValues.personal_profile_for_id) errors.personal_profile_for_id = 'Complexion is required';
-        if (!formValues.personal_hobbies) errors.personal_hobbies = 'Hobbies are required';
-        if (!formValues.personal_pysically_changed) errors.personal_pysically_changed = 'Physical status is required';
+        // if (!formValues.personal_hobbies) errors.personal_hobbies = 'Hobbies are required';
+        // if (!formValues.personal_pysically_changed) errors.personal_pysically_changed = 'Physical status is required';
         // if (!formValues.personal_eye_wear) errors.personal_eye_wear = 'Eye wear status is required';
         // if (!formValues.profile_created_by) errors.profile_created_by = 'Profile created by is required';
         // if ([2, 3, 5].includes(Number(formValues.personal_profile_marital_status_id)) && !formValues.no_of_children) {
@@ -736,7 +736,7 @@ export const ProfileDetailsEdit = () => {
                                 />
                                 {validationErrors.personal_hobbies && <Text style={styles.error}>{validationErrors.personal_hobbies}</Text>}
 
-                                <Text style={styles.labelNew}>Profile Created For</Text>
+                                {/* <Text style={styles.labelNew}>Profile Created For</Text>
                                 <RNPickerSelect
                                     onValueChange={(value) => handleChange('personal_profile_for_id', value)}
                                     items={profileOptions}
@@ -753,7 +753,7 @@ export const ProfileDetailsEdit = () => {
                                     placeholder={{ label: "Profile Created", value: null }}
                                     style={pickerSelectStyles}
                                 />
-                                {validationErrors.personal_profile_for_id && <Text style={styles.error}>{validationErrors.personal_profile_for_id}</Text>}
+                                {validationErrors.personal_profile_for_id && <Text style={styles.error}>{validationErrors.personal_profile_for_id}</Text>} */}
 
 
 
@@ -786,11 +786,32 @@ export const ProfileDetailsEdit = () => {
 
 
                                 <Text style={styles.labelNew}>Body Type</Text>
-                                <TextInput
+                                {/* <TextInput
                                     style={styles.input}
                                     placeholder="Body Type"
                                     value={formValues.personal_body_type}
                                     onChangeText={(text) => handleChange('personal_body_type', text)}
+                                /> */}
+                                <RNPickerSelect
+                                    onValueChange={(value) => handleChange('personal_body_type', value)}
+                                    items={[
+                                        { label: 'Yes', value: 'yes' },
+                                        { label: 'No', value: 'no' },
+                                        // { label: 'Glasses', value: 'glasses' },
+                                        // { label: 'Contact Lenses', value: 'contact_lenses' },
+                                    ]}
+                                    value={formValues.personal_body_type}
+                                    useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                    Icon={() => (
+                                        <Ionicons
+                                            name="chevron-down" // Name of the icon
+                                            size={24}
+                                            color="gray"
+                                            style={{ marginTop: 10 }}
+                                        />
+                                    )}
+                                    placeholder={{ label: "Body Type", value: null }}
+                                    style={pickerSelectStyles}
                                 />
                                 {validationErrors.personal_body_type && <Text style={styles.error}>{validationErrors.personal_body_type}</Text>}
 

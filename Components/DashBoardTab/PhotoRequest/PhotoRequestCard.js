@@ -20,7 +20,9 @@ import {
     createOrRetrieveChat,
     fetchPhotoRequest,
     updatePhotoRequest,
-    updatePhotoRequestReject
+    updatePhotoRequestReject,
+    logProfileVisit,
+    fetchProfileDataCheck
 } from '../../../CommonApiCall/CommonApiCall';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from "@react-navigation/native";
@@ -206,9 +208,49 @@ export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
         return { uri: image }; // Direct URL case
     };
 
+    // const handleProfileClick = async (viewedProfileId) => {
+    //     navigation.navigate("ProfileDetails", { viewedProfileId });
+    // }
+
     const handleProfileClick = async (viewedProfileId) => {
-        navigation.navigate("ProfileDetails", { viewedProfileId });
-    }
+        const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+        console.log('profile view msg', profileCheckResponse)
+
+        // 2. Check if the API returned any failure
+        if (profileCheckResponse?.status === "failure") {
+            Toast.show({
+                type: "error",
+                // text1: "Profile Error", // You can keep this general
+                text1: profileCheckResponse.message, // <-- This displays the exact API message
+                position: "bottom",
+            });
+            return; // Stop the function
+        }
+
+        const success = await logProfileVisit(viewedProfileId);
+
+        if (success) {
+            Toast.show({
+                type: "success",
+                text1: "Profile Viewed",
+                text2: `You have viewed profile ${viewedProfileId}.`,
+                position: "bottom",
+            });
+            // navigation.navigate("ProfileDetails", { id });
+            navigation.navigate("ProfileDetails", {
+                viewedProfileId,
+                // profileId: allProfileIds,
+            });
+        } else {
+            Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: "Failed to log profile visit.",
+                position: "bottom",
+            });
+        }
+    };
+
 
     return (
         <ScrollView style={styles.profileScrollView}>

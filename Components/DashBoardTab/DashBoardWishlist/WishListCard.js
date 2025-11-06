@@ -6,10 +6,12 @@ import {
     Image,
     FlatList, TouchableOpacity, ActivityIndicator
 } from "react-native";
-import { getWishlistProfiles } from "../../../CommonApiCall/CommonApiCall";  // Import the function
+import { MaterialIcons } from "@expo/vector-icons";
+import { getWishlistProfiles, handleBookmark, logProfileVisit, fetchProfileDataCheck } from "../../../CommonApiCall/CommonApiCall";  // Import the function
 import { useNavigation } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
+import Toast from "react-native-toast-message";
 
 export const WishlistCard = ({ sortBy = "datetime" }) => {
     const [profiles, setProfiles] = useState([]);
@@ -20,6 +22,7 @@ export const WishlistCard = ({ sortBy = "datetime" }) => {
     const [totalRecords, setTotalRecords] = useState(0);
     const navigation = useNavigation();
     const [allProfileIds, setAllProfileIds] = useState({});
+    const [bookmarkedProfiles, setBookmarkedProfiles] = useState(new Set());
 
     const loadProfiles = async (page = 1, isInitialLoad = false) => {
         console.log('Loading profiles:', page, isInitialLoad);
@@ -40,14 +43,26 @@ export const WishlistCard = ({ sortBy = "datetime" }) => {
                 setTotalPages(1);
                 setTotalRecords(0);
                 setCurrentPage(1);
+                setBookmarkedProfiles(new Set());
             } else if (response && response.data) {
+                const newProfiles = response.data.profiles || [];
+
+                // Extract bookmarked profiles from API response
+                const bookmarkedIds = new Set();
+                newProfiles.forEach(profile => {
+                    if (profile.wishlist_profile === 1) {
+                        bookmarkedIds.add(profile.wishlist_profileid);
+                    }
+                });
                 if (isInitialLoad) {
                     setProfiles(response.data.profiles || []);
+                    setBookmarkedProfiles(bookmarkedIds);
                 } else {
                     setProfiles((prevProfiles) => [
                         ...prevProfiles,
-                        ...(response.data.profiles || []),
+                        ...newProfiles,
                     ]);
+                    setBookmarkedProfiles(prev => new Set([...prev, ...bookmarkedIds]));
                 }
 
                 // Update profile IDs mapping
@@ -64,6 +79,7 @@ export const WishlistCard = ({ sortBy = "datetime" }) => {
                 setTotalPages(response.data.total_pages || 1);
                 setTotalRecords(response.data.total_records || 0);
                 setCurrentPage(page);
+                console.log("Bookmarked profiles:", Array.from(bookmarkedIds));
             } else {
                 console.warn("No profiles found or error in response.");
                 setProfiles([]);
@@ -80,6 +96,42 @@ export const WishlistCard = ({ sortBy = "datetime" }) => {
     useEffect(() => {
         loadProfiles(1, true);
     }, [sortBy]);
+
+
+    const handleSavePress = async (viewedProfileId) => {
+        // Since this is wishlist, we only allow removing bookmarks (setting to "0")
+        const newStatus = "0";
+        const success = await handleBookmark(viewedProfileId, newStatus);
+
+        if (success) {
+            const updatedBookmarkedProfiles = new Set(bookmarkedProfiles);
+            updatedBookmarkedProfiles.delete(viewedProfileId);
+            setBookmarkedProfiles(updatedBookmarkedProfiles);
+
+            // Remove the profile from the list
+            setProfiles(prevProfiles =>
+                prevProfiles.filter(profile => profile.wishlist_profileid !== viewedProfileId)
+            );
+
+            Toast.show({
+                type: "info",
+                text1: "Removed",
+                text2: "Profile has been removed from wishlist.",
+                position: "bottom",
+            });
+
+            // Update total records count
+            setTotalRecords(prev => prev - 1);
+        } else {
+            Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: "Failed to remove profile from wishlist.",
+                position: "bottom",
+            });
+        }
+    };
+
 
     const handleEndReached = () => {
         if (!isLoadingMore && currentPage < totalPages) {
@@ -106,12 +158,52 @@ export const WishlistCard = ({ sortBy = "datetime" }) => {
         return { uri: image }; // Direct URL case
     };
 
+    // const handleProfileClick = async (viewedProfileId) => {
+    //     navigation.navigate("ProfileDetails", {
+    //         viewedProfileId,
+    //         allProfileIds
+    //     });
+    // };
+
     const handleProfileClick = async (viewedProfileId) => {
-        navigation.navigate("ProfileDetails", {
-            viewedProfileId,
-            allProfileIds
-        });
+        const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+        console.log('profile view msg', profileCheckResponse)
+
+        // 2. Check if the API returned any failure
+        if (profileCheckResponse?.status === "failure") {
+            Toast.show({
+                type: "error",
+                // text1: "Profile Error", // You can keep this general
+                text1: profileCheckResponse.message, // <-- This displays the exact API message
+                position: "bottom",
+            });
+            return; // Stop the function
+        }
+
+        const success = await logProfileVisit(viewedProfileId);
+
+        if (success) {
+            Toast.show({
+                type: "success",
+                text1: "Profile Viewed",
+                text2: `You have viewed profile ${viewedProfileId}.`,
+                position: "bottom",
+            });
+            // navigation.navigate("ProfileDetails", { id });
+            navigation.navigate("ProfileDetails", {
+                viewedProfileId,
+                allProfileIds
+            });
+        } else {
+            Toast.show({
+                type: "error",
+                text1: "Error",
+                text2: "Failed to log profile visit.",
+                position: "bottom",
+            });
+        }
     };
+
     return (
         <View style={styles.profileScrollView}>
             <FlatList
@@ -144,12 +236,24 @@ export const WishlistCard = ({ sortBy = "datetime" }) => {
                                 source={getImageSource(item.wishlist_Profile_img)}
                                 style={styles.profileImage}
                             />
+                            <TouchableOpacity
+                                onPress={() => handleSavePress(item.wishlist_profileid)}
+                                style={styles.saveIconContainer}
+                            >
+                                <MaterialIcons
+                                    name={bookmarkedProfiles.has(item.wishlist_profileid) ? "bookmark" : "bookmark-border"}
+                                    size={20}
+                                    color="red"
+                                    style={styles.saveIcon}
+                                />
+                            </TouchableOpacity>
                             <View style={styles.profileContent}>
                                 <Text style={styles.profileName}>
                                     {item.wishlist_profile_name} <Text style={styles.profileId}>({item.wishlist_profileid})</Text>
                                 </Text>
                                 <Text style={styles.profileAge}>
-                                    {item.wishlist_profile_age} Yrs
+                                    {item.wishlist_profile_age} Yrs <Text style={styles.line}>|</Text>
+                                    {item.wishlist_height} Cms
                                 </Text>
                                 <Text style={styles.zodiac}>{item.wishlist_star}</Text>
                                 <Text style={styles.employed}>{item.wishlist_profession}</Text>

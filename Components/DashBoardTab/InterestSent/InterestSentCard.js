@@ -12,11 +12,16 @@ import { MaterialIcons } from "@expo/vector-icons";
 import {
   getInterestsList,
   markProfileWishlist,
+  handleBookmark,
+  logProfileVisit,
+  fetchProfileDataCheck
 } from "../../../CommonApiCall/CommonApiCall"; // Import the functions
 import { useNavigation } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
 import { FeaturedProfiles } from "../../HomeTab/FeaturedProfiles";
+import Toast from "react-native-toast-message";
+
 export const InterestSentCard = ({ sortBy = "datetime" }) => {
   const navigation = useNavigation();
   const [profiles, setProfiles] = useState([]);
@@ -49,14 +54,24 @@ export const InterestSentCard = ({ sortBy = "datetime" }) => {
         setTotalPages(1);
         setTotalRecords(0);
         setCurrentPage(1);
+        setBookmarkedProfiles(new Set());
       } else if (response && response.data) {
+        const newProfiles = response.data.profiles || [];
+        const bookmarkedIds = new Set();
+        newProfiles.forEach(profile => {
+          if (profile.myint_profile_wishlist === 1) {
+            bookmarkedIds.add(profile.myint_profileid);
+          }
+        });
         if (isInitialLoad) {
           setProfiles(response.data.profiles || []);
+          setBookmarkedProfiles(bookmarkedIds);
         } else {
           setProfiles((prevProfiles) => [
             ...prevProfiles,
-            ...(response.data.profiles || []),
+            ...newProfiles,
           ]);
+          setBookmarkedProfiles(prev => new Set([...prev, ...bookmarkedIds]));
         }
 
         setTotalPages(response.data.total_pages || 1);
@@ -67,18 +82,20 @@ export const InterestSentCard = ({ sortBy = "datetime" }) => {
           const globalIndex = (page - 1) * perPage + index; // Calculate global index based on page
           acc[globalIndex] = profile.myint_profileid;
           return acc;
-      }, {});
-      
-      setAllProfileIds(prev => ({
+        }, {});
+
+        setAllProfileIds(prev => ({
           ...prev,
           ...profileIds
-      }));
+        }));
       } else {
         setError("No profiles found or error in response.");
         setProfiles([]);
+        setBookmarkedProfiles(new Set());
       }
     } catch (error) {
       setError("Failed to fetch profiles. Please try again later.");
+      setBookmarkedProfiles(new Set());
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -118,28 +135,94 @@ export const InterestSentCard = ({ sortBy = "datetime" }) => {
   };
 
   const handleSavePress = async (profileId) => {
-    const updatedBookmarkedProfiles = new Set(bookmarkedProfiles);
-    const newStatus = updatedBookmarkedProfiles.has(profileId) ? "0" : "1";
+    const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";
+    const success = await handleBookmark(profileId, newStatus);
 
-    try {
-      await markProfileWishlist(profileId, newStatus);
+    if (success) {
+      const updatedBookmarkedProfiles = new Set(bookmarkedProfiles);
       if (newStatus === "1") {
         updatedBookmarkedProfiles.add(profileId);
+        Toast.show({
+          type: "success",
+          text1: "Saved",
+          text2: "Profile has been saved to bookmarks.",
+          position: "bottom",
+        });
       } else {
         updatedBookmarkedProfiles.delete(profileId);
+        Toast.show({
+          type: "info",
+          text1: "Unsaved",
+          text2: "Profile has been removed from bookmarks.",
+          position: "bottom",
+        });
       }
       setBookmarkedProfiles(updatedBookmarkedProfiles);
-    } catch (error) {
-      // Error handling is done within the API function, so no need here
+
+      // Update the profiles state to reflect the bookmark change
+      setProfiles(prevProfiles =>
+        prevProfiles.map(profile =>
+          profile.viwed_profileid === profileId
+            ? { ...profile, viwed_profile_wishlist: newStatus === "1" ? 1 : 0 }
+            : profile
+        )
+      );
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to update bookmark status.",
+        position: "bottom",
+      });
     }
   };
 
+  // const handleProfileClick = async (viewedProfileId) => {
+  //   navigation.navigate("ProfileDetails", {
+  //     viewedProfileId,
+  //     allProfileIds,
+  //   });
+  // };
+
   const handleProfileClick = async (viewedProfileId) => {
-    navigation.navigate("ProfileDetails", {
-      viewedProfileId,
-      allProfileIds,
-    });
+    const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+    console.log('profile view msg', profileCheckResponse)
+
+    // 2. Check if the API returned any failure
+    if (profileCheckResponse?.status === "failure") {
+      Toast.show({
+        type: "error",
+        // text1: "Profile Error", // You can keep this general
+        text1: profileCheckResponse.message, // <-- This displays the exact API message
+        position: "bottom",
+      });
+      return; // Stop the function
+    }
+
+    const success = await logProfileVisit(viewedProfileId);
+
+    if (success) {
+      Toast.show({
+        type: "success",
+        text1: "Profile Viewed",
+        text2: `You have viewed profile ${viewedProfileId}.`,
+        position: "bottom",
+      });
+      // navigation.navigate("ProfileDetails", { id });
+      navigation.navigate("ProfileDetails", {
+        viewedProfileId,
+        allProfileIds
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to log profile visit.",
+        position: "bottom",
+      });
+    }
   };
+
 
   const renderItem = ({ item: profile }) => (
     <TouchableOpacity

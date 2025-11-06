@@ -155,6 +155,7 @@ export const PartnerSettings = () => {
         retrieveDataFromSession();
         fetchHighestEdu();
         fetchAnnualIncome();
+        fetchFieldOfStudy();
         // fetchMatchList();
         //fetchMatchStars();
     }, []);
@@ -672,7 +673,7 @@ export const PartnerSettings = () => {
                     <Text style={styles.redText}>Field of Study</Text>
                     <View style={styles.formContainer}>
                         <View style={styles.inputContainer}>
-                            {["1", "2", "3"].some((v) => control._formValues?.education?.includes(v)) ? (
+                            {/* {["1", "2", "3"].some((v) => control._formValues?.education?.includes(v)) ? ( */}
                                 <Controller
                                     control={control}
                                     name="fieldOfStudy"
@@ -711,20 +712,7 @@ export const PartnerSettings = () => {
                                         </View>
                                     )}
                                 />
-                            ) : (
-                                <Controller
-                                    control={control}
-                                    name="fieldOfStudyText"
-                                    render={({ field: { onChange, value } }) => (
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder="Enter Field of Study"
-                                            value={value || ""}
-                                            onChangeText={onChange}
-                                        />
-                                    )}
-                                />
-                            )}
+                          
                             {fieldError && <Text style={styles.errorText}>{fieldError}</Text>}
                         </View>
                     </View>

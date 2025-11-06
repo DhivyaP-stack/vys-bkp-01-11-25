@@ -367,7 +367,7 @@
 //                   underlineColorAndroid="transparent"
 //                   autoCorrect={false}
 //                   autoCapitalize="none"
-                  
+
 //                 />
 //               </View>
 //               <TouchableOpacity
@@ -542,7 +542,7 @@ export const HomeWithToast = () => {
     const newState = !isEnabled;
     setIsEnabled(newState);
     const newOrderBy = newState ? "2" : "1";
-    
+
     // If searching, update search results with new order
     if (searchProfileId.length > 0) {
       await handleSearchPress(searchProfileId, newOrderBy);
@@ -566,15 +566,26 @@ export const HomeWithToast = () => {
       setIsSearching(false);
       return;
     }
-    
+
     const orderByValue = orderBy || getOrderBy();
-    
+
     try {
       setIsSearching(true);
       const response = await Search_By_profileId_matchingProfile(profileId, orderByValue);
       if (response.Status === 1 && response.profiles) {
         setSearchResults(response.profiles);
         setTotalCount(response.total_count || response.profiles.length);
+        // const wishlistedIds = response.profiles
+        //   .filter((p) => p.wish_list === 1 || p.wish_list === "1")
+        //   .map((p) => p.profile_id);
+
+        // if (wishlistedIds.length > 0) {
+        //   setBookmarkedProfiles((prev) => {
+        //     const updated = new Set(prev);
+        //     wishlistedIds.forEach((id) => updated.add(id));
+        //     return updated;
+        //   });
+        // }
       } else {
         setSearchResults([]);
         setTotalCount(0);
@@ -657,7 +668,7 @@ export const HomeWithToast = () => {
           />
           <View style={styles.profileContent}>
             <Text style={styles.nameStyle}>
-              {item.int_profile_name} ({item.int_profileid})
+              {item.int_profile_name}({item.int_profileid})
             </Text>
             <Text style={styles.ageStyle}>{item.int_profile_age} yrs</Text>
           </View>
@@ -765,7 +776,7 @@ export const HomeWithToast = () => {
                 </Text>
               </Text>
               <Text style={{
-                fontSize: 15, 
+                fontSize: 15,
                 fontWeight: 'bold',
                 alignSelf: 'center',
                 color: '#b40101ff',
@@ -773,7 +784,7 @@ export const HomeWithToast = () => {
               }}>
                 Sort by Date:
               </Text>
-              <Switch 
+              <Switch
                 style={styles.toggleSwitchcontainer}
                 trackColor={{ false: '#767577', true: '#7f0909ff' }}
                 thumbColor={isEnabled ? '#e80909ff' : '#f4f3f4'}

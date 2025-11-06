@@ -456,7 +456,17 @@ export const ProfileCard = ({ searchProfiles, isLoadingNew, orderBy = "1" }) => 
             ...(response.all_profile_ids || {})
           }));
         }
+        const wishlistedIds = newProfiles
+          .filter((p) => p.wish_list === 1 || p.wish_list === "1")
+          .map((p) => p.profile_id);
 
+        if (wishlistedIds.length > 0) {
+          setBookmarkedProfiles((prevSet) => {
+            const updated = new Set(prevSet);
+            wishlistedIds.forEach((id) => updated.add(id));
+            return updated;
+          });
+        }
         setTotalPages(Math.ceil(response.total_count / perPage));
         setTotalRecords(response.total_count || 0);
         setCurrentPage(page);
@@ -567,6 +577,15 @@ export const ProfileCard = ({ searchProfiles, isLoadingNew, orderBy = "1" }) => 
     try {
       const data = await fetchProfileDataCheck(viewedProfileId, "1");
       console.log("data 1 ==>", data);
+      if (data?.status === "failure") {
+        Toast.show({
+          type: "error",
+          // text1: "Profile Error", // You can keep this general
+          text1: data.message, // <-- This displays the exact API message
+          position: "bottom",
+        });
+        return; // Stop the function
+      }
       const success = await logProfileVisit(viewedProfileId);
       console.log("Log visit success 2:", success);
 

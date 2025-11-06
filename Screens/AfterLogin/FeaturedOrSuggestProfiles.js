@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { markProfileWishlist } from "../../CommonApiCall/CommonApiCall";
+import { markProfileWishlist, logProfileVisit, fetchProfileDataCheck } from "../../CommonApiCall/CommonApiCall";
 import {
   Ionicons,
 } from "@expo/vector-icons";
@@ -26,7 +26,7 @@ export const FeaturedOrSuggestProfiles = ({ route }) => {
         acc[globalIndex] = profile.profile_id;
         return acc;
       }, {});
-      
+
       setAllProfileIds(prev => ({
         ...prev,
         ...profileIds
@@ -63,8 +63,47 @@ export const FeaturedOrSuggestProfiles = ({ route }) => {
     return { uri: image }; // Direct URL case
   };
 
+  // const handleProfileClick = async (viewedProfileId) => {
+  //   navigation.navigate("ProfileDetails", { viewedProfileId, allProfileIds });
+  // };
+
   const handleProfileClick = async (viewedProfileId) => {
-    navigation.navigate("ProfileDetails", { viewedProfileId, allProfileIds });
+    const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+    console.log('profile view msg', profileCheckResponse)
+
+    // 2. Check if the API returned any failure
+    if (profileCheckResponse?.status === "failure") {
+      Toast.show({
+        type: "error",
+        // text1: "Profile Error", // You can keep this general
+        text1: profileCheckResponse.message, // <-- This displays the exact API message
+        position: "bottom",
+      });
+      return; // Stop the function
+    }
+
+    const success = await logProfileVisit(viewedProfileId);
+
+    if (success) {
+      Toast.show({
+        type: "success",
+        text1: "Profile Viewed",
+        text2: `You have viewed profile ${viewedProfileId}.`,
+        position: "bottom",
+      });
+      // navigation.navigate("ProfileDetails", { id });
+      navigation.navigate("ProfileDetails", {
+        viewedProfileId,
+        allProfileIds,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to log profile visit.",
+        position: "bottom",
+      });
+    }
   };
 
   const renderProfileItem = ({ item, index }) => {
@@ -75,31 +114,31 @@ export const FeaturedOrSuggestProfiles = ({ route }) => {
         onPress={() => handleProfileClick(profileId)}
       >
         <View style={styles.profileContainer}>
-        <Image
-          source={getImageSource(item.profile_img)}
-          style={styles.profileImage}
-        />
-        <View style={styles.profileContent}>
-          <Text style={styles.profileName}>
-            {item.profile_name}{" "}
-            <Text style={styles.profileId}>
-              ({item.profile_id})
+          <Image
+            source={getImageSource(item.profile_img)}
+            style={styles.profileImage}
+          />
+          <View style={styles.profileContent}>
+            <Text style={styles.profileName}>
+              {item.profile_name}{" "}
+              <Text style={styles.profileId}>
+                ({item.profile_id})
+              </Text>
             </Text>
-          </Text>
-          <Text style={styles.profileAge}>
-            {item.profile_age} Yrs{" "}
-            <Text style={styles.line}>|</Text>
-            {item.profile_height}{" "}
-          </Text>
-          <Text style={styles.zodiac}>{item.star}</Text>
-          <Text style={styles.employed}>
-            {item.profession}
-          </Text>
+            <Text style={styles.profileAge}>
+              {item.profile_age} Yrs{" "}
+              <Text style={styles.line}>|</Text>
+              {item.profile_height}{" "}
+            </Text>
+            <Text style={styles.zodiac}>{item.star}</Text>
+            <Text style={styles.employed}>
+              {item.profession}
+            </Text>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
+      </TouchableOpacity>
+    );
+  };
 
   const ListHeader = () => (
     <View style={styles.contentConatiner}>

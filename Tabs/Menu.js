@@ -23,7 +23,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import CircularProgress from "react-native-circular-progress-indicator";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { fetchDashboardData, getMyProfilePersonal, getMyEducationalDetails} from "../CommonApiCall/CommonApiCall";
+import { fetchDashboardData, getMyProfilePersonal, getMyEducationalDetails } from "../CommonApiCall/CommonApiCall";
 import Toast from "react-native-toast-message";
 
 // Get device dimensions
@@ -216,7 +216,7 @@ export const Menu = () => {
       const age = dashboardData?.profile_details?.age || 'Not available';
       const starName = dashboardData?.profile_details?.star_name || 'Not available';
       // const baseUrl = 'https://vysyamaladevnew-aehaazdxdzegasfb.westus2-01.azurewebsites.net';
-      const baseUrl = 'vysyamala.com';
+      const baseUrl = 'https://vsysmalamat-ejh3ftcdbnezhhfv.westus2-01.azurewebsites.net';
       const profession = profileDetails?.prosession;
       const annualIncome = educationalDetails?.personal_ann_inc_name;
       const placeOfStay = educationalDetails?.personal_work_district || educationalDetails?.personal_work_city_name
@@ -241,10 +241,12 @@ export const Menu = () => {
 
       // Construct the share URL with proper encoding
       const shareUrl = `${baseUrl}/auth/profile/${encodeURIComponent(profileId)}/`;
+      const title = 'Check out this profile!';
 
       const message =
-        `*Vysyamala Matrimony Profile*\n\n` +
-        `🌟 *Profile Link:* ${shareUrl}\n` +
+        // `*Vysyamala Matrimony Profile*\n\n` +
+        // `🌟 *Profile Link:* ${shareUrl}\n` +
+        `${title}\n\n` +
         `🆔 *Profile ID:* ${profileId}\n` +
         `👤 *Profile Name:* ${profileName}\n` +
         `🎂 *Age:* ${age} years\n` +
@@ -294,7 +296,7 @@ export const Menu = () => {
       const age = dashboardData?.profile_details?.age || 'Not available';
       const starName = dashboardData?.profile_details?.star_name || 'Not available';
       // const baseUrl = 'https://vysyamaladevnew-aehaazdxdzegasfb.westus2-01.azurewebsites.net';
-      const baseUrl = 'vysyamala.com';
+      const baseUrl = 'https://vsysmalamat-ejh3ftcdbnezhhfv.westus2-01.azurewebsites.net';
       const profession = profileDetails?.prosession;
       const annualIncome = educationalDetails?.personal_ann_inc_name;
       const placeOfStay = educationalDetails?.personal_work_district || educationalDetails?.personal_work_city_name
@@ -319,10 +321,12 @@ export const Menu = () => {
 
       // Construct the share URL with proper encoding
       const shareUrl = `${baseUrl}/auth/profile_view/${encodeURIComponent(profileId)}/`;
+      const title = 'Check out this profile!';
 
       const message =
-        `*Vysyamala Matrimony Profile*\n\n` +
-        `🌟 *Profile Link:* ${shareUrl}\n` +
+        // `*Vysyamala Matrimony Profile*\n\n` +
+        // `🌟 *Profile Link:* ${shareUrl}\n` +
+        `${title}\n\n` +
         `🆔 *Profile ID:* ${profileId}\n` +
         `👤 *Profile Name:* ${profileName}\n` +
         `🎂 *Age:* ${age} years\n` +

@@ -15,6 +15,7 @@ import {
   getVysassistList,
   handleBookmark,
   logProfileVisit,
+  fetchProfileDataCheck,
   getWishlistProfiles,
 } from "../../CommonApiCall/CommonApiCall";
 import { ProfileNotFound } from "../ProfileNotFound";
@@ -52,14 +53,27 @@ export const VysassistCard = ({ sortBy = "datetime" }) => {
         setTotalPages(1);
         setTotalRecords(0);
         setCurrentPage(1);
+        setBookmarkedProfiles(new Set());
       } else if (response && response.data) {
+        const newProfiles = response.data.profiles || [];
+
+        // START: --- ADD THIS LOGIC ---
+        // Extract bookmarked profiles from THIS API response
+        const bookmarkedIds = new Set();
+        newProfiles.forEach(profile => {
+          if (profile.vys_profile_wishlist === 1) {
+            bookmarkedIds.add(profile.vys_profileid);
+          }
+        });
         if (isInitialLoad) {
           setProfiles(response.data.profiles || []);
+          setBookmarkedProfiles(bookmarkedIds);
         } else {
           setProfiles((prevProfiles) => [
             ...prevProfiles,
-            ...(response.data.profiles || []),
+            ...newProfiles,
           ]);
+          setBookmarkedProfiles(prev => new Set([...prev, ...bookmarkedIds]));
         }
 
         // Update profile IDs mapping
@@ -101,25 +115,25 @@ export const VysassistCard = ({ sortBy = "datetime" }) => {
     loadProfiles(1, true);
   }, [sortBy]);
 
-  useEffect(() => {
-    const loadWishlistProfiles = async () => {
-      try {
-        const response = await getWishlistProfiles();
-        if (response) {
-          const profileIds = response.map(
-            (profile) => profile.wishlist_profileid
-          );
-          const profileIdsSet = new Set(profileIds);
-          setBookmarkedProfiles(profileIdsSet);
-        } else {
-          console.log("No profiles found in response.");
-        }
-      } catch (error) {
-        console.error("Error loading wishlist profiles:", error);
-      }
-    };
-    loadWishlistProfiles();
-  }, []);
+  // useEffect(() => {
+  //   const loadWishlistProfiles = async () => {
+  //     try {
+  //       const response = await getWishlistProfiles();
+  //       if (response) {
+  //         const profileIds = response.map(
+  //           (profile) => profile.wishlist_profileid
+  //         );
+  //         const profileIdsSet = new Set(profileIds);
+  //         setBookmarkedProfiles(profileIdsSet);
+  //       } else {
+  //         console.log("No profiles found in response.");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error loading wishlist profiles:", error);
+  //     }
+  //   };
+  //   loadWishlistProfiles();
+  // }, []);
 
   // ... rest of your existing functions (handleSavePress, handleProfileClick, getImageSource) remain the same ...
   const getImageSource = (image) => {
@@ -167,11 +181,50 @@ export const VysassistCard = ({ sortBy = "datetime" }) => {
     }
   };
 
+  // const handleProfileClick = async (viewedProfileId) => {
+  //   const success = await logProfileVisit(viewedProfileId);
+
+  //   if (success) {
+  //     navigation.navigate("ProfileDetails", { viewedProfileId, allProfileIds });
+  //   } else {
+  //     Toast.show({
+  //       type: "error",
+  //       text1: "Error",
+  //       text2: "Failed to log profile visit.",
+  //       position: "bottom",
+  //     });
+  //   }
+  // };
+
   const handleProfileClick = async (viewedProfileId) => {
+    const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+    console.log('profile view msg', profileCheckResponse)
+
+    // 2. Check if the API returned any failure
+    if (profileCheckResponse?.status === "failure") {
+      Toast.show({
+        type: "error",
+        // text1: "Profile Error", // You can keep this general
+        text1: profileCheckResponse.message, // <-- This displays the exact API message
+        position: "bottom",
+      });
+      return; // Stop the function
+    }
+
     const success = await logProfileVisit(viewedProfileId);
 
     if (success) {
-      navigation.navigate("ProfileDetails", { viewedProfileId, allProfileIds });
+      Toast.show({
+        type: "success",
+        text1: "Profile Viewed",
+        text2: `You have viewed profile ${viewedProfileId}.`,
+        position: "bottom",
+      });
+      // navigation.navigate("ProfileDetails", { id });
+      navigation.navigate("ProfileDetails", {
+        viewedProfileId,
+        allProfileIds,
+      });
     } else {
       Toast.show({
         type: "error",

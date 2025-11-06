@@ -8,7 +8,8 @@ import {
     getAdvanceSearchResults,
     handleBookmark,
     logProfileVisit,
-    getWishlistProfiles
+    getWishlistProfiles,
+    fetchProfileDataCheck
 } from '../../../CommonApiCall/CommonApiCall';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -28,19 +29,19 @@ export const SearchCard = () => {
             setCurrentPage((prevPage) => prevPage + 1);
         }
     };
-    
+
     useEffect(() => {
         const loadProfiles = async () => {
             if (isLoading || currentPage > totalPages) return; // Prevent multiple concurrent requests or over-fetching
-    
+
             setIsLoading(true); // Set loading state
-    
+
             try {
                 const count = await AsyncStorage.getItem('totalcount');
                 const totalCount = parseInt(count, 10);
                 const perPage = 6;
                 const pageNumber = currentPage;
-    
+
                 const response = await getAdvanceSearchResults(perPage, pageNumber);
                 console.log("response all data search ===>", JSON.stringify(response));
                 if (response) {
@@ -52,6 +53,15 @@ export const SearchCard = () => {
                         return acc;
                     }, {});
                     setAllProfileIds((prevIds) => ({ ...prevIds, ...profileIds }));
+                    setBookmarkedProfiles((prevSet) => {
+                        const newSet = new Set(prevSet);
+                        response.data.forEach((profile) => {
+                            if (profile.wish_list === 1) {
+                                newSet.add(profile.profile_id);
+                            }
+                        });
+                        return newSet;
+                    });
                 } else {
                     console.warn('No profiles found or error in response.');
                 }
@@ -61,11 +71,11 @@ export const SearchCard = () => {
                 setIsLoading(false); // Reset loading state
             }
         };
-    
+
         loadProfiles();
     }, [currentPage]); // Re-run when currentPage changes
-    
-    
+
+
     useEffect(() => {
         const loadWishlistProfiles = async () => {
             try {
@@ -119,17 +129,56 @@ export const SearchCard = () => {
         }
     };
 
+    // const handleProfileClick = async (viewedProfileId) => {
+    //     const success = await logProfileVisit(viewedProfileId);
+
+    //     if (success) {
+    //         // Toast.show({
+    //         //     type: "success",
+    //         //     text1: "Profile Viewed",
+    //         //     text2: `You have viewed profile ${viewedProfileId}.`,
+    //         //     position: "bottom",
+    //         // });
+    //         navigation.navigate("ProfileDetails", { viewedProfileId, allProfileIds });
+    //     } else {
+    //         Toast.show({
+    //             type: "error",
+    //             text1: "Error",
+    //             text2: "Failed to log profile visit.",
+    //             position: "bottom",
+    //         });
+    //     }
+    // };
+
     const handleProfileClick = async (viewedProfileId) => {
+        const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+        console.log('profile view msg', profileCheckResponse)
+
+        // 2. Check if the API returned any failure
+        if (profileCheckResponse?.status === "failure") {
+            Toast.show({
+                type: "error",
+                // text1: "Profile Error", // You can keep this general
+                text1: profileCheckResponse.message, // <-- This displays the exact API message
+                position: "bottom",
+            });
+            return; // Stop the function
+        }
+
         const success = await logProfileVisit(viewedProfileId);
 
         if (success) {
-            // Toast.show({
-            //     type: "success",
-            //     text1: "Profile Viewed",
-            //     text2: `You have viewed profile ${viewedProfileId}.`,
-            //     position: "bottom",
-            // });
-            navigation.navigate("ProfileDetails", { viewedProfileId, allProfileIds });
+            Toast.show({
+                type: "success",
+                text1: "Profile Viewed",
+                text2: `You have viewed profile ${viewedProfileId}.`,
+                position: "bottom",
+            });
+            // navigation.navigate("ProfileDetails", { id });
+            navigation.navigate("ProfileDetails", {
+                viewedProfileId,
+                allProfileIds,
+            });
         } else {
             Toast.show({
                 type: "error",
@@ -141,7 +190,7 @@ export const SearchCard = () => {
     };
 
 
-      const getImageSource = (image) => {
+    const getImageSource = (image) => {
         if (!image) return { uri: 'https://www.google.com/url?sa=i&url=https%3A%2F%2Fstock.adobe.com%2Fsearch%2Fimages%3Fk%3Ddefault%2Bimage&psig=AOvVaw28Px6jC5wsx4TWxwOrHJT2&ust=1726388184602000&source=images&cd=vfe&opi=89978449&ved=0CBEQjRxqFwoTCMCfpqb_wYgDFQAAAAAdAAAAABAE' }; // Fallback image
         if (Array.isArray(image)) {
             return { uri: image[0] }; // Use the first image if it's an array
@@ -150,63 +199,63 @@ export const SearchCard = () => {
     };
 
 
-    console.log("dddddddddddddd",profiles);
+    console.log("dddddddddddddd", profiles);
 
 
     return (
         <>
-        <FlatList
-            data={profiles}
-            keyExtractor={(item) => item.profile_id}
-            renderItem={({ item }) => (
-                <TouchableOpacity
-                    key={item.profile_id}
-                    onPress={() => handleProfileClick(item.profile_id)}
-                    style={styles.profileDiv}
-                >
-                    <View style={styles.profileContainer}>
-                        {/* <Image
+            <FlatList
+                data={profiles}
+                keyExtractor={(item) => item.profile_id}
+                renderItem={({ item }) => (
+                    <TouchableOpacity
+                        key={item.profile_id}
+                        onPress={() => handleProfileClick(item.profile_id)}
+                        style={styles.profileDiv}
+                    >
+                        <View style={styles.profileContainer}>
+                            {/* <Image
                             source={{ uri: item.profile_img }}
                             style={styles.profileImage}
                         /> */}
-                           <Image
+                            <Image
                                 source={getImageSource(item.profile_img)}
                                 style={styles.profileImage}
                             />
-                        <TouchableOpacity onPress={() => handleSavePress(item.profile_id)}>
-                            <MaterialIcons
-                                name={bookmarkedProfiles.has(item.profile_id) ? 'bookmark' : 'bookmark-border'}
-                                size={20}
-                                color="red"
-                                style={styles.saveIcon}
-                            />
-                        </TouchableOpacity>
-                        <View style={styles.profileContent}>
-                            <Text style={styles.profileName}>
-                                {item.profile_name} <Text style={styles.profileId}>({item.profile_id})</Text>
-                            </Text>
-                            <Text style={styles.profileAge}>
-                                {item.profile_age} Yrs <Text style={styles.line}>|</Text> {item.profile_height} ft
-                            </Text>
-                            <Text style={styles.zodiac}>{item.degree}</Text>
-                            <Text style={styles.employed}>{item.profession}</Text>
+                            <TouchableOpacity onPress={() => handleSavePress(item.profile_id)}>
+                                <MaterialIcons
+                                    name={bookmarkedProfiles.has(item.profile_id) ? 'bookmark' : 'bookmark-border'}
+                                    size={20}
+                                    color="red"
+                                    style={styles.saveIcon}
+                                />
+                            </TouchableOpacity>
+                            <View style={styles.profileContent}>
+                                <Text style={styles.profileName}>
+                                    {item.profile_name} <Text style={styles.profileId}>({item.profile_id})</Text>
+                                </Text>
+                                <Text style={styles.profileAge}>
+                                    {item.profile_age} Yrs <Text style={styles.line}>|</Text> {item.profile_height} ft
+                                </Text>
+                                <Text style={styles.zodiac}>{item.degree}</Text>
+                                <Text style={styles.employed}>{item.profession}</Text>
+                            </View>
                         </View>
+                    </TouchableOpacity>
+                )}
+                onEndReached={handleEndReached}
+                onEndReachedThreshold={0.5} // Trigger at 50% from the end
+                ListFooterComponent={
+                    <View style={{ paddingBottom: 20 }}>
+                        {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
                     </View>
-                </TouchableOpacity>
-            )}
-            onEndReached={handleEndReached}
-            onEndReachedThreshold={0.5} // Trigger at 50% from the end
-            ListFooterComponent={
-                <View style={{ paddingBottom: 20 }}>
-                    {isLoading && <ActivityIndicator size="large" color="#0000ff" />}
-                </View>
-            }
-            contentContainerStyle={styles.profileScrollView}
-            showsVerticalScrollIndicator={true}
-    initialNumToRender={6}
-    maxToRenderPerBatch={6}
-    windowSize={5}
-        />
+                }
+                contentContainerStyle={styles.profileScrollView}
+                showsVerticalScrollIndicator={true}
+                initialNumToRender={6}
+                maxToRenderPerBatch={6}
+                windowSize={5}
+            />
         </>
     );
 };

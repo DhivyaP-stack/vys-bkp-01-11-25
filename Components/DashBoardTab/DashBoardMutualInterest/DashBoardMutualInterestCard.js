@@ -13,6 +13,9 @@ import Toast from "react-native-toast-message";
 import {
   fetchMutualInterests,
   markProfileWishlist,
+  handleBookmark,
+  logProfileVisit,
+  fetchProfileDataCheck
 } from "../../../CommonApiCall/CommonApiCall"; // Update import path
 import { useNavigation } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
@@ -30,6 +33,7 @@ export const DashBoardMutualInterestCard = ({ sortBy = "datetime" }) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [allProfileIds, setAllProfileIds] = useState({});
+
   const loadProfiles = async (page = 1, isInitialLoad = false) => {
     console.log("Loading profiles1:", { page, isInitialLoad });
     if ((isLoading && isInitialLoad) || (isLoadingMore && !isInitialLoad))
@@ -97,21 +101,46 @@ export const DashBoardMutualInterestCard = ({ sortBy = "datetime" }) => {
     loadProfiles(1, true);
   }, [sortBy]);
 
-  // Bookmark Toast Message Indicator
   const handleSavePress = async (profileId) => {
-    const updatedBookmarkedProfiles = new Set(bookmarkedProfiles);
-    const newStatus = updatedBookmarkedProfiles.has(profileId) ? "0" : "1";
+    const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";
+    const success = await handleBookmark(profileId, newStatus);
 
-    try {
-      await markProfileWishlist(profileId, newStatus);
+    if (success) {
+      const updatedBookmarkedProfiles = new Set(bookmarkedProfiles);
       if (newStatus === "1") {
         updatedBookmarkedProfiles.add(profileId);
+        Toast.show({
+          type: "success",
+          text1: "Saved",
+          text2: "Profile has been saved to bookmarks.",
+          position: "bottom",
+        });
       } else {
         updatedBookmarkedProfiles.delete(profileId);
+        Toast.show({
+          type: "info",
+          text1: "Unsaved",
+          text2: "Profile has been removed from bookmarks.",
+          position: "bottom",
+        });
       }
       setBookmarkedProfiles(updatedBookmarkedProfiles);
-    } catch (error) {
-      // Error handling is done within the API function, so no need here
+
+      // Update the profiles state to reflect the bookmark change
+      setProfiles(prevProfiles =>
+        prevProfiles.map(profile =>
+          profile.viwed_profileid === profileId
+            ? { ...profile, viwed_profile_wishlist: newStatus === "1" ? 1 : 0 }
+            : profile
+        )
+      );
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to update bookmark status.",
+        position: "bottom",
+      });
     }
   };
 
@@ -127,11 +156,51 @@ export const DashBoardMutualInterestCard = ({ sortBy = "datetime" }) => {
     return { uri: image }; // Direct URL case
   };
 
+  // const handleProfileClick = async (viewedProfileId) => {
+
+  //   navigation.navigate("ProfileDetails", {
+  //     viewedProfileId,
+  //     profileId: allProfileIds,
+  //   });
+  // };
+
   const handleProfileClick = async (viewedProfileId) => {
-    navigation.navigate("ProfileDetails", {
-      viewedProfileId,
-      profileId: allProfileIds,
-    });
+    const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+    console.log('profile view msg', profileCheckResponse)
+
+    // 2. Check if the API returned any failure
+    if (profileCheckResponse?.status === "failure") {
+      Toast.show({
+        type: "error",
+        // text1: "Profile Error", // You can keep this general
+        text1: profileCheckResponse.message, // <-- This displays the exact API message
+        position: "bottom",
+      });
+      return; // Stop the function
+    }
+
+    const success = await logProfileVisit(viewedProfileId);
+
+    if (success) {
+      Toast.show({
+        type: "success",
+        text1: "Profile Viewed",
+        text2: `You have viewed profile ${viewedProfileId}.`,
+        position: "bottom",
+      });
+      // navigation.navigate("ProfileDetails", { id });
+      navigation.navigate("ProfileDetails", {
+        viewedProfileId,
+        profileId: allProfileIds,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to log profile visit.",
+        position: "bottom",
+      });
+    }
   };
 
   const renderItem = ({ item: profile }) => (
@@ -166,7 +235,7 @@ export const DashBoardMutualInterestCard = ({ sortBy = "datetime" }) => {
           </Text>
           <Text style={styles.profileAge}>
             {profile.mutint_profile_age} Yrs <Text style={styles.line}>|</Text>
-            {profile.mutint_height}{" "}
+            {profile.mutint_height} Cms{" "}
           </Text>
           <Text style={styles.zodiac}>{profile.mutint_star}</Text>
           <Text style={styles.employed}>{profile.mutint_profession}</Text>
