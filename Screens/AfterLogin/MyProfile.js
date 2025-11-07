@@ -53,6 +53,8 @@ export const MyProfile = () => {
     const [profileDetails, setProfileDetails] = useState(null); // State for profile details
     const [loading, setLoading] = useState(false);
     const [educationalDetails, setEducationalDetails] = useState(null);
+    const currentPlanId = AsyncStorage.getItem("current_plan_id");
+    const allowedPremiumIds = [1, 2, 3, 14, 15, 17, 10, 11, 12, 13];
     // Fetch images from API
     // useEffect(() => {
     //     const fetchAndSetImages = async () => {
@@ -671,7 +673,7 @@ export const MyProfile = () => {
                             <Text style={styles.profileNumber}>{profileDetails.profile_id}</Text>
 
                             <View style={styles.planFlex}>
-                                <LinearGradient
+                                {/* <LinearGradient
                                     colors={
                                         profileDetails.package_name === "Platinum"
                                             ? ["#E5E4E2", "#C0C0C0", "#FFFFFF"]
@@ -701,7 +703,59 @@ export const MyProfile = () => {
                                     {profileDetails.valid_upto == ""
                                         ? "2024-01-01"
                                         : profileDetails.valid_upto}
-                                </Text>
+                                </Text> */}
+                                {profileDetails.valid_upto &&
+                                    new Date(profileDetails.valid_upto) < new Date() &&
+                                    allowedPremiumIds.includes(currentPlanId) ? (
+                                    // --- SHOW RENEW BUTTON ---
+                                    <TouchableOpacity
+                                        style={styles.renewButtonWrapper}
+                                        onPress={() => navigation.navigate('PayNow')} // Navigates to your upgrade screen
+                                    >
+                                        <LinearGradient
+                                            colors={["#BD1225", "#FF4050"]}
+                                            start={{ x: 0, y: 0 }}
+                                            end={{ x: 1, y: 1 }}
+                                            style={styles.renewButton}
+                                        >
+                                            <Text style={styles.renewButtonText}>Renew</Text>
+                                        </LinearGradient>
+                                    </TouchableOpacity>
+                                ) : (
+                                    <View style={styles.planFlex}>
+                                        <LinearGradient
+                                            colors={
+                                                profileDetails.package_name === "Platinum"
+                                                    ? ["#E5E4E2", "#C0C0C0", "#FFFFFF"]
+                                                    : profileDetails.package_name === "Gold"
+                                                        ? ["#D79D32", "#FFB800", "#FDE166"]
+                                                        : profileDetails.package_name === "Diamond"
+                                                            ? ["#B9F2FF", "#FFFFFF", "#B9F2FF"]
+                                                            : ["#D79D32", "#FFB800", "#FDE166"]
+                                            }
+                                            locations={[0, 0.5, 1]}
+                                            start={{ x: 1, y: 1 }}
+                                            end={{ x: 0, y: 0 }}
+                                            style={[
+                                                styles.goldLinearGradient,
+                                                profileDetails.package_name === "Diamond" && styles.diamondText
+                                            ]}
+                                        >
+                                            <Text style={[
+                                                styles.goldText,
+                                                profileDetails.package_name === "Diamond" && { color: "#fff" }
+                                            ]}>
+                                                {profileDetails.package_name || "Gold"}
+                                            </Text>
+                                        </LinearGradient>
+                                        <Text style={styles.date}>
+                                            Valid Upto :
+                                            {profileDetails.valid_upto == ""
+                                                ? "2024-01-01"
+                                                : profileDetails.valid_upto}
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
 
                             {/* Plan flex */}
@@ -1149,5 +1203,23 @@ const styles = StyleSheet.create({
 
     editIcon: {
         padding: 0,
+    },
+    renewButtonWrapper: {
+        alignSelf: 'flex-start', // Aligns button to the left
+        marginBottom: 10, // Spacing below the button
+    },
+    renewButton: {
+        borderRadius: 6,
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        minWidth: 100,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    renewButtonText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: '600',
+        fontFamily: "inter",
     },
 });

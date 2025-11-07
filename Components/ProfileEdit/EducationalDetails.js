@@ -1092,48 +1092,48 @@ export const EducationalDetails = () => {
                         {/* View Mode */}
                         {educationalDetails && (
                             <>
-                                <Text style={styles.labelNew}>Education Level : <Text style={styles.valueNew}>{educationalDetails.personal_edu_name}</Text></Text>
+                                <Text style={styles.labelNew}>Education Level : <Text style={styles.valueNew}>{educationalDetails.personal_edu_name || "N/A"}</Text></Text>
                                 {/* New fields for view mode */}
                                 {educationalDetails.persoanl_field_ofstudy_name && (
-                                    <Text style={styles.labelNew}>Field of Study : <Text style={styles.valueNew}>{educationalDetails.persoanl_field_ofstudy_name}</Text></Text>
+                                    <Text style={styles.labelNew}>Field of Study : <Text style={styles.valueNew}>{educationalDetails.persoanl_field_ofstudy_name || "N/A"}</Text></Text>
                                 )}
 
                                 {educationalDetails.persoanl_degree_name && (
-                                    <Text style={styles.labelNew}>Specific Field : <Text style={styles.valueNew}>{educationalDetails.persoanl_degree_name}</Text></Text>
+                                    <Text style={styles.labelNew}>Specific Field : <Text style={styles.valueNew}>{educationalDetails.persoanl_degree_name || "N/A"}</Text></Text>
                                 )}
 
                                 {educationalDetails.persoanl_edu_other && (
-                                    <Text style={styles.labelNew}>Other Education : <Text style={styles.valueNew}>{educationalDetails.persoanl_edu_other}</Text></Text>
+                                    <Text style={styles.labelNew}>Other Education : <Text style={styles.valueNew}>{educationalDetails.persoanl_edu_other || "N/A"}</Text></Text>
                                 )}
-                                <Text style={styles.labelNew}>About Education : <Text style={styles.valueNew}>{educationalDetails.personal_about_edu}</Text></Text>
-                                <Text style={styles.labelNew}>Profession : <Text style={styles.valueNew}>{educationalDetails.personal_profession_name}</Text></Text>
+                                <Text style={styles.labelNew}>About Education : <Text style={styles.valueNew}>{educationalDetails.personal_about_edu || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Profession : <Text style={styles.valueNew}>{educationalDetails.personal_profession_name || "N/A"}</Text></Text>
                                 {educationalDetails.personal_company_name && (
-                                    <Text style={styles.labelNew}>Company Name : <Text style={styles.valueNew}>{educationalDetails.personal_company_name}</Text></Text>
+                                    <Text style={styles.labelNew}>Company Name : <Text style={styles.valueNew}>{educationalDetails.personal_company_name || "N/A"}</Text></Text>
                                 )}
                                 {educationalDetails.personal_designation && (
-                                    <Text style={styles.labelNew}>Designation : <Text style={styles.valueNew}>{educationalDetails.personal_designation}</Text></Text>
+                                    <Text style={styles.labelNew}>Designation : <Text style={styles.valueNew}>{educationalDetails.personal_designation || "N/A"}</Text></Text>
                                 )}
                                 {educationalDetails.personal_profess_details && (
-                                    <Text style={styles.labelNew}>Profession Details : <Text style={styles.valueNew}>{educationalDetails.personal_profess_details}</Text></Text>
+                                    <Text style={styles.labelNew}>Profession Details : <Text style={styles.valueNew}>{educationalDetails.personal_profess_details || "N/A"}</Text></Text>
                                 )}
                                 {educationalDetails.personal_business_name && (
-                                    <Text style={styles.labelNew}>Business Name : <Text style={styles.valueNew}>{educationalDetails.personal_business_name}</Text></Text>
+                                    <Text style={styles.labelNew}>Business Name : <Text style={styles.valueNew}>{educationalDetails.personal_business_name || "N/A"}</Text></Text>
                                 )}
                                 {educationalDetails.personal_business_addresss && (
-                                    <Text style={styles.labelNew}>Business Address : <Text style={styles.valueNew}>{educationalDetails.personal_business_addresss}</Text></Text>
+                                    <Text style={styles.labelNew}>Business Address : <Text style={styles.valueNew}>{educationalDetails.personal_business_addresss || "N/A"}</Text></Text>
                                 )}
                                 {educationalDetails.personal_nature_of_business && (
-                                    <Text style={styles.labelNew}>Nature of Business : <Text style={styles.valueNew}>{educationalDetails.personal_nature_of_business}</Text></Text>
+                                    <Text style={styles.labelNew}>Nature of Business : <Text style={styles.valueNew}>{educationalDetails.personal_nature_of_business || "N/A"}</Text></Text>
                                 )}
-                                <Text style={styles.labelNew}>Gross Annual Income : <Text style={styles.valueNew}>{educationalDetails.personal_ann_inc_name}</Text></Text>
-                                <Text style={styles.labelNew}>Gross Income : <Text style={styles.valueNew}>{educationalDetails.personal_gross_ann_inc}</Text></Text>
-                                <Text style={styles.labelNew}>Work Country : <Text style={styles.valueNew}>{educationalDetails.personal_work_coun_name}</Text></Text>
-                                <Text style={styles.labelNew}>Work State : <Text style={styles.valueNew}>{educationalDetails.personal_work_sta_name}</Text></Text>
-                                <Text style={styles.labelNew}>Work District : <Text style={styles.valueNew}>{educationalDetails.personal_work_district}</Text></Text>
-                                <Text style={styles.labelNew}>Work City : <Text style={styles.valueNew}>{educationalDetails.personal_work_city_name}</Text></Text>
-                                <Text style={styles.labelNew}>Work Place : <Text style={styles.valueNew}>{educationalDetails.personal_work_place}</Text></Text>
-                                <Text style={styles.labelNew}>Work Pincode : <Text style={styles.valueNew}>{educationalDetails.personal_work_pin}</Text></Text>
-                                <Text style={styles.labelNew}>Career Plans : <Text style={styles.valueNew}>{educationalDetails.personal_career_plans}</Text></Text>
+                                <Text style={styles.labelNew}>Gross Annual Income : <Text style={styles.valueNew}>{educationalDetails.personal_ann_inc_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Gross Income : <Text style={styles.valueNew}>{educationalDetails.personal_gross_ann_inc || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Work Country : <Text style={styles.valueNew}>{educationalDetails.personal_work_coun_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Work State : <Text style={styles.valueNew}>{educationalDetails.personal_work_sta_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Work District : <Text style={styles.valueNew}>{educationalDetails.personal_work_district || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Work City : <Text style={styles.valueNew}>{educationalDetails.personal_work_city_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Work Place : <Text style={styles.valueNew}>{educationalDetails.personal_work_place || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Work Pincode : <Text style={styles.valueNew}>{educationalDetails.personal_work_pin || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Career Plans : <Text style={styles.valueNew}>{educationalDetails.personal_career_plans || "N/A"}</Text></Text>
                             </>
                         )}
                     </View>

@@ -603,7 +603,7 @@ export const ContactDetails = () => {
                             <TextInput
                                 style={[styles.input, validationErrors.personal_prof_phone && styles.inputError]}
                                 placeholder="Alternate Mobile"
-                                keyboardType="number"
+                                keyboardType="numeric"
                                 value={formValues.personal_prof_phone}
                                 onChangeText={(text) => handleChange('personal_prof_phone', text)}
                             />
@@ -698,17 +698,17 @@ export const ContactDetails = () => {
                     <View style={styles.editOptions}>
                         {contactDetails && (
                             <>
-                                <Text style={styles.labelNew}>Address : <Text style={styles.valueNew}>{contactDetails.personal_prof_addr}</Text></Text>
-                                <Text style={styles.labelNew}>Country : <Text style={styles.valueNew}>{contactDetails.personal_prof_count_name}</Text></Text>
-                                <Text style={styles.labelNew}>State : <Text style={styles.valueNew}>{contactDetails.personal_prof_stat_name}</Text></Text>
-                                <Text style={styles.labelNew}>District : <Text style={styles.valueNew}>{contactDetails.personal_prof_district_name}</Text></Text>
-                                <Text style={styles.labelNew}>City : <Text style={styles.valueNew}>{contactDetails.personal_prof_city_name}</Text></Text>
-                                <Text style={styles.labelNew}>Pincode : <Text style={styles.valueNew}>{contactDetails.personal_prof_pin}</Text></Text>
-                                <Text style={styles.labelNew}>Alternate Mobile : <Text style={styles.valueNew}>{contactDetails.personal_prof_phone}</Text></Text>
-                                <Text style={styles.labelNew}>WhatsApp : <Text style={styles.valueNew}>{contactDetails.personal_prof_whats}</Text></Text>
-                                <Text style={styles.labelNew}>Email : <Text style={styles.valueNew}>{contactDetails.personal_email}</Text></Text>
-                                <Text style={styles.labelNew}>Profile Email ID : <Text style={styles.valueNew}>{contactDetails.admin_use_email}</Text></Text>
-                                <Text style={styles.labelNew}>Profile Mobile No : <Text style={styles.valueNew}>{contactDetails.personal_prof_mob_no}</Text></Text>
+                                <Text style={styles.labelNew}>Address : <Text style={styles.valueNew}>{contactDetails.personal_prof_addr || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Country : <Text style={styles.valueNew}>{contactDetails.personal_prof_count_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>State : <Text style={styles.valueNew}>{contactDetails.personal_prof_stat_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>District : <Text style={styles.valueNew}>{contactDetails.personal_prof_district_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>City : <Text style={styles.valueNew}>{contactDetails.personal_prof_city_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Pincode : <Text style={styles.valueNew}>{contactDetails.personal_prof_pin || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Alternate Mobile : <Text style={styles.valueNew}>{contactDetails.personal_prof_phone || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>WhatsApp : <Text style={styles.valueNew}>{contactDetails.personal_prof_whats || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Email : <Text style={styles.valueNew}>{contactDetails.personal_email || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Profile Email ID : <Text style={styles.valueNew}>{contactDetails.admin_use_email || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Profile Mobile No : <Text style={styles.valueNew}>{contactDetails.personal_prof_mob_no || "N/A"}</Text></Text>
                             </>
                         )}
                     </View>

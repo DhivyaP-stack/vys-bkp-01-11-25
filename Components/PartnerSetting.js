@@ -40,14 +40,15 @@ import MatchingStars from '../Components/MatchingStars/MatchingStars';
 // });
 
 const schema = z.object({
-    ageDifference: z.string().optional(),
-    heightFrom: z.string().optional(),
+    ageDifference: z.string().min(1, "Age Difference is required"),
+    heightFrom: z.string().min(1, "Height From is required"),
     heightTo: z.string().min(1, "Height To is required"),
-    chevvai: z.string().min(1, "Chevvai selection is required"),
-    rehu: z.string().min(1, "Rehu selection is required"),
-    maritalStatus: z.array(z.string()).min(1, "Please select at least one marital status"),
-    education: z.array(z.string()).min(1, "Please select at least one education option"),
-    profession: z.array(z.string()).min(1, "Please select at least one profession"),
+    chevvai: z.string().optional(),
+    rehu: z.string().optional(),
+    maritalStatus: z.array(z.string()).optional(),
+    education: z.array(z.string()).optional(),
+    fieldOfStudy: z.array(z.string()).optional(),
+    profession: z.array(z.string()).optional(),
     annualIncomeMin: z.string().optional(),
     annualIncomeMax: z.string().optional(),
     foreignInterest: z.string().optional(),
@@ -61,6 +62,7 @@ const schema = z.object({
 
 
 const age = [
+    { label: 'Select Age Difference', value: '' },
     { label: '1', value: '1' },
     { label: '2', value: '2' },
     { label: '3', value: '3' },
@@ -94,6 +96,7 @@ export const PartnerSettings = () => {
             heightTo: '',
             maritalStatus: [],
             education: [],
+            fieldOfStudy: [],
             profession: [],
             annualIncomeMin: '',
             annualIncomeMax: '',
@@ -110,7 +113,7 @@ export const PartnerSettings = () => {
     const [highestEduOptions, setHighestEduOptions] = useState([]);
     const [annualIncomeOptions, setAnnualIncomeOptions] = useState([]);
     const [professionOptions, setProfessionOptions] = useState([]);
-
+    const [fieldOfStudyOptions, setFieldOfStudyOptions] = useState([]);
     const [selectedIncomeMinIds, setSelectedIncomeMinIds] = useState(''); // Store selected IDs as a string
     const [selectedIncomeMaxIds, setSelectedIncomeMaxIds] = useState('');
     const [matchingStarsData, setMatchingStarsData] = useState([]); // Holds grouped star data for rendering
@@ -123,6 +126,7 @@ export const PartnerSettings = () => {
         fetchProfessionOptions();
         fetchHighestEdu();
         fetchAnnualIncome();
+        fetchFieldOfStudy();
         //fetchMatchingStars();
         // fetchMatchList();
         //fetchMatchStars();
@@ -192,44 +196,20 @@ export const PartnerSettings = () => {
         }
     };
 
-    // const fetchMatchingStars = async () => {
-    //     try {
-    //         const birthstar = await AsyncStorage.getItem("birthStarValue");
-    //         const gender = await AsyncStorage.getItem("gender");
-    //         const birthstarid = await AsyncStorage.getItem("birthStaridValue");
-    //         console.log("birthstar =====>", birthstar);
-    //         console.log("gender =====>", gender);
-    //         console.log("birthstarid =====>", birthstarid);
+    const fetchFieldOfStudy = async () => {
+        try {
+            const response = await axios.post(`${config.apiUrl}/auth/Get_Field_ofstudy/`);
+            const fieldOfStudyArray = Object.keys(response.data).map(key => ({
+                label: response.data[key].study_description,
+                value: response.data[key].study_id.toString(),
+            }));
+            setFieldOfStudyOptions(fieldOfStudyArray);
+        } catch (error) {
+            console.error("Error fetching field of study:", error);
+        }
+    };
 
-    //         const response = await axios.post(`${config.apiUrl}/auth/Get_Matchstr_Pref/`, {
-    //             // birth_star_id: "10",
-    //             // gender: "female",
-    //             birth_star_id: birthstar,
-    //             gender: gender,
-    //             birth_rasi_id: birthstarid
-    //         });
-    //         // console.log("partner settings matching stsr response ", response)
-    //         const data = response.data;
-    //         // Assuming data is an object like: { "15": [star1, ...], "10": [star2, ...], "0": [star3, ...] }
 
-    //         let flatOptions = [];
-    //         const processedData = Object.keys(data).map(key => {
-    //             const stars = data[key];
-    //             // Add all stars to a flat list for easy lookup later
-    //             flatOptions = [...flatOptions, ...stars];
-    //             return {
-    //                 matchCount: parseInt(key, 10),
-    //                 stars: stars
-    //             };
-    //         }).sort((a, b) => b.matchCount - a.matchCount); // Sort by match count
-
-    //         setMatchingStarsData(processedData);
-    //         setAllStarOptions(flatOptions); // Save the flat list
-
-    //     } catch (error) {
-    //         console.error("Error fetching matching stars:", error);
-    //     }
-    // };
     useEffect(() => {
         const fetchProfileData = async () => {
             try {
@@ -240,6 +220,7 @@ export const PartnerSettings = () => {
                 setValue('ageDifference', partnerProfileData.fromAge);
                 setValue('heightFrom', partnerProfileData.fromHeight);
                 setValue('heightTo', partnerProfileData.toHeight);
+                setValue('education', partnerProfileData.education);
                 setValue('education', partnerProfileData.education);
                 setValue('maritalStatus', partnerProfileData.maritalStatus);
                 setValue('profession', partnerProfileData.profession);
@@ -396,172 +377,6 @@ export const PartnerSettings = () => {
         initializeStarSelection();
     }, [setValue]);
 
-    // useEffect(() => {
-    //     const initializeStarSelection = async () => {
-    //         const birthstar = await AsyncStorage.getItem("birthStarValue");
-    //         const gender = await AsyncStorage.getItem("gender");
-    //         const birthstarid = await AsyncStorage.getItem("birthStaridValue");
-
-    //         // Return early if essential data for fetching is missing
-    //         if (!birthstar || !gender || !birthstarid) return;
-
-    //         try {
-    //             // 1. Fetch the master list of all possible matching stars
-    //             const response = await axios.post(`${config.apiUrl}/auth/Get_Matchstr_Pref/`, {
-    //                 birth_star_id: birthstar,
-    //                 gender: gender,
-    //                 birth_rasi_id: birthstarid
-    //             });
-
-    //             const matchCountArrays = Object.values(response.data);
-    //             console.log("matchCountArrays =====>", matchCountArrays);
-
-    //             // For rendering grouped stars in UI
-    //             setMatchingStarsData(matchCountArrays);
-
-    //             // Flatten the groups of stars into a single "master list" for easy lookup
-    //             const allAvailableStars = matchCountArrays.flatMap(matchCountArray =>
-    //                 matchCountArray.map(star => ({
-    //                     id: star.id.toString(),
-    //                     rasi: star.dest_rasi_id.toString(),
-    //                     star: star.dest_star_id.toString(),
-    //                     label: `${star.matching_starname} - ${star.matching_rasiname}`,
-    //                     match_count: star.match_count
-    //                 }))
-    //             );
-
-    //             setAllStarOptions(allAvailableStars);
-
-    //             // 2. Fetch the user's saved partner preferences
-    //             try {
-    //                 const partnerProfileData = await fetchPartnerProfile();
-    //                 console.log("partnerProfileData", partnerProfileData);
-
-    //                 // 3. Check if the user has previously saved star preferences
-    //                 if (partnerProfileData && partnerProfileData.partner_porutham_ids && partnerProfileData.partner_porutham_ids.trim() !== '') {
-    //                     console.log("Found saved star preferences:", partnerProfileData.partner_porutham_ids);
-
-    //                     // Split the comma-separated string of saved IDs into an array
-    //                     const savedStarIds = partnerProfileData.partner_porutham_ids
-    //                         .split(",")
-    //                         .map(id => id.trim());
-
-    //                     // Map over the saved IDs and find the full star object from our master list
-    //                     const apiSelectedItems = savedStarIds
-    //                         .map(savedId => {
-    //                             // Find the complete star object in our master list that matches the saved ID
-    //                             const matchingStar = allAvailableStars.find(
-    //                                 star => star.id.toString() === savedId
-    //                             );
-
-    //                             // If found, construct the object needed for the state
-    //                             if (matchingStar) {
-    //                                 return {
-    //                                     id: matchingStar.id.toString(),
-    //                                     rasi: matchingStar.rasi,
-    //                                     star: matchingStar.star,
-    //                                     label: matchingStar.label,
-    //                                 };
-    //                             }
-    //                             // If an old ID is not in the current master list, it will be ignored
-    //                             return null;
-    //                         })
-    //                         .filter(item => item !== null); // Filter out any nulls
-
-    //                     // Set the state with the preferences loaded from the API
-    //                     setSelectedStarIds(apiSelectedItems);
-    //                     setValue('matchingStars', apiSelectedItems);
-
-    //                 } else {
-    //                     // 4. FALLBACK: If there's no saved profile data, set the default selections
-    //                     console.log("No saved preferences found. Setting default star selections.");
-    //                     setDefaultSelections(allAvailableStars);
-    //                 }
-
-    //             } catch (profileError) {
-    //                 console.error("Error fetching partner profile:", profileError);
-    //                 // If profile fetch fails, set default selections
-    //                 setDefaultSelections(allAvailableStars);
-    //             }
-
-    //         } catch (error) {
-    //             console.error("Error fetching matching stars:", error);
-    //         }
-    //     };
-
-    //     // Helper function to set default selections
-    //     const setDefaultSelections = (allStars) => {
-    //         const defaultSelectedIds = allStars
-    //             .filter(item => item.match_count > 0) // Select all with at least one match
-    //             .map(item => ({
-    //                 id: item.id.toString(),
-    //                 rasi: item.rasi,
-    //                 star: item.star,
-    //                 label: item.label,
-    //             }));
-
-    //         setSelectedStarIds(defaultSelectedIds);
-    //         setValue('matchingStars', defaultSelectedIds);
-    //     };
-
-    //     initializeStarSelection();
-    // }, [setValue]);
-
-
-    // useEffect(() => {
-    //     const fetchMatchingStars = async () => {
-    //         const birthstar = await AsyncStorage.getItem("birthStarValue");
-    //         const gender = await AsyncStorage.getItem("gender");
-    //         const birthstarid = await AsyncStorage.getItem("birthStaridValue");
-    //         console.log("birthstar =====>", birthstar);
-    //         console.log("gender =====>", gender);
-    //         console.log("birthstarid =====>", birthstarid);
-    //         try {
-    //             const response = await axios.post(`${config.apiUrl}/auth/Get_Matchstr_Pref/`, {
-    //                 birth_star_id: birthstar,
-    //                 gender: gender,
-    //                 birth_rasi_id: birthstarid
-    //             });
-
-    //             const matchCountArrays = Object.values(response.data);
-    //             console.log("matchCountArrays =====>", matchCountArrays);
-    //             setMatchingStarsData(matchCountArrays);
-
-    //             // 1. Create a flat list of ALL star options for later lookup
-    //             const allStarsFlat = matchCountArrays.flatMap(matchCountArray =>
-    //                 matchCountArray.map(star => ({
-    //                     id: star.id.toString(),
-    //                     rasi: star.dest_rasi_id.toString(),
-    //                     star: star.dest_star_id.toString(),
-    //                     label: `${star.matching_starname} - ${star.matching_rasiname}`,
-    //                     match_count: star.match_count
-    //                     // You can add other star properties if needed
-    //                 }))
-    //             );
-    //             setAllStarOptions(allStarsFlat); // <-- This is important
-
-    //             // 2. Initialize `initialSelected` excluding stars with 0 poruthams
-    //             const initialSelected = allStarsFlat
-    //                 .filter(star => star.match_count !== 0) // Exclude stars with 0 poruthams
-    //                 .map(star => ({ // Map to the structure needed
-    //                     id: star.id,
-    //                     rasi: star.rasi,
-    //                     star: star.star,
-    //                     label: star.label
-    //                 }));
-
-    //             // 3. Set BOTH the state and the form's default value
-    //             setSelectedStarIds(initialSelected);
-    //             setValue('matchingStars', initialSelected); // <-- Set default form value
-
-    //             console.log('Response from server:', matchCountArrays);
-    //         } catch (error) {
-    //             console.error('Error fetching matching star options:', error);
-    //         }
-    //     };
-    //     fetchMatchingStars();
-    // }, [setValue]); // Keep dependency as [setValue]
-
     const onSubmit = async (data) => {
         try {
             // Combine income min and max into a comma-separated string
@@ -588,6 +403,7 @@ export const PartnerSettings = () => {
                 pref_marital_status: data.maritalStatus ? data.maritalStatus.join(',') : '',
                 pref_profession: data.profession ? data.profession.join(',') : '',
                 pref_education: data.education ? data.education.join(',') : '',
+                pref_fieldof_study: data.fieldOfStudy ? data.fieldOfStudy.join(',') : '',
                 pref_anual_income: data.annualIncomeMin || '',
                 pref_anual_income_max: data.annualIncomeMax || '',
                 pref_chevvai: data.chevvai || '',
@@ -628,7 +444,22 @@ export const PartnerSettings = () => {
         }
     };
 
+    // ... Inside your PartnerSettings component, after the onSubmit function ...
 
+    const onError = (errors, e) => {
+        console.log("--- VALIDATION FAILED ---", errors);
+
+        // Find the first error message to show in the toast
+        const firstErrorKey = Object.keys(errors)[0];
+        const firstErrorMessage = errors[firstErrorKey]?.message;
+
+        Toast.show({
+            type: 'error',
+            position: 'bottom',
+            text1: 'Submission Failed',
+            text2: firstErrorMessage || 'Please fill all required fields.',
+        });
+    };
 
     useEffect(() => {
         const fetchProfileData = async () => {
@@ -646,6 +477,7 @@ export const PartnerSettings = () => {
                 setValue('heightFrom', partnerProfileData.fromHeight);
                 setValue('heightTo', partnerProfileData.toHeight);
                 setValue('education', partnerProfileData.education);
+                setValue('fieldOfStudy', partnerProfileData.fieldofstudy);
                 setValue('maritalStatus', partnerProfileData.maritalStatus);
                 setValue('profession', partnerProfileData.profession);
                 setValue('rehu', partnerProfileData.rahuKetuDhosam);
@@ -726,7 +558,7 @@ export const PartnerSettings = () => {
                             )}
                         />
                     </View>
-                    {/* {errors.ageDifference && <Text style={styles.errorText}>{errors.ageDifference.message}</Text>} */}
+                    {errors.ageDifference && <Text style={styles.errorText}>{errors.ageDifference.message}</Text>}
                 </View>
             </View>
 
@@ -748,9 +580,9 @@ export const PartnerSettings = () => {
                                         value={value}
                                         onChangeText={onChange}
                                     />
-                                    {/* {errors.heightFrom && (
+                                    {errors.heightFrom && (
                                         <Text style={styles.errorText}>{errors.heightFrom.message}</Text>
-                                    )} */}
+                                    )}
                                 </View>
                             )}
                         />
@@ -926,6 +758,79 @@ export const PartnerSettings = () => {
                 {errors.education && <Text style={styles.errorTextCheckBox}>{errors.education.message}</Text>}
             </View>
 
+            {/* Field of Study */}
+            <View style={styles.checkContainer}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                    <Pressable
+                        style={[
+                            styles.checkboxBase,
+                            (watch("fieldOfStudy")?.length === fieldOfStudyOptions.length && fieldOfStudyOptions.length > 0) && styles.checkboxChecked,
+                        ]}
+                        onPress={() => {
+                            const allValues = fieldOfStudyOptions.map(opt => opt.value);
+                            if (watch("fieldOfStudy")?.length === fieldOfStudyOptions.length) {
+                                setValue("fieldOfStudy", []);
+                            } else {
+                                setValue("fieldOfStudy", allValues);
+                            }
+                        }}
+                    >
+                        {(watch("fieldOfStudy")?.length === fieldOfStudyOptions.length && fieldOfStudyOptions.length > 0) && (
+                            <Ionicons name="checkmark" size={14} color="white" />
+                        )}
+                    </Pressable>
+                    <Pressable
+                        onPress={() => {
+                            const allValues = fieldOfStudyOptions.map(opt => opt.value);
+                            if (watch("fieldOfStudy")?.length === fieldOfStudyOptions.length) {
+                                setValue("fieldOfStudy", []);
+                            } else {
+                                setValue("fieldOfStudy", allValues);
+                            }
+                        }}
+                    >
+                        <Text style={styles.checkRedText}>Field of Study</Text>
+                    </Pressable>
+                </View>
+                <Controller
+                    control={control}
+                    name="fieldOfStudy"
+                    render={({ field: { onChange, value } }) => (
+                        <View style={styles.checkboxDivColFlex}>
+                            {fieldOfStudyOptions.map((field) => (
+                                <View key={field.value} style={styles.checkboxContainer}>
+                                    <Pressable
+                                        style={[
+                                            styles.checkboxBase,
+                                            value.includes(field.value) && styles.checkboxChecked,
+                                        ]}
+                                        onPress={() => {
+                                            const newValue = value.includes(field.value)
+                                                ? value.filter((item) => item !== field.value)
+                                                : [...value, field.value];
+                                            onChange(newValue);
+                                        }}
+                                    >
+                                        {value.includes(field.value) && (
+                                            <Ionicons name="checkmark" size={14} color="white" />
+                                        )}
+                                    </Pressable>
+                                    <Pressable onPress={() => {
+                                        const newValue = value.includes(field.value)
+                                            ? value.filter((item) => item !== field.value)
+                                            : [...value, field.value];
+                                        onChange(newValue);
+                                    }}>
+                                        <Text style={styles.checkboxLabel}>{field.label}</Text>
+                                    </Pressable>
+                                </View>
+                            ))}
+                        </View>
+                    )}
+                />
+                {errors.fieldOfStudy && <Text style={styles.errorTextCheckBox}>{errors.fieldOfStudy.message}</Text>}
+            </View>
+
             {/* Profession */}
             <View style={styles.checkContainer}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
@@ -935,7 +840,8 @@ export const PartnerSettings = () => {
                             (watch("profession")?.length === professionOptions.length && professionOptions.length > 0) && styles.checkboxChecked,
                         ]}
                         onPress={() => {
-                            const allValues = professionOptions;
+                            // --- THIS IS THE FIX ---
+                            const allValues = professionOptions.map(opt => opt.value);
                             if (watch("profession")?.length === professionOptions.length) {
                                 setValue("profession", []);
                             } else {
@@ -949,7 +855,7 @@ export const PartnerSettings = () => {
                     </Pressable>
                     <Pressable
                         onPress={() => {
-                            const allValues = professionOptions;
+                            const allValues = professionOptions.map(opt => opt.value);
                             if (watch("profession")?.length === professionOptions.length) {
                                 setValue("profession", []);
                             } else {
@@ -1012,7 +918,7 @@ export const PartnerSettings = () => {
                                     style={styles.dropdown}
                                     placeholderStyle={styles.placeholderStyle}
                                     selectedTextStyle={styles.selectedTextStyle}
-                                    data={annualIncomeOptions} // Use the incomeOptions array
+                                    data={[{ label: 'Select Annual Income Min', value: '' }, ...annualIncomeOptions]} // Use the incomeOptions array
                                     maxHeight={180}
                                     labelField="label"
                                     valueField="value"
@@ -1081,7 +987,7 @@ export const PartnerSettings = () => {
                                     style={styles.dropdown}
                                     placeholderStyle={styles.placeholderStyle}
                                     selectedTextStyle={styles.selectedTextStyle}
-                                    data={annualIncomeOptions} // Use the incomeOptions array
+                                    data={[{ label: 'Select Annual Income Max', value: '' }, ...annualIncomeOptions]}// Use the incomeOptions array
                                     maxHeight={180}
                                     labelField="label"
                                     valueField="value"
@@ -1118,6 +1024,7 @@ export const PartnerSettings = () => {
                                 <Dropdown
                                     style={styles.dropdown}
                                     data={[
+                                        { label: "Select Chevvai", value: "" },
                                         { label: "Yes", value: "Yes" },
                                         { label: "No", value: "No" },
                                         { label: "Both", value: "Both" }
@@ -1150,6 +1057,7 @@ export const PartnerSettings = () => {
                                 <Dropdown
                                     style={styles.dropdown}
                                     data={[
+                                        { label: "Select Rahu/Ketu Dhosam", value: "" },
                                         { label: "Yes", value: "Yes" },
                                         { label: "No", value: "No" },
                                         { label: "Both", value: "Both" }
@@ -1157,7 +1065,7 @@ export const PartnerSettings = () => {
                                     maxHeight={180}
                                     labelField="label"
                                     valueField="value"
-                                    placeholder="Select Rehu"
+                                    placeholder="Select Rahu/Ketu Dhosam"
                                     value={value}
                                     onChange={(item) => {
                                         onChange(item.value);
@@ -1182,13 +1090,15 @@ export const PartnerSettings = () => {
                             render={({ field: { onChange, value } }) => (
                                 <Dropdown
                                     style={styles.dropdown}
-                                    data={[{ label: 'Yes', value: 'Yes' },
-                                    { label: 'No', value: 'No' },
-                                    { label: 'Both', value: 'Both' }]}
+                                    data={[
+                                        { label: 'Select Foreign Interest', value: '' },
+                                        { label: 'Yes', value: 'Yes' },
+                                        { label: 'No', value: 'No' },
+                                        { label: 'Both', value: 'Both' }]}
                                     maxHeight={180}
                                     labelField="label"
                                     valueField="value"
-                                    placeholder="Select your Foreign Interest"
+                                    placeholder="Select Foreign Interest"
                                     value={value}
                                     onChange={(item) => {
                                         onChange(item.value);
@@ -1240,7 +1150,7 @@ export const PartnerSettings = () => {
             <View style={styles.formContainer}>
                 <TouchableOpacity
                     style={styles.btn}
-                    onPress={handleSubmit(onSubmit)}
+                    onPress={handleSubmit(onSubmit, onError)}
                 >
                     <LinearGradient
                         colors={["#BD1225", "#FF4050"]}

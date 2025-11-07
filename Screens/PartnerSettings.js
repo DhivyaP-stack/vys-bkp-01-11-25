@@ -126,7 +126,7 @@ export const PartnerSettings = () => {
 
 
     const maritalStatusSelected = watch("maritalStatus") || [];
-
+    const fieldOfStudySelected = watch("fieldOfStudy") || [];
 
     const fetchFieldOfStudy = async () => {
         try {
@@ -234,9 +234,9 @@ export const PartnerSettings = () => {
             const birthstar = await AsyncStorage.getItem("birthStarValue");
             const gender = await AsyncStorage.getItem("gender");
             const birthstarid = await AsyncStorage.getItem("birthStaridValue");
-            console.log("birthstar =====>",birthstar);
-            console.log("gender =====>",gender);
-            console.log("birthstarid =====>",birthstarid);
+            console.log("birthstar =====>", birthstar);
+            console.log("gender =====>", gender);
+            console.log("birthstarid =====>", birthstarid);
             try {
                 const response = await axios.post(`${config.apiUrl}/auth/Get_Matchstr_Pref/`, {
                     // birth_star_id: "10",
@@ -247,7 +247,7 @@ export const PartnerSettings = () => {
                 });
 
                 const matchCountArrays = Object.values(response.data);
-                console.log("matchCountArrays =====>",matchCountArrays);
+                console.log("matchCountArrays =====>", matchCountArrays);
                 setMatchStars(matchCountArrays);
 
                 // Initialize `selectedStarIds` excluding stars with 0 poruthams
@@ -298,7 +298,7 @@ export const PartnerSettings = () => {
         console.log("Data submitted:", data);
         try {
             setSubmitting(true);
-            
+
             const profileId = await AsyncStorage.getItem("profile_id_new");
             if (!profileId) {
                 throw new Error("ProfileId not found in sessionStorage");
@@ -670,51 +670,81 @@ export const PartnerSettings = () => {
 
 
                 <View style={styles.searchContainer}>
-                    <Text style={styles.redText}>Field of Study</Text>
-                    <View style={styles.formContainer}>
-                        <View style={styles.inputContainer}>
-                            {/* {["1", "2", "3"].some((v) => control._formValues?.education?.includes(v)) ? ( */}
-                                <Controller
-                                    control={control}
-                                    name="fieldOfStudy"
-                                    render={({ field: { onChange, value } }) => (
-                                        <View style={styles.checkboxDivColFlex}>
-                                            {fieldOfStudyOptions.map((field) => (
-                                                <View key={field.value} style={styles.checkboxContainer}>
-                                                    <Pressable
-                                                        style={[
-                                                            styles.checkboxBase,
-                                                            value?.includes(field.value) && styles.checkboxChecked,
-                                                        ]}
-                                                        onPress={() => {
-                                                            const newValue = value?.includes(field.value)
-                                                                ? value.filter((item) => item !== field.value) // Remove if already selected
-                                                                : [...(value || []), field.value]; // Add if not selected
-                                                            onChange(newValue);
-                                                        }}
-                                                    >
-                                                        {value?.includes(field.value) && (
-                                                            <Ionicons name="checkmark" size={14} color="white" />
-                                                        )}
-                                                    </Pressable>
-                                                    <Pressable
-                                                        onPress={() => {
-                                                            const newValue = value?.includes(field.value)
-                                                                ? value.filter((item) => item !== field.value)
-                                                                : [...(value || []), field.value];
-                                                            onChange(newValue);
-                                                        }}
-                                                    >
-                                                        <Text style={styles.checkboxLabel}>{field.label}</Text>
-                                                    </Pressable>
-                                                </View>
-                                            ))}
-                                        </View>
-                                    )}
-                                />
-                          
-                            {fieldError && <Text style={styles.errorText}>{fieldError}</Text>}
+                    {/* <Text style={styles.redText}>Field of Study</Text> */}
+                    {/* Field of Study Section */}
+                    <View style={styles.checkContainer}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                            <Pressable
+                                style={[
+                                    styles.checkboxBase,
+                                    (fieldOfStudySelected?.length === fieldOfStudyOptions.length && fieldOfStudyOptions.length > 0) && styles.checkboxChecked,
+                                ]}
+                                onPress={() => {
+                                    const allValues = fieldOfStudyOptions.map(opt => opt.value);
+                                    if (fieldOfStudySelected?.length === fieldOfStudyOptions.length) {
+                                        setValue("fieldOfStudy", []);
+                                    } else {
+                                        setValue("fieldOfStudy", allValues);
+                                    }
+                                }}
+                            >
+                                {(fieldOfStudySelected?.length === fieldOfStudyOptions.length && fieldOfStudyOptions.length > 0) && (
+                                    <Ionicons name="checkmark" size={14} color="white" />
+                                )}
+                            </Pressable>
+                            <Pressable
+                                onPress={() => {
+                                    const allValues = fieldOfStudyOptions.map(opt => opt.value);
+                                    if (fieldOfStudySelected?.length === fieldOfStudyOptions.length) {
+                                        setValue("fieldOfStudy", []);
+                                    } else {
+                                        setValue("fieldOfStudy", allValues);
+                                    }
+                                }}
+                            >
+                                <Text style={styles.checkRedText}>Field of Study</Text>
+                            </Pressable>
                         </View>
+
+                        <Controller
+                            control={control}
+                            name="fieldOfStudy"
+                            render={({ field: { onChange, value } }) => (
+                                <View style={styles.checkboxDivColFlex}>
+                                    {fieldOfStudyOptions.map((field) => (
+                                        <View key={field.value} style={styles.checkboxContainer}>
+                                            <Pressable
+                                                style={[
+                                                    styles.checkboxBase,
+                                                    value?.includes(field.value) && styles.checkboxChecked,
+                                                ]}
+                                                onPress={() => {
+                                                    const newValue = value?.includes(field.value)
+                                                        ? value.filter((item) => item !== field.value) // Remove if already selected
+                                                        : [...(value || []), field.value]; // Add if not selected
+                                                    onChange(newValue);
+                                                }}
+                                            >
+                                                {value?.includes(field.value) && (
+                                                    <Ionicons name="checkmark" size={14} color="white" />
+                                                )}
+                                            </Pressable>
+                                            <Pressable
+                                                onPress={() => {
+                                                    const newValue = value?.includes(field.value)
+                                                        ? value.filter((item) => item !== field.value)
+                                                        : [...(value || []), field.value];
+                                                    onChange(newValue);
+                                                }}
+                                            >
+                                                <Text style={styles.checkboxLabel}>{field.label}</Text>
+                                            </Pressable>
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
+                        />
+                        {fieldError && <Text style={styles.errorText}>{fieldError}</Text>}
                     </View>
                 </View>
 
@@ -1377,7 +1407,7 @@ const styles = StyleSheet.create({
         alignSelf: "flex-start",
         // paddingHorizontal: 10,
         marginBottom: 10,
-        marginTop : 7
+        marginTop: 7
     },
 
     checkboxDivFlex: {
@@ -1556,19 +1586,19 @@ const styles = StyleSheet.create({
         textAlign: "left",
     },
 
-redText1: {
-    color: "#535665",
-    fontSize: 20,
-    fontWeight: "700",
-    fontFamily: "inter",
-    alignSelf: "flex-start",
-    paddingHorizontal: 20,
+    redText1: {
+        color: "#535665",
+        fontSize: 20,
+        fontWeight: "700",
+        fontFamily: "inter",
+        alignSelf: "flex-start",
+        paddingHorizontal: 20,
         // paddingHorizontal: 20,
         // marginBottom: 10,
     },
 
 
-formContainer1: {
+    formContainer1: {
         width: "100%",
         paddingHorizontal: 20,
         // flexDirection: "row",

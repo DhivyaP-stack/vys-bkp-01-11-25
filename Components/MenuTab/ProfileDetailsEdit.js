@@ -388,6 +388,7 @@ export const ProfileDetailsEdit = () => {
 
     const validateForm = () => {
         const errors = {};
+        const isTenDigits = (value) => /^\d{10}$/.test(value);
         // Validate each field
         if (!formValues.personal_profile_name || formValues.personal_profile_name.trim() === '') {
             errors.personal_profile_name = 'Name is required';
@@ -410,6 +411,9 @@ export const ProfileDetailsEdit = () => {
         }
         if (!formValues.personal_profile_complexion_id) {
             errors.personal_profile_complexion_id = 'Complexion is required';
+        }
+        if (formValues.Mobile_no && !isTenDigits(formValues.Mobile_no)) {
+            errors.Mobile_no = 'Please enter at least 10 digits for Registered Mobile';
         }
         // if (!formValues.personal_blood_group) errors.personal_blood_group = 'Blood group is required';
         // if (!formValues.personal_about_self) errors.personal_about_self = 'About yourself is required';
@@ -930,12 +934,14 @@ export const ProfileDetailsEdit = () => {
                                     style={styles.input}
                                     placeholder="Registered Mobile"
                                     value={formValues.Mobile_no}
+                                    useNativeAndroidPickerStyle={false}
                                     onChangeText={(text) => handleChange('Mobile_no', text)}
                                     keyboardType="numeric"
-                                    minLength={10}
-                                    maxLength={15}
+
                                 />
-                                {/* {validationErrors.personal_pysically_changed && <Text style={styles.error}>{validationErrors.personal_pysically_changed}</Text>} */}
+                                {validationErrors.Mobile_no && (
+                                    <Text style={styles.error}>{validationErrors.Mobile_no}</Text>
+                                )}
 
                                 {/* <Text style={styles.labelNew}>Profile Created For</Text>
                                 <RNPickerSelect
@@ -1023,23 +1029,23 @@ export const ProfileDetailsEdit = () => {
                                     <View style={styles.line} /> */}
                                 {personalDetails && (
                                     <>
-                                        <Text style={styles.labelNew}>Name : <Text style={styles.valueNew}>{personalDetails.personal_profile_name}</Text></Text>
-                                        <Text style={styles.labelNew}>Gender : <Text style={styles.valueNew}>{personalDetails.personal_gender}</Text></Text>
-                                        <Text style={styles.labelNew}>Age : <Text style={styles.valueNew}>{personalDetails.personal_age} Years</Text></Text>
+                                        <Text style={styles.labelNew}>Name : <Text style={styles.valueNew}>{personalDetails.personal_profile_name || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Gender : <Text style={styles.valueNew}>{personalDetails.personal_gender || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Age : <Text style={styles.valueNew}>{personalDetails.personal_age || "N/A"} Years</Text></Text>
                                         <Text style={styles.labelNew}>DOB : <Text style={styles.valueNew}>{personalDetails.personal_profile_dob}</Text></Text>
-                                        <Text style={styles.labelNew}>Place of Birth : <Text style={styles.valueNew}>{personalDetails.personal_place_of_birth}</Text></Text>
-                                        <Text style={styles.labelNew}>Time of Birth : <Text style={styles.valueNew}>{personalDetails.personal_time_of_birth}</Text></Text>
-                                        <Text style={styles.labelNew}>Height : <Text style={styles.valueNew}>{personalDetails.personal_profile_height}</Text></Text>
-                                        <Text style={styles.labelNew}>Weight : <Text style={styles.valueNew}>{personalDetails.personal_weight}</Text></Text>
-                                        <Text style={styles.labelNew}>Body Type : <Text style={styles.valueNew}>{personalDetails.personal_body_type}</Text></Text>
-                                        <Text style={styles.labelNew}>Eye Wear : <Text style={styles.valueNew}>{personalDetails.personal_eye_wear}</Text></Text>
-                                        <Text style={styles.labelNew}>Marital Status : <Text style={styles.valueNew}>{personalDetails.personal_profile_marital_status_name}</Text></Text>
-                                        <Text style={styles.labelNew}>Blood Group : <Text style={styles.valueNew}>{personalDetails.personal_blood_group}</Text></Text>
-                                        <Text style={styles.labelNew}>About Myself : <Text style={styles.valueNew}>{personalDetails.personal_about_self}</Text></Text>
-                                        <Text style={styles.labelNew}>Complexion : <Text style={styles.valueNew}>{personalDetails.personal_profile_complexion_name}</Text></Text>
-                                        <Text style={styles.labelNew}>Hobbies : <Text style={styles.valueNew}>{personalDetails.personal_hobbies}</Text></Text>
-                                        <Text style={styles.labelNew}>Physical Status : <Text style={styles.valueNew}>{personalDetails.personal_pysically_changed}</Text></Text>
-                                        <Text style={styles.labelNew}>Registered Mobile : <Text style={styles.valueNew}>{personalDetails.mobile_no}</Text></Text>
+                                        <Text style={styles.labelNew}>Place of Birth : <Text style={styles.valueNew}>{personalDetails.personal_place_of_birth || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Time of Birth : <Text style={styles.valueNew}>{personalDetails.personal_time_of_birth || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Height : <Text style={styles.valueNew}>{personalDetails.personal_profile_height || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Weight : <Text style={styles.valueNew}>{personalDetails.personal_weight || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Body Type : <Text style={styles.valueNew}>{personalDetails.personal_body_type || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Eye Wear : <Text style={styles.valueNew}>{personalDetails.personal_eye_wear || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Marital Status : <Text style={styles.valueNew}>{personalDetails.personal_profile_marital_status_name || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Blood Group : <Text style={styles.valueNew}>{personalDetails.personal_blood_group || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>About Myself : <Text style={styles.valueNew}>{personalDetails.personal_about_self || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Complexion : <Text style={styles.valueNew}>{personalDetails.personal_profile_complexion_name || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Hobbies : <Text style={styles.valueNew}>{personalDetails.personal_hobbies || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Physical Status : <Text style={styles.valueNew}>{personalDetails.personal_pysically_changed || "N/A"}</Text></Text>
+                                        <Text style={styles.labelNew}>Registered Mobile : <Text style={styles.valueNew}>{personalDetails.mobile_no || "N/A"}</Text></Text>
                                         {/* <Text style={styles.labelNew}>Profile Created By : <Text style={styles.valueNew}>{personalDetails.personal_profile_for_name}</Text></Text> */}
                                         {/* {[2, 3, 5].includes(Number(personalDetails.personal_profile_marital_status_id)) && (
                                                 <Text style={styles.labelNew}>

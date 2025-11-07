@@ -733,18 +733,18 @@ export const FamilyDetails = () => {
                         {/* View Mode */}
                         {familyDetails && (
                             <>
-                                <Text style={styles.labelNew}>About My Family : <Text style={styles.valueNew}>{familyDetails.personal_about_fam}</Text></Text>
-                                <Text style={styles.labelNew}>Father Name : <Text style={styles.valueNew}>{familyDetails.personal_father_name}</Text></Text>
-                                <Text style={styles.labelNew}>Father's Occupation : <Text style={styles.valueNew}>{familyDetails.personal_father_occu_name}</Text></Text>
-                                <Text style={styles.labelNew}>Mother Name : <Text style={styles.valueNew}>{familyDetails.personal_mother_name}</Text></Text>
-                                <Text style={styles.labelNew}>Mother's Occupation : <Text style={styles.valueNew}>{familyDetails.personal_mother_occu_name}</Text></Text>
-                                <Text style={styles.labelNew}>Family Status : <Text style={styles.valueNew}>{familyDetails.personal_fam_sta_name}</Text></Text>
-                                <Text style={styles.labelNew}>Sisters : <Text style={styles.valueNew}>{familyDetails.personal_sis}</Text></Text>
-                                <Text style={styles.labelNew}>Sisters Married : <Text style={styles.valueNew}>{familyDetails.personal_sis_married}</Text></Text>
-                                <Text style={styles.labelNew}>Brothers : <Text style={styles.valueNew}>{familyDetails.personal_bro}</Text></Text>
-                                <Text style={styles.labelNew}>Brothers Married : <Text style={styles.valueNew}>{familyDetails.personal_bro_married}</Text></Text>
-                                <Text style={styles.labelNew}>Property Details : <Text style={styles.valueNew}>{familyDetails.personal_prope_det}</Text></Text>
-                                <Text style={styles.labelNew}>Property Worth : <Text style={styles.valueNew}>{familyDetails.personal_property_worth}</Text></Text>
+                                <Text style={styles.labelNew}>About My Family : <Text style={styles.valueNew}>{familyDetails.personal_about_fam || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Father Name : <Text style={styles.valueNew}>{familyDetails.personal_father_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Father's Occupation : <Text style={styles.valueNew}>{familyDetails.personal_father_occu_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Mother Name : <Text style={styles.valueNew}>{familyDetails.personal_mother_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Mother's Occupation : <Text style={styles.valueNew}>{familyDetails.personal_mother_occu_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Family Status : <Text style={styles.valueNew}>{familyDetails.personal_fam_sta_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Sisters : <Text style={styles.valueNew}>{familyDetails.personal_sis || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Sisters Married : <Text style={styles.valueNew}>{familyDetails.personal_sis_married || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Brothers : <Text style={styles.valueNew}>{familyDetails.personal_bro || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Brothers Married : <Text style={styles.valueNew}>{familyDetails.personal_bro_married || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Property Details : <Text style={styles.valueNew}>{familyDetails.personal_prope_det || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Property Worth : <Text style={styles.valueNew}>{familyDetails.personal_property_worth || "N/A"}</Text></Text>
                                 {(martialStatus === "2" || martialStatus === "3" || martialStatus === "5") && (
                                     <Text style={styles.labelNew}>
                                         No of Children : <Text style={styles.valueNew}>{familyDetails.personal_no_of_children}</Text>

@@ -1024,6 +1024,7 @@ export const fetchPartnerProfile = async () => {
 
         // Map the selected values for education, profession, and income
         const selectedEducation = data.partner_edu_id.split(',').map((id) => id.trim());
+        const selectedFieldofStudy = data.partner_field_of_study.split(',').map((id) => id.trim());
         const selectedProfession = data.partner_profe.split(',').map((id) => id.trim());
         const selectedIncome = data.partner_ann_inc.split(',').map((id) => id.trim());
         const selectedIncomeMax = data.partner_ann_inc_max.split(',').map((id) => id.trim());
@@ -1037,6 +1038,7 @@ export const fetchPartnerProfile = async () => {
             // toHeight: data.partner_height_to || '',
             toHeight: data.partner_height_to || '',
             education: selectedEducation,
+            fieldofstudy: selectedFieldofStudy,
             maritalStatus: selectedStatus,
             income: selectedIncome,
             profession: selectedProfession,
@@ -1612,7 +1614,7 @@ export const removeProfileImage = async (formData) => {
         });
 
         const result = response.data;
-        
+
         if (result.success === 1) {
             return { success: true, message: result.message };
         } else {
@@ -2109,10 +2111,10 @@ export const fetchPhotoRequest = async (perPage, page, sortBy = "datetime") => {
 
         if (response.data.Status === 1) {
             // Return the complete data structure
-            return { 
-                success: true, 
+            return {
+                success: true,
                 data: response.data.data,
-                Status: response.data.Status 
+                Status: response.data.Status
             };
         } else {
             Toast.show({
@@ -2120,10 +2122,10 @@ export const fetchPhotoRequest = async (perPage, page, sortBy = "datetime") => {
                 text1: "Error",
                 text2: response.data.message,
             });
-            return { 
-                success: false, 
+            return {
+                success: false,
                 data: null,
-                Status: response.data.Status 
+                Status: response.data.Status
             };
         }
     } catch (error) {
@@ -2133,10 +2135,10 @@ export const fetchPhotoRequest = async (perPage, page, sortBy = "datetime") => {
             text2: "Failed to load profiles.",
         });
         console.error(error);
-        return { 
-            success: false, 
+        return {
+            success: false,
             data: null,
-            Status: 0 
+            Status: 0
         };
     }
 };

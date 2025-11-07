@@ -267,6 +267,11 @@ export const PayNow = () => {
           text1: "Payment Cancelled",
           text2: "You have cancelled the payment",
         });
+        Alert.alert(
+          "Payment Incompleted",
+          "It looks like your payment was not completed. Please retry, or share your transaction screenshot with us on WhatsApp 9944851550 for assistance.",
+          [{ text: "OK" }]
+        );
       } else if (error.code === 2) {
         // Network error
         Toast.show({
@@ -280,6 +285,11 @@ export const PayNow = () => {
           text1: "Payment Failed",
           text2: error.description || "Something went wrong. Please try again.",
         });
+        Alert.alert(
+          "Payment Incompleted",
+          "It looks like your payment was not completed. Please retry, or share your transaction screenshot with us on WhatsApp 9944851550 for assistance.",
+          [{ text: "OK" }]
+        );
       }
     }
   };

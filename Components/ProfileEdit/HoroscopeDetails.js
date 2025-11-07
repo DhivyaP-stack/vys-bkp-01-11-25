@@ -309,7 +309,7 @@ export const HoroscopeDetails = () => {
                     ragu_dosham: formValues.personal_ragu_dos || '',
                     nalikai: formValues.personal_nalikai || '',
                     suya_gothram: formValues.personal_surya_goth || '',
-                    madulamn:formValues.personal_madulamn || '',
+                    madulamn: formValues.personal_madulamn || '',
                     dasa_name: formValues.personal_dasa || '',
                     dasa_balance: formValues.personal_dasa_bal_day ?
                         `day:${formValues.personal_dasa_bal_day}, month:${formValues.personal_dasa_bal_month}, year:${formValues.personal_dasa_bal_year}` : '',
@@ -672,18 +672,18 @@ export const HoroscopeDetails = () => {
                     <View style={styles.editOptions}>
                         {horoscopeDetails && (
                             <>
-                                <Text style={styles.labelNew}>Birth Star : <Text style={styles.valueNew}>{horoscopeDetails.personal_bthstar_name}</Text></Text>
-                                <Text style={styles.labelNew}>Rasi : <Text style={styles.valueNew}>{horoscopeDetails.personal_bth_rasi_name}</Text></Text>
-                                <Text style={styles.labelNew}>Lagnam : <Text style={styles.valueNew}>{horoscopeDetails.personal_lagnam_didi_name}</Text></Text>
-                                <Text style={styles.labelNew}>Dasa Name : <Text style={styles.valueNew}>{horoscopeDetails.personal_dasa}</Text></Text>
-                                <Text style={styles.labelNew}>Dasa Balance : <Text style={styles.valueNew}>{horoscopeDetails.personal_dasa_bal}</Text></Text>
-                                <Text style={styles.labelNew}>Nallikai : <Text style={styles.valueNew}>{horoscopeDetails.personal_nalikai}</Text></Text>
-                                <Text style={styles.labelNew}>Didi : <Text style={styles.valueNew}>{horoscopeDetails.personal_didi}</Text></Text>
-                                <Text style={styles.labelNew}>Suya Gothram : <Text style={styles.valueNew}>{horoscopeDetails.personal_surya_goth}</Text></Text>
-                                <Text style={styles.labelNew}>Madhulam : <Text style={styles.valueNew}>{horoscopeDetails.personal_madulamn}</Text></Text>
-                                <Text style={styles.labelNew}>Ragu Dosham : <Text style={styles.valueNew}>{horoscopeDetails.personal_ragu_dos}</Text></Text>
-                                <Text style={styles.labelNew}>Chevvai Dosham : <Text style={styles.valueNew}>{horoscopeDetails.personal_chevvai_dos}</Text></Text>
-                                <Text style={styles.labelNew}>Horoscope Hints : <Text style={styles.valueNew}>{horoscopeDetails.personal_horoscope_hints}</Text></Text>
+                                <Text style={styles.labelNew}>Birth Star : <Text style={styles.valueNew}>{horoscopeDetails.personal_bthstar_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Rasi : <Text style={styles.valueNew}>{horoscopeDetails.personal_bth_rasi_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Lagnam : <Text style={styles.valueNew}>{horoscopeDetails.personal_lagnam_didi_name || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Dasa Name : <Text style={styles.valueNew}>{horoscopeDetails.personal_dasa || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Dasa Balance : <Text style={styles.valueNew}>{horoscopeDetails.personal_dasa_bal || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Nallikai : <Text style={styles.valueNew}>{horoscopeDetails.personal_nalikai || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Didi : <Text style={styles.valueNew}>{horoscopeDetails.personal_didi || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Suya Gothram : <Text style={styles.valueNew}>{horoscopeDetails.personal_surya_goth || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Madhulam : <Text style={styles.valueNew}>{horoscopeDetails.personal_madulamn || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Ragu Dosham : <Text style={styles.valueNew}>{horoscopeDetails.personal_ragu_dos || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Chevvai Dosham : <Text style={styles.valueNew}>{horoscopeDetails.personal_chevvai_dos || "N/A"}</Text></Text>
+                                <Text style={styles.labelNew}>Horoscope Hints : <Text style={styles.valueNew}>{horoscopeDetails.personal_horoscope_hints || "N/A"}</Text></Text>
                             </>
                         )}
                     </View>

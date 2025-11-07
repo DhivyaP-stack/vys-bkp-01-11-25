@@ -185,12 +185,12 @@ export const OtpVerify = () => {
       console.log("JSON Response:", JSON.stringify(jsonResponse));
       console.log(jsonResponse.message);
 
-      if (jsonResponse.message !== "OTP verified successfully.") {
+      if (jsonResponse.message === "OTP verified successfully.") {
         Alert.alert("Success", "OTP verified successfully.");
         navigation.navigate("BasicDetails");
         // navigation.navigate("ContactInfo");
       } else {
-        Alert.alert("Error", jsonResponse.Message || "OTP verification failed.");
+        Alert.alert("Error", jsonResponse.message || "OTP verification failed.");
       }
     } catch (error) {
       console.error("OTP verification error:", error);

@@ -573,15 +573,16 @@ export const OtherSettings = () => {
                     <TouchableOpacity onPress={() => navigation.goBack()}>
                         <Ionicons name="arrow-back" size={24} color="#ED1E24" />
                     </TouchableOpacity>
-                    {/* <Text style={styles.headerText}>
-          {"Other Settings"}
-        </Text> */}
-                </View>
-                <View style={styles.contentContainer}>
-                    <Text style={styles.profileName}>Other Settings
-                        <Text style={styles.profileId}> (05)</Text>
+
+                    <Text style={styles.headerText}>
+                        {"Other Settings"}
                     </Text>
                 </View>
+                {/* <View style={styles.contentContainer}>
+                    <Text style={styles.profileName}>Other Settings */}
+                {/* <Text style={styles.profileId}> (05)</Text> */}
+                {/* </Text>
+                </View> */}
 
                 {/* Alert Settings */}
                 <View>
