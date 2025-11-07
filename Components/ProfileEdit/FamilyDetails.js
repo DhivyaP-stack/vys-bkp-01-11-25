@@ -37,7 +37,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
 export const FamilyDetails = () => {
-
     const [familyDetails, setFamilyDetails] = useState(null); // State for profile details
     const [isEditMode, setIsEditMode] = useState(false); // Toggle between view and edit mode
     const [validationErrors, setValidationErrors] = useState({});
@@ -48,12 +47,8 @@ export const FamilyDetails = () => {
     const [selectedBrothersMarried, setSelectedBrothersMarried] = useState(null); // State for the second dropdown
     const [martialStatus, setMartialStatus] = useState(null);
     const [noOfChildren, setNoOfChildren] = useState('');
-
     const [submitting, setSubmitting] = useState(false); // Add state to track submission
     const [isFetched, setIsFetched] = useState(false);
-
-
-
 
     const [formValues, setFormValues] = useState({
         personal_about_fam: '',
@@ -67,6 +62,7 @@ export const FamilyDetails = () => {
         personal_bro: '',
         personal_bro_married: '',
         personal_prope_det: '',
+        personal_property_worth: '',
         personal_father_occu_id: null,
         personal_mother_occu_id: null,
         personal_fam_sta_id: null,
@@ -127,6 +123,7 @@ export const FamilyDetails = () => {
                 personal_bro: familyDetails.personal_bro || '',
                 personal_bro_married: familyDetails.personal_bro_married || '',
                 personal_prope_det: familyDetails.personal_prope_det || '',
+                personal_property_worth: familyDetails.personal_property_worth || '',
                 personal_father_occu_id: familyDetails.personal_father_occu_id || null,
                 personal_mother_occu_id: familyDetails.personal_mother_occu_id || null,
                 personal_fam_sta_id: familyDetails.personal_fam_sta_id || null,
@@ -258,7 +255,7 @@ export const FamilyDetails = () => {
 
         // Validate each field
         // if (!formValues.personal_about_fam) errors.personal_about_fam = 'About Family is required';
-        // if (!formValues.personal_father_name) errors.personal_father_name = 'Father Name is required';
+        if (!formValues.personal_father_name) errors.personal_father_name = 'Father Name is required';
         // if (!formValues.personal_father_occu_name) errors.personal_father_occu_name = 'Father Occupation Name is required';
         // if (!formValues.personal_mother_name) errors.personal_mother_name = 'Mother Name is required';
         // if (!formValues.personal_mother_occu_name) errors.personal_mother_occu_name = 'Mother Occupation Name is required';
@@ -314,6 +311,7 @@ export const FamilyDetails = () => {
         if (validateForm()) {
             // Map the selected dropdown values to the form data
             const familyData = {
+                about_family: formValues.personal_about_fam || "",
                 father_name: formValues.personal_father_name || "",
                 father_occupation: formValues.personal_father_occu_name || "",
                 mother_name: formValues.personal_mother_name || "",
@@ -324,6 +322,7 @@ export const FamilyDetails = () => {
                 no_of_brother: SelectedValueBro || "0",
                 no_of_bro_married: selectedBrothersMarried || "0",
                 property_details: formValues.personal_prope_det || "",
+                property_worth: formValues.personal_property_worth || "",
                 personal_about_fam: formValues.personal_about_fam || "",
                 no_of_children: noOfChildren === "" ? "0" : noOfChildren,
                 father_alive: formValues.father_alive || "",
@@ -380,7 +379,7 @@ export const FamilyDetails = () => {
                     <View style={styles.editOptions}>
                         {/* About Family */}
                         <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>About Family</Text>
+                            <Text style={styles.labelNew}>About My Family</Text>
                             <TextInput
                                 style={styles.input}
                                 placeholder="Enter About Family"
@@ -607,6 +606,26 @@ export const FamilyDetails = () => {
                             {validationErrors.personal_prope_det && <Text style={styles.error}>{validationErrors.personal_prope_det}</Text>}
                         </View>
 
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Property Worth</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Property Worth"
+                                value={formValues.personal_property_worth}
+                                useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                Icon={() => (
+                                    <Ionicons
+                                        name="chevron-down" // Name of the icon
+                                        size={24}
+                                        color="gray"
+                                        style={{ marginTop: 10 }}
+                                    />
+                                )}
+                                onChangeText={(text) => handleChange('personal_property_worth', text)}
+                            />
+                            {validationErrors.personal_property_worth && <Text style={styles.error}>{validationErrors.personal_property_worth}</Text>}
+                        </View>
+
                         {['2', '3', '5'].includes(martialStatus) && (
                             <View style={styles.formGroup}>
                                 <Text style={styles.labelNew}>No. of Children</Text>
@@ -725,19 +744,20 @@ export const FamilyDetails = () => {
                                 <Text style={styles.labelNew}>Brothers : <Text style={styles.valueNew}>{familyDetails.personal_bro}</Text></Text>
                                 <Text style={styles.labelNew}>Brothers Married : <Text style={styles.valueNew}>{familyDetails.personal_bro_married}</Text></Text>
                                 <Text style={styles.labelNew}>Property Details : <Text style={styles.valueNew}>{familyDetails.personal_prope_det}</Text></Text>
-                                <Text style={styles.labelNew}>Father Alive : <Text style={styles.valueNew}>{familyDetails.father_alive}</Text></Text>
-                                <Text style={styles.labelNew}>Mother Alive : <Text style={styles.valueNew}>{familyDetails.mother_alive}</Text></Text>
+                                <Text style={styles.labelNew}>Property Worth : <Text style={styles.valueNew}>{familyDetails.personal_property_worth}</Text></Text>
                                 {(martialStatus === "2" || martialStatus === "3" || martialStatus === "5") && (
                                     <Text style={styles.labelNew}>
                                         No of Children : <Text style={styles.valueNew}>{familyDetails.personal_no_of_children}</Text>
                                     </Text>
                                 )}
+                                <Text style={styles.labelNew}>Father Alive : <Text style={styles.valueNew}>{familyDetails.father_alive}</Text></Text>
+                                <Text style={styles.labelNew}>Mother Alive : <Text style={styles.valueNew}>{familyDetails.mother_alive}</Text></Text>
                             </>
                         )}
                     </View>
                 )}
             </View>
-        </View>
+        </View >
 
     )
 }

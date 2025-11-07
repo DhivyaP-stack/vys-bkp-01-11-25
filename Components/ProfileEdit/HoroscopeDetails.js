@@ -69,6 +69,7 @@ export const HoroscopeDetails = () => {
         personal_ragu_dos: '',
         personal_nalikai: '',
         personal_surya_goth: '',
+        personal_madulamn: '',
         personal_dasa: '',
         personal_dasa_bal_day: '',
         personal_dasa_bal_month: '',
@@ -219,6 +220,7 @@ export const HoroscopeDetails = () => {
                 personal_ragu_dos: horoscopeDetails.personal_ragu_dos?.toLowerCase() || 'unknown',
                 personal_nalikai: horoscopeDetails.personal_nalikai || '',
                 personal_surya_goth: horoscopeDetails.personal_surya_goth || '',
+                personal_madulamn: horoscopeDetails.personal_madulamn || '',
                 personal_dasa: horoscopeDetails.personal_dasa || '',
                 personal_dasa_bal_day: day,
                 personal_dasa_bal_month: month,
@@ -277,17 +279,17 @@ export const HoroscopeDetails = () => {
 
         // Validate only the ID fields since they are the ones being sent to the API
         if (!formValues.personal_bthstar_id) errors.personal_bthstar_id = 'Birth Star is required';
-        if (!formValues.personal_bth_rasi_id) errors.personal_bth_rasi_id = 'Birth Rasi is required';
-        if (!formValues.personal_lagnam_didi_id) errors.personal_lagnam_didi_id = 'Lagnam/Didi is required';
-        if (!formValues.personal_didi) errors.personal_didi = 'Didi is required';
-        if (!formValues.personal_chevvai_dos) errors.personal_chevvai_dos = 'Chevvai Dosam is required';
-        if (!formValues.personal_ragu_dos) errors.personal_ragu_dos = 'Rahu Dosam is required';
-        if (!formValues.personal_nalikai) errors.personal_nalikai = 'Nalikai is required';
+        if (!formValues.personal_bth_rasi_id) errors.personal_bth_rasi_id = 'Rasi is required';
+        // if (!formValues.personal_lagnam_didi_id) errors.personal_lagnam_didi_id = 'Lagnam/Didi is required';
+        // if (!formValues.personal_didi) errors.personal_didi = 'Didi is required';
+        // if (!formValues.personal_chevvai_dos) errors.personal_chevvai_dos = 'Chevvai Dosam is required';
+        // if (!formValues.personal_ragu_dos) errors.personal_ragu_dos = 'Rahu Dosam is required';
+        // if (!formValues.personal_nalikai) errors.personal_nalikai = 'Nalikai is required';
         if (!formValues.personal_surya_goth) errors.personal_surya_goth = 'Surya Gowthram is required';
-        if (!formValues.personal_dasa) errors.personal_dasa = 'Dasa is required';
-        if (!formValues.personal_dasa_bal_day) errors.personal_dasa_bal_day = 'Dasa Day is required';
-        if (!formValues.personal_dasa_bal_month) errors.personal_dasa_bal_month = 'Dasa Month is required';
-        if (!formValues.personal_dasa_bal_year) errors.personal_dasa_bal_year = 'Dasa Year is required';
+        // if (!formValues.personal_dasa) errors.personal_dasa = 'Dasa is required';
+        // if (!formValues.personal_dasa_bal_day) errors.personal_dasa_bal_day = 'Dasa Day is required';
+        // if (!formValues.personal_dasa_bal_month) errors.personal_dasa_bal_month = 'Dasa Month is required';
+        // if (!formValues.personal_dasa_bal_year) errors.personal_dasa_bal_year = 'Dasa Year is required';
 
         setValidationErrors(errors);
         return Object.keys(errors).length === 0;
@@ -307,6 +309,7 @@ export const HoroscopeDetails = () => {
                     ragu_dosham: formValues.personal_ragu_dos || '',
                     nalikai: formValues.personal_nalikai || '',
                     suya_gothram: formValues.personal_surya_goth || '',
+                    madulamn:formValues.personal_madulamn || '',
                     dasa_name: formValues.personal_dasa || '',
                     dasa_balance: formValues.personal_dasa_bal_day ?
                         `day:${formValues.personal_dasa_bal_day}, month:${formValues.personal_dasa_bal_month}, year:${formValues.personal_dasa_bal_year}` : '',
@@ -419,7 +422,7 @@ export const HoroscopeDetails = () => {
 
                         {/* Lagnam / Didi */}
                         <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>Lagnam/Didi</Text>
+                            <Text style={styles.labelNew}>Lagnam</Text>
                             <RNPickerSelect
                                 onValueChange={(value) => handleChange('personal_lagnam_didi_id', value)}
                                 items={lagnams}
@@ -438,34 +441,6 @@ export const HoroscopeDetails = () => {
                             />
                             {validationErrors.personal_lagnam_didi_id && (
                                 <Text style={styles.error}>{validationErrors.personal_lagnam_didi_id}</Text>
-                            )}
-                        </View>
-
-                        {/* Nalikai */}
-                        <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>Nalikai</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Enter Nalikai"
-                                value={formValues.personal_nalikai}
-                                onChangeText={(text) => handleChange('personal_nalikai', text)}
-                            />
-                            {validationErrors.personal_nalikai && (
-                                <Text style={styles.error}>{validationErrors.personal_nalikai}</Text>
-                            )}
-                        </View>
-
-                        {/* Surya Gowthram */}
-                        <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>Surya Gowthram</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Enter Surya Gowthram"
-                                value={formValues.personal_surya_goth}
-                                onChangeText={(text) => handleChange('personal_surya_goth', text)}
-                            />
-                            {validationErrors.personal_surya_goth && (
-                                <Text style={styles.error}>{validationErrors.personal_surya_goth}</Text>
                             )}
                         </View>
 
@@ -557,6 +532,21 @@ export const HoroscopeDetails = () => {
                                 </View>
                             </View>
                         </View>
+
+                        {/* Nalikai */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Nallikai</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Nallikai"
+                                value={formValues.personal_nalikai}
+                                onChangeText={(text) => handleChange('personal_nalikai', text)}
+                            />
+                            {validationErrors.personal_nalikai && (
+                                <Text style={styles.error}>{validationErrors.personal_nalikai}</Text>
+                            )}
+                        </View>
+
                         {/* Didi */}
                         <View style={styles.formGroup}>
                             <Text style={styles.labelNew}>Didi</Text>
@@ -568,9 +558,34 @@ export const HoroscopeDetails = () => {
                             />
                             {validationErrors.personal_didi && <Text style={styles.error}>{validationErrors.personal_didi}</Text>}
                         </View>
+
+                        {/* Surya Gowthram */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Surya Gothram</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Surya Gothram"
+                                value={formValues.personal_surya_goth}
+                                onChangeText={(text) => handleChange('personal_surya_goth', text)}
+                            />
+                            {validationErrors.personal_surya_goth && (
+                                <Text style={styles.error}>{validationErrors.personal_surya_goth}</Text>
+                            )}
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Madhulam</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Enter Madhulam"
+                                value={formValues.personal_madulamn}
+                                onChangeText={(text) => handleChange('personal_madulamn', text)}
+                            />
+                        </View>
+
                         {/* Chevvai Dosam */}
                         <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>Chevvai Dosam</Text>
+                            <Text style={styles.labelNew}>Chevvai Dosham</Text>
                             <RNPickerSelect
                                 onValueChange={(value) => handleChange('personal_chevvai_dos', value)}
                                 items={chevvaiDoshamOptions}
@@ -594,7 +609,7 @@ export const HoroscopeDetails = () => {
 
                         {/* Rahu Dosam */}
                         <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>Rahu Dosam</Text>
+                            <Text style={styles.labelNew}>Rahu Dosham</Text>
                             <RNPickerSelect
                                 onValueChange={(value) => handleChange('personal_ragu_dos', value)}
                                 items={raguDoshamOptions}
@@ -660,13 +675,14 @@ export const HoroscopeDetails = () => {
                                 <Text style={styles.labelNew}>Birth Star : <Text style={styles.valueNew}>{horoscopeDetails.personal_bthstar_name}</Text></Text>
                                 <Text style={styles.labelNew}>Rasi : <Text style={styles.valueNew}>{horoscopeDetails.personal_bth_rasi_name}</Text></Text>
                                 <Text style={styles.labelNew}>Lagnam : <Text style={styles.valueNew}>{horoscopeDetails.personal_lagnam_didi_name}</Text></Text>
-                                <Text style={styles.labelNew}>Nallikai : <Text style={styles.valueNew}>{horoscopeDetails.personal_nalikai}</Text></Text>
-                                <Text style={styles.labelNew}>Suya Gothram : <Text style={styles.valueNew}>{horoscopeDetails.personal_surya_goth}</Text></Text>
                                 <Text style={styles.labelNew}>Dasa Name : <Text style={styles.valueNew}>{horoscopeDetails.personal_dasa}</Text></Text>
                                 <Text style={styles.labelNew}>Dasa Balance : <Text style={styles.valueNew}>{horoscopeDetails.personal_dasa_bal}</Text></Text>
+                                <Text style={styles.labelNew}>Nallikai : <Text style={styles.valueNew}>{horoscopeDetails.personal_nalikai}</Text></Text>
                                 <Text style={styles.labelNew}>Didi : <Text style={styles.valueNew}>{horoscopeDetails.personal_didi}</Text></Text>
-                                <Text style={styles.labelNew}>Chevvai Dosham : <Text style={styles.valueNew}>{horoscopeDetails.personal_chevvai_dos}</Text></Text>
+                                <Text style={styles.labelNew}>Suya Gothram : <Text style={styles.valueNew}>{horoscopeDetails.personal_surya_goth}</Text></Text>
+                                <Text style={styles.labelNew}>Madhulam : <Text style={styles.valueNew}>{horoscopeDetails.personal_madulamn}</Text></Text>
                                 <Text style={styles.labelNew}>Ragu Dosham : <Text style={styles.valueNew}>{horoscopeDetails.personal_ragu_dos}</Text></Text>
+                                <Text style={styles.labelNew}>Chevvai Dosham : <Text style={styles.valueNew}>{horoscopeDetails.personal_chevvai_dos}</Text></Text>
                                 <Text style={styles.labelNew}>Horoscope Hints : <Text style={styles.valueNew}>{horoscopeDetails.personal_horoscope_hints}</Text></Text>
                             </>
                         )}

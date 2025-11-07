@@ -183,6 +183,7 @@ export const ContactDetails = () => {
         personal_prof_mob_no: '',
         personal_prof_whats: '',
         personal_email: '',
+        admin_use_email: '',
         personal_prof_stat_id: null,
         personal_prof_count_id: null,
         personal_prof_district_id: null,
@@ -190,17 +191,17 @@ export const ContactDetails = () => {
 
     });
 
-        // Function to fetch profile data
-        const fetchProfileData = async () => {
-            try {
-                const data = await getMyContactDetails();
-                setContactDetails(data.data); // Set the data in the state
-            } catch (error) {
-                console.error('Failed to load profile data', error);
-            }
-        };
+    // Function to fetch profile data
+    const fetchProfileData = async () => {
+        try {
+            const data = await getMyContactDetails();
+            setContactDetails(data.data); // Set the data in the state
+        } catch (error) {
+            console.error('Failed to load profile data', error);
+        }
+    };
 
-   
+
 
     useEffect(() => {
         fetchProfileData(); // Call the function when component mounts
@@ -223,6 +224,7 @@ export const ContactDetails = () => {
                 personal_prof_phone: contactDetails.personal_prof_phone || '',
                 personal_prof_mob_no: contactDetails.personal_prof_mob_no || '',
                 personal_prof_whats: contactDetails.personal_prof_whats || '',
+                admin_use_email: contactDetails.admin_use_email || '',
                 personal_email: contactDetails.personal_email || '',
                 personal_prof_stat_id: contactDetails.personal_prof_stat_id || null,
                 personal_prof_count_id: contactDetails.personal_prof_count_id || null,
@@ -232,7 +234,7 @@ export const ContactDetails = () => {
             setIsFetched(true);  // Mark as fetched to prevent further updates
 
         }
-    }, [contactDetails,isFetched]);
+    }, [contactDetails, isFetched]);
 
 
 
@@ -298,46 +300,72 @@ export const ContactDetails = () => {
     const validateForm = () => {
         const errors = {};
 
-        // Helper function for 10-digit check
+        // // Helper function for 10-digit check
         const isTenDigits = (value) => /^\d{10}$/.test(value);
+        const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-        if (!formValues.personal_prof_addr) errors.personal_prof_addr = 'Professional Address is required';
-        if (!formValues.personal_prof_city) errors.personal_prof_city = 'Professional City is required';
-        if (!formValues.personal_prof_pin) errors.personal_prof_pin = 'Professional Pin Code is required';
+        // if (!formValues.personal_prof_addr) errors.personal_prof_addr = 'Professional Address is required';
+        // if (!formValues.personal_prof_city) errors.personal_prof_city = 'Professional City is required';
+        // if (!formValues.personal_prof_pin) errors.personal_prof_pin = 'Professional Pin Code is required';
 
-        // Phone validation
-        if (!formValues.personal_prof_phone) {
-            errors.personal_prof_phone = 'Professional Phone Number is required';
-        } else if (!isTenDigits(formValues.personal_prof_phone)) {
-            errors.personal_prof_phone = 'Phone Number must be 10 digits';
+        // // Phone validation
+        // if (!formValues.personal_prof_phone) {
+        //     errors.personal_prof_phone = 'Professional Phone Number is required';
+        // } else if (!isTenDigits(formValues.personal_prof_phone)) {
+        //     errors.personal_prof_phone = 'Phone Number must be 10 digits';
+        // }
+
+        // // Mobile validation
+        // if (!formValues.personal_prof_mob_no) {
+        //     errors.personal_prof_mob_no = 'Mobile Number is required';
+        // } else if (!isTenDigits(formValues.personal_prof_mob_no)) {
+        //     errors.personal_prof_mob_no = 'Mobile Number must be 10 digits';
+        // }
+
+        // // WhatsApp validation
+        // if (!formValues.personal_prof_whats) {
+        //     errors.personal_prof_whats = 'WhatsApp Number is required';
+        // } else if (!isTenDigits(formValues.personal_prof_whats)) {
+        //     errors.personal_prof_whats = 'WhatsApp Number must be 10 digits';
+        // }
+        if (formValues.personal_prof_mob_no && !isTenDigits(formValues.personal_prof_mob_no)) {
+            errors.personal_prof_mob_no = 'Please enter at least 10 digits for Mobile Number';
+        }
+        if (formValues.personal_prof_whats && !isTenDigits(formValues.personal_prof_whats)) {
+            errors.personal_prof_whats = 'Please enter at least 10 digits for Whatsapp Number';
+        }
+        if (formValues.personal_prof_phone && !isTenDigits(formValues.personal_prof_phone)) {
+            errors.personal_prof_phone = 'Please enter at least 10 digits for Alternate Mobile Number';
         }
 
-        // Mobile validation
-        if (!formValues.personal_prof_mob_no) {
-            errors.personal_prof_mob_no = 'Mobile Number is required';
-        } else if (!isTenDigits(formValues.personal_prof_mob_no)) {
-            errors.personal_prof_mob_no = 'Mobile Number must be 10 digits';
+        // if (!formValues.personal_email) errors.personal_email = 'Email is required';
+        if (!formValues.personal_email) {
+            errors.personal_email = 'Email is required';
+        } else if (
+            !isValidEmail(formValues.personal_email) ||
+            !formValues.personal_email.includes('.com')
+        ) {
+            errors.personal_email = 'Please enter a valid Email';
         }
 
-        // WhatsApp validation
-        if (!formValues.personal_prof_whats) {
-            errors.personal_prof_whats = 'WhatsApp Number is required';
-        } else if (!isTenDigits(formValues.personal_prof_whats)) {
-            errors.personal_prof_whats = 'WhatsApp Number must be 10 digits';
+        if (formValues.admin_use_email) {
+            if (
+                !isValidEmail(formValues.admin_use_email) ||
+                !formValues.admin_use_email.includes('.com')
+            ) {
+                errors.admin_use_email = 'Please enter a valid Profile Email';
+            }
         }
-
-        if (!formValues.personal_email) errors.personal_email = 'Email is required';
-
-        // Conditional validations based on country ID
-        if (formValues.personal_prof_count_id === "1") {
-            if (!formValues.personal_prof_stat_id) errors.personal_prof_stat_id = 'State is required';
-            if (!formValues.personal_prof_district_id) errors.personal_prof_district_id = 'District is required';
-            if (!formValues.personal_prof_city_id) errors.personal_prof_city_id = 'City is required';
-        } else {
-            if (!formValues.personal_prof_stat_name) errors.personal_prof_stat_name = 'State Name is required';
-            if (!formValues.personal_prof_district_name) errors.personal_prof_district_name = 'District Name is required';
-            if (!formValues.personal_prof_city_name) errors.personal_prof_city_name = 'City Name is required';
-        }
+        // // Conditional validations based on country ID
+        // if (formValues.personal_prof_count_id === "1") {
+        //     if (!formValues.personal_prof_stat_id) errors.personal_prof_stat_id = 'State is required';
+        //     if (!formValues.personal_prof_district_id) errors.personal_prof_district_id = 'District is required';
+        //     if (!formValues.personal_prof_city_id) errors.personal_prof_city_id = 'City is required';
+        // } else {
+        //     if (!formValues.personal_prof_stat_name) errors.personal_prof_stat_name = 'State Name is required';
+        //     if (!formValues.personal_prof_district_name) errors.personal_prof_district_name = 'District Name is required';
+        //     if (!formValues.personal_prof_city_name) errors.personal_prof_city_name = 'City Name is required';
+        // }
 
         if (!formValues.personal_prof_count_id) errors.personal_prof_count_id = 'Country is required';
 
@@ -363,6 +391,8 @@ export const ContactDetails = () => {
                 Profile_mobile_no: formValues.personal_prof_mob_no,
                 Profile_whatsapp: formValues.personal_prof_whats,
                 EmailId: formValues.personal_email,
+                Profile_emailid: formValues.admin_use_email,
+
             };
 
             try {
@@ -381,9 +411,9 @@ export const ContactDetails = () => {
                 console.error('Failed to update profile:', error);
                 Toast.show({
                     type: 'error',
-                    text1: 'Error', 
+                    text1: 'Error',
                     text2: 'Failed to update contact details. Please try again.',
-                    });
+                });
             }
         }
     };
@@ -569,10 +599,11 @@ export const ContactDetails = () => {
 
                         {/* Phone Field */}
                         <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>Phone</Text>
+                            <Text style={styles.labelNew}>Alternate Mobile</Text>
                             <TextInput
-                                style={styles.input}
-                                placeholder="Phone"
+                                style={[styles.input, validationErrors.personal_prof_phone && styles.inputError]}
+                                placeholder="Alternate Mobile"
+                                keyboardType="number"
                                 value={formValues.personal_prof_phone}
                                 onChangeText={(text) => handleChange('personal_prof_phone', text)}
                             />
@@ -581,26 +612,13 @@ export const ContactDetails = () => {
                             )}
                         </View>
 
-                        {/* Mobile Field */}
-                        <View style={styles.formGroup}>
-                            <Text style={styles.labelNew}>Mobile</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Mobile"
-                                value={formValues.personal_prof_mob_no}
-                                onChangeText={(text) => handleChange('personal_prof_mob_no', text)}
-                            />
-                            {validationErrors.personal_prof_mob_no && (
-                                <Text style={styles.error}>{validationErrors.personal_prof_mob_no}</Text>
-                            )}
-                        </View>
-
                         {/* WhatsApp Field */}
                         <View style={styles.formGroup}>
                             <Text style={styles.labelNew}>WhatsApp</Text>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, validationErrors.personal_prof_whats && styles.inputError]}
                                 placeholder="WhatsApp"
+                                keyboardType="numeric"
                                 value={formValues.personal_prof_whats}
                                 onChangeText={(text) => handleChange('personal_prof_whats', text)}
                             />
@@ -613,13 +631,41 @@ export const ContactDetails = () => {
                         <View style={styles.formGroup}>
                             <Text style={styles.labelNew}>Email</Text>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, validationErrors.personal_email && styles.inputError]}
                                 placeholder="Email"
                                 value={formValues.personal_email}
                                 onChangeText={(text) => handleChange('personal_email', text)}
                             />
                             {validationErrors.personal_email && (
                                 <Text style={styles.error}>{validationErrors.personal_email}</Text>
+                            )}
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Profile Email ID</Text>
+                            <TextInput
+                                style={[styles.input, validationErrors.admin_use_email && styles.inputError]}
+                                placeholder="Email"
+                                value={formValues.admin_use_email}
+                                onChangeText={(text) => handleChange('admin_use_email', text)}
+                            />
+                            {validationErrors.admin_use_email && (
+                                <Text style={styles.error}>{validationErrors.admin_use_email}</Text>
+                            )}
+                        </View>
+
+                        {/* Mobile Field */}
+                        <View style={styles.formGroup}>
+                            <Text style={styles.labelNew}>Profile Mobile No</Text>
+                            <TextInput
+                                style={[styles.input, validationErrors.personal_prof_mob_no && styles.inputError]}
+                                placeholder="Mobile"
+                                keyboardType="numeric"
+                                value={formValues.personal_prof_mob_no}
+                                onChangeText={(text) => handleChange('personal_prof_mob_no', text)}
+                            />
+                            {validationErrors.personal_prof_mob_no && (
+                                <Text style={styles.error}>{validationErrors.personal_prof_mob_no}</Text>
                             )}
                         </View>
 
@@ -653,13 +699,16 @@ export const ContactDetails = () => {
                         {contactDetails && (
                             <>
                                 <Text style={styles.labelNew}>Address : <Text style={styles.valueNew}>{contactDetails.personal_prof_addr}</Text></Text>
-                                <Text style={styles.labelNew}>City : <Text style={styles.valueNew}>{contactDetails.personal_prof_city_name}</Text></Text>
-                                <Text style={styles.labelNew}>State : <Text style={styles.valueNew}>{contactDetails.personal_prof_stat_name}</Text></Text>
                                 <Text style={styles.labelNew}>Country : <Text style={styles.valueNew}>{contactDetails.personal_prof_count_name}</Text></Text>
-                                <Text style={styles.labelNew}>Phone : <Text style={styles.valueNew}>{contactDetails.personal_prof_phone}</Text></Text>
-                                <Text style={styles.labelNew}>Mobile : <Text style={styles.valueNew}>{contactDetails.personal_prof_mob_no}</Text></Text>
+                                <Text style={styles.labelNew}>State : <Text style={styles.valueNew}>{contactDetails.personal_prof_stat_name}</Text></Text>
+                                <Text style={styles.labelNew}>District : <Text style={styles.valueNew}>{contactDetails.personal_prof_district_name}</Text></Text>
+                                <Text style={styles.labelNew}>City : <Text style={styles.valueNew}>{contactDetails.personal_prof_city_name}</Text></Text>
+                                <Text style={styles.labelNew}>Pincode : <Text style={styles.valueNew}>{contactDetails.personal_prof_pin}</Text></Text>
+                                <Text style={styles.labelNew}>Alternate Mobile : <Text style={styles.valueNew}>{contactDetails.personal_prof_phone}</Text></Text>
                                 <Text style={styles.labelNew}>WhatsApp : <Text style={styles.valueNew}>{contactDetails.personal_prof_whats}</Text></Text>
                                 <Text style={styles.labelNew}>Email : <Text style={styles.valueNew}>{contactDetails.personal_email}</Text></Text>
+                                <Text style={styles.labelNew}>Profile Email ID : <Text style={styles.valueNew}>{contactDetails.admin_use_email}</Text></Text>
+                                <Text style={styles.labelNew}>Profile Mobile No : <Text style={styles.valueNew}>{contactDetails.personal_prof_mob_no}</Text></Text>
                             </>
                         )}
                     </View>
@@ -815,10 +864,10 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         marginBottom: 30,
     },
-    menuChanges: { 
-        width: '100%', 
+    menuChanges: {
+        width: '100%',
         backgroundColor: '#4F515D',
-        justifyContent: 'center', 
+        justifyContent: 'center',
         alignItems: 'center'
     },
     editOptions: {

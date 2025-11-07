@@ -46,6 +46,10 @@ export const ProfileDetailsEdit = () => {
     const [showFamilyDetails, setShowFamilyDetails] = useState(false);
     const [showHoroscopeDetails, setShowHoroscopeDetails] = useState(false);
     const [showContactDetails, setShowContactDetails] = useState(false);
+    const [hour, setHour] = useState('');
+    const [minute, setMinute] = useState('');
+    const [period, setPeriod] = useState('AM');
+
     const [formValues, setFormValues] = useState({
         personal_profile_name: '',
         personal_gender: '',
@@ -66,6 +70,7 @@ export const ProfileDetailsEdit = () => {
         personal_profile_marital_status_id: null,
         personal_profile_complexion_id: null,
         personal_profile_for_id: null,
+        Mobile_no: ''
         // no_of_children: '',
     });
     const [isFetched, setIsFetched] = useState(false);
@@ -86,30 +91,94 @@ export const ProfileDetailsEdit = () => {
         </Pressable>
     );
 
+    const calculateAge = (dob) => {
+        if (!dob) return '';
+
+        const birthDate = new Date(dob);
+        const today = new Date();
+
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        // Adjust age if birthday hasn't occurred this year yet
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        return age.toString();
+    };
+    // In ProfileDetailsEdit.js
     const fetchProfileData = async () => {
         try {
             const data = await getMyProfilePersonal();
-            setPersonalDetails(data.data); // Set the data in the state
+
+            // --- THIS IS THE FIX ---
+            if (data && data.data) {
+                setPersonalDetails(data.data);
+            } else {
+                setPersonalDetails(null);
+            }
+            // --- END FIX ---
+
         } catch (error) {
             console.error('Failed to load profile data', error);
+            setPersonalDetails(null); // <-- ALSO ADD THIS
         }
     };
-
     // UseEffect to fetch profile data initially
     useEffect(() => {
         fetchProfileData(); // Call the function when component mounts
     }, []); // Empty dependency array ensures it only runs on mount
 
+    const handleTimeChange = (type, value) => {
+        if (type === 'hour') {
+            setHour(value);
+        } else if (type === 'minute') {
+            setMinute(value);
+        } else if (type === 'period') {
+            setPeriod(value);
+        }
+
+        // Update the formValues with the combined time string
+        const timeString = type === 'hour' ? `${value}:${minute} ${period}` :
+            type === 'minute' ? `${hour}:${value} ${period}` :
+                `${hour}:${minute} ${value}`;
+
+        setFormValues(prevValues => ({
+            ...prevValues,
+            personal_time_of_birth: timeString
+        }));
+    };
+
+    useEffect(() => {
+        // Parse existing time of birth when personalDetails is available
+        if (personalDetails?.personal_time_of_birth) {
+            const timeString = personalDetails.personal_time_of_birth;
+            // Handle different time formats
+            if (timeString.includes(':')) {
+                const [timePart, periodPart] = timeString.split(' ');
+                if (timePart) {
+                    const [hours, minutes] = timePart.split(':');
+                    setHour(hours || '');
+                    setMinute(minutes || '');
+                    setPeriod((periodPart && (periodPart === 'AM' || periodPart === 'PM')) ? periodPart : 'AM');
+                }
+            }
+        }
+    }, [personalDetails]);
+
     useEffect(() => {
         // Update form values only once when personalDetails is fetched
         if (personalDetails && !isFetched) {
+            const initialAge = personalDetails.personal_profile_dob
+                ? calculateAge(personalDetails.personal_profile_dob)
+                : '';
             setFormValues({
                 ...formValues,
                 personal_profile_name: personalDetails.personal_profile_name || '',
                 personal_profile_dob: personalDetails.personal_profile_dob || '',
                 personal_gender: personalDetails.personal_gender || '',
-                personal_age: personalDetails.personal_age || '',
-
+                personal_age: initialAge, // Use calculated age instead of stored age
                 personal_place_of_birth: personalDetails.personal_place_of_birth || '',
                 personal_time_of_birth: personalDetails.personal_time_of_birth || '',
                 personal_weight: personalDetails.personal_weight || '',
@@ -127,6 +196,7 @@ export const ProfileDetailsEdit = () => {
                 profile_created_by: personalDetails.profile_created_by || '',
                 personal_body_type: personalDetails.personal_body_type || '',
                 personal_video_url: personalDetails.personal_video_url || '',
+                Mobile_no: personalDetails.mobile_no || ''
                 // no_of_children: personalDetails.no_of_children || '',
             });
             setIsFetched(true);  // Mark as fetched to prevent further updates
@@ -319,19 +389,32 @@ export const ProfileDetailsEdit = () => {
     const validateForm = () => {
         const errors = {};
         // Validate each field
-        if (!formValues.personal_profile_name) errors.personal_profile_name = 'Name is required';
+        if (!formValues.personal_profile_name || formValues.personal_profile_name.trim() === '') {
+            errors.personal_profile_name = 'Name is required';
+        }
         // if (!formValues.personal_gender) errors.personal_gender = 'Gender is required';
         // if (!formValues.personal_age) errors.personal_age = 'Age is required';
-        if (!formValues.personal_profile_dob) errors.personal_profile_dob = 'Date of birth is required';
-        // if (!formValues.personal_place_of_birth) errors.personal_place_of_birth = 'Place of birth is required';
+        if (!formValues.personal_profile_dob) {
+            errors.personal_profile_dob = 'Date of birth is required';
+        }
+        if (!formValues.personal_place_of_birth || formValues.personal_place_of_birth.trim() === '') {
+            errors.personal_place_of_birth = 'Place of birth is required';
+        }
         // if (!formValues.personal_time_of_birth) errors.personal_time_of_birth = 'Time of birth is required';
         // if (!formValues.personal_weight) errors.personal_weight = 'Weight is required';
-        if (!formValues.personal_profile_height) errors.personal_profile_height = 'Height is required';
-        if (!formValues.personal_profile_marital_status_id) errors.personal_profile_marital_status_id = 'Marital status is required';
+        if (!formValues.personal_profile_height) {
+            errors.personal_profile_height = 'Height is required';
+        }
+        if (!formValues.personal_profile_marital_status_id) {
+            errors.personal_profile_marital_status_id = 'Marital status is required';
+        }
+        if (!formValues.personal_profile_complexion_id) {
+            errors.personal_profile_complexion_id = 'Complexion is required';
+        }
         // if (!formValues.personal_blood_group) errors.personal_blood_group = 'Blood group is required';
         // if (!formValues.personal_about_self) errors.personal_about_self = 'About yourself is required';
-        if (!formValues.personal_profile_complexion_id) errors.personal_profile_complexion_id = 'Complexion is required';
-        if (!formValues.personal_profile_for_id) errors.personal_profile_for_id = 'Complexion is required';
+        // if (!formValues.personal_profile_complexion_id) errors.personal_profile_complexion_id = 'Complexion is required';
+        // if (!formValues.personal_profile_for_id) errors.personal_profile_for_id = 'Complexion is required';
         // if (!formValues.personal_hobbies) errors.personal_hobbies = 'Hobbies are required';
         // if (!formValues.personal_pysically_changed) errors.personal_pysically_changed = 'Physical status is required';
         // if (!formValues.personal_eye_wear) errors.personal_eye_wear = 'Eye wear status is required';
@@ -345,6 +428,10 @@ export const ProfileDetailsEdit = () => {
 
     const handleSave = async () => {
         console.log("all data edit ===>")
+        const timeOfBirth = hour && minute ? `${hour}:${minute} ${period}` : '';
+        console.log("my profile time of birth", timeOfBirth);
+        console.log("Form values:", formValues);
+
         if (validateForm()) {
             const profileData = {
                 Profile_name: formValues.personal_profile_name,
@@ -352,7 +439,7 @@ export const ProfileDetailsEdit = () => {
                 personal_age: formValues.personal_age,
                 Profile_dob: formValues.personal_profile_dob,
                 place_of_birth: formValues.personal_place_of_birth,
-                time_of_birth: formValues.personal_time_of_birth,
+                time_of_birth: timeOfBirth,
                 Profile_height: formValues.personal_profile_height,
                 weight: formValues.personal_weight,
                 eye_wear: formValues.personal_eye_wear,
@@ -364,6 +451,7 @@ export const ProfileDetailsEdit = () => {
                 hobbies: formValues.personal_hobbies,
                 physically_changed: formValues.personal_pysically_changed,
                 Profile_for: formValues.personal_profile_for_id,
+                Mobile_no: formValues.Mobile_no
                 // no_of_children: formValues.no_of_children,
             };
             console.log("all data edit ===>", profileData)
@@ -521,7 +609,7 @@ export const ProfileDetailsEdit = () => {
                                 />
                                 {validationErrors.personal_profile_name && <Text style={styles.error}>{validationErrors.personal_profile_name}</Text>}
 
-                                <Text style={styles.labelNew}>Gender</Text>
+                                {/* <Text style={styles.labelNew}>Gender</Text>
                                 <RNPickerSelect
                                     disabled={true}
                                     onValueChange={(value) => handleChange('personal_gender', value)}
@@ -546,17 +634,9 @@ export const ProfileDetailsEdit = () => {
                                     )}
                                     placeholder={{ label: "Select Gender", value: null }}
                                 />
-                                {validationErrors.personal_gender && <Text style={styles.error}>{validationErrors.personal_gender}</Text>}
+                                {validationErrors.personal_gender && <Text style={styles.error}>{validationErrors.personal_gender}</Text>} */}
 
-                                <Text style={styles.labelNew}>Age</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Age"
-                                    value={formValues.personal_age.toString()}
-                                    keyboardType="numeric"
-                                    editable={false}
-                                />
-                                {validationErrors.personal_age && <Text style={styles.error}>{validationErrors.personal_age}</Text>}
+
 
                                 {/* <Text style={styles.labelNew}>Date of Birth</Text>
                                     <TextInput
@@ -568,10 +648,9 @@ export const ProfileDetailsEdit = () => {
                                     {validationErrors.personal_profile_dob && <Text style={styles.error}>{validationErrors.personal_profile_dob}</Text>} */}
 
                                 <Text style={styles.label}>Date of Birth</Text>
-
                                 <Pressable onPress={() => setShowDatepicker(true)}>
                                     <TextInput
-                                        style={styles.input}
+                                        style={[styles.input, { color: 'black' }]}
                                         placeholder="Date of Birth"
                                         value={formValues.personal_profile_dob}
                                         editable={false}
@@ -591,7 +670,14 @@ export const ProfileDetailsEdit = () => {
                                         onChange={(event, date) => {
                                             if (date) {
                                                 const formattedDate = date.toISOString().split('T')[0];
+
+                                                // Update date of birth
                                                 handleChange('personal_profile_dob', formattedDate);
+
+                                                // Calculate and update age automatically
+                                                const calculatedAge = calculateAge(formattedDate);
+                                                handleChange('personal_age', calculatedAge);
+
                                                 setShowDatepicker(false);
                                             }
                                         }}
@@ -600,6 +686,15 @@ export const ProfileDetailsEdit = () => {
                                     />
                                 )}
 
+                                <Text style={styles.labelNew}>Age</Text>
+                                <TextInput
+                                    style={[styles.input, { color: 'black' }]}
+                                    placeholder="Age"
+                                    value={formValues.personal_age.toString()}
+                                    keyboardType="numeric"
+                                    editable={false}
+                                    onChangeText={(text) => handleChange('personal_age', text)}
+                                />
 
                                 <Text style={styles.labelNew}>Place of Birth</Text>
                                 <TextInput
@@ -610,24 +705,54 @@ export const ProfileDetailsEdit = () => {
                                 />
                                 {validationErrors.personal_place_of_birth && <Text style={styles.error}>{validationErrors.personal_place_of_birth}</Text>}
 
+                                {/* Remove the existing TextInput for Time of Birth and replace with: */}
                                 <Text style={styles.labelNew}>Time of Birth</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Time of Birth"
-                                    value={formValues.personal_time_of_birth}
-                                    onChangeText={(text) => handleChange('personal_time_of_birth', text)}
-                                />
-                                {validationErrors.personal_time_of_birth && <Text style={styles.error}>{validationErrors.personal_time_of_birth}</Text>}
+                                <View style={styles.timeContainer}>
+                                    <View style={styles.timePicker}>
+                                        <RNPickerSelect
+                                            onValueChange={(value) => handleTimeChange('hour', value)}
+                                            items={Array.from({ length: 12 }, (_, i) => ({
+                                                label: (i + 1).toString().padStart(2, '0'),
+                                                value: (i + 1).toString().padStart(2, '0'),
+                                            }))}
+                                            value={hour}
+                                            useNativeAndroidPickerStyle={false}
+                                            placeholder={{ label: "Select hour", value: "" }}
+                                            style={pickerSelectStyles}
+                                        />
+                                    </View>
 
-                                <Text style={styles.labelNew}>Weight</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Weight"
-                                    value={formValues.personal_weight}
-                                    keyboardType="numeric"
-                                    onChangeText={(text) => handleChange('personal_weight', text)}
-                                />
-                                {validationErrors.personal_weight && <Text style={styles.error}>{validationErrors.personal_weight}</Text>}
+                                    <Text style={styles.timeSeparator}>:</Text>
+
+                                    <View style={styles.timePicker}>
+                                        <RNPickerSelect
+                                            onValueChange={(value) => handleTimeChange('minute', value)}
+                                            items={Array.from({ length: 60 }, (_, i) => ({
+                                                label: i.toString().padStart(2, '0'),
+                                                value: i.toString().padStart(2, '0'),
+                                            }))}
+                                            value={minute}
+                                            useNativeAndroidPickerStyle={false}
+                                            placeholder={{ label: "Select minute", value: "" }}
+                                            style={pickerSelectStyles}
+                                        />
+                                    </View>
+
+                                    <View style={styles.timePicker}>
+                                        <RNPickerSelect
+                                            onValueChange={(value) => handleTimeChange('period', value)}
+                                            items={[
+                                                { label: 'AM', value: 'AM' },
+                                                { label: 'PM', value: 'PM' },
+                                            ]}
+                                            value={period}
+                                            useNativeAndroidPickerStyle={false}
+                                            placeholder={{ label: "AM | PM", value: "" }}
+                                            style={pickerSelectStyles}
+                                        />
+                                    </View>
+                                </View>
+                                {/* {validationErrors.personal_time_of_birth && <Text style={styles.error}>{validationErrors.personal_time_of_birth}</Text>} */}
 
                                 <Text style={styles.labelNew}>Height</Text>
                                 <RNPickerSelect
@@ -648,6 +773,72 @@ export const ProfileDetailsEdit = () => {
                                 />
                                 {validationErrors.personal_profile_height && <Text style={styles.error}>{validationErrors.personal_profile_height}</Text>}
 
+                                <Text style={styles.labelNew}>Weight</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Weight"
+                                    value={formValues.personal_weight}
+                                    keyboardType="numeric"
+                                    onChangeText={(text) => handleChange('personal_weight', text)}
+                                />
+                                {/* {validationErrors.personal_weight && <Text style={styles.error}>{validationErrors.personal_weight}</Text>} */}
+
+                                <Text style={styles.labelNew}>Body Type</Text>
+                                {/* <TextInput
+                                    style={styles.input}
+                                    placeholder="Body Type"
+                                    value={formValues.personal_body_type}
+                                    onChangeText={(text) => handleChange('personal_body_type', text)}
+                                /> */}
+                                <RNPickerSelect
+                                    onValueChange={(value) => handleChange('personal_body_type', value)}
+                                    items={[
+                                        { label: 'Yes', value: 'Yes' },
+                                        { label: 'No', value: 'NO' },
+                                        // { label: 'Glasses', value: 'glasses' },
+                                        // { label: 'Contact Lenses', value: 'contact_lenses' },
+                                    ]}
+                                    value={formValues.personal_body_type}
+                                    useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                    Icon={() => (
+                                        <Ionicons
+                                            name="chevron-down" // Name of the icon
+                                            size={24}
+                                            color="gray"
+                                            style={{ marginTop: 10 }}
+                                        />
+                                    )}
+                                    placeholder={{ label: "Body Type", value: null }}
+                                    style={pickerSelectStyles}
+                                />
+                                {/* {validationErrors.personal_body_type && <Text style={styles.error}>{validationErrors.personal_body_type}</Text>} */}
+
+                                <Text style={styles.labelNew}>Eye Wear</Text>
+                                <RNPickerSelect
+                                    onValueChange={(value) => handleChange('personal_eye_wear', value)}
+                                    items={[
+                                        { label: 'Yes', value: 'Yes' },
+                                        { label: 'No', value: 'No' },
+                                        // { label: 'Glasses', value: 'glasses' },
+                                        // { label: 'Contact Lenses', value: 'contact_lenses' },
+                                    ]}
+                                    value={formValues.personal_eye_wear}
+                                    useNativeAndroidPickerStyle={false} // Important for custom styles on Android
+                                    Icon={() => (
+                                        <Ionicons
+                                            name="chevron-down" // Name of the icon
+                                            size={24}
+                                            color="gray"
+                                            style={{ marginTop: 10 }}
+                                        />
+                                    )}
+                                    placeholder={{ label: "Eye Wear", value: null }}
+                                    style={pickerSelectStyles}
+                                />
+                                {/* {validationErrors.personal_eye_wear && (
+                                    <Text style={styles.error}>{validationErrors.personal_eye_wear}</Text>
+                                )} */}
+
                                 <Text style={styles.labelNew}>Marital Status</Text>
                                 <RNPickerSelect
                                     onValueChange={(value) => handleChange('personal_profile_marital_status_id', value)}
@@ -666,6 +857,24 @@ export const ProfileDetailsEdit = () => {
                                     style={pickerSelectStyles}
                                 />
                                 {validationErrors.personal_profile_marital_status_id && <Text style={styles.error}>{validationErrors.personal_profile_marital_status_id}</Text>}
+
+                                <Text style={styles.labelNew}>Blood Group</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Blood Group"
+                                    value={formValues.personal_blood_group}
+                                    onChangeText={(text) => handleChange('personal_blood_group', text)}
+                                />
+                                {/* {validationErrors.personal_blood_group && <Text style={styles.error}>{validationErrors.personal_blood_group}</Text>} */}
+
+                                <Text style={styles.labelNew}>About Myself</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="About Yourself"
+                                    value={formValues.personal_about_self}
+                                    onChangeText={(text) => handleChange('personal_about_self', text)}
+                                />
+                                {/* {validationErrors.personal_about_self && <Text style={styles.error}>{validationErrors.personal_about_self}</Text>} */}
 
                                 <Text style={styles.labelNew}>Complexion</Text>
                                 <RNPickerSelect
@@ -686,23 +895,14 @@ export const ProfileDetailsEdit = () => {
                                 />
                                 {validationErrors.personal_profile_complexion_id && <Text style={styles.error}>{validationErrors.personal_profile_complexion_id}</Text>}
 
-                                <Text style={styles.labelNew}>Blood Group</Text>
+                                <Text style={styles.labelNew}>Hobbies</Text>
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="Blood Group"
-                                    value={formValues.personal_blood_group}
-                                    onChangeText={(text) => handleChange('personal_blood_group', text)}
+                                    placeholder="Hobbies"
+                                    value={formValues.personal_hobbies}
+                                    onChangeText={(text) => handleChange('personal_hobbies', text)}
                                 />
-                                {validationErrors.personal_blood_group && <Text style={styles.error}>{validationErrors.personal_blood_group}</Text>}
-
-                                <Text style={styles.labelNew}>About Yourself</Text>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="About Yourself"
-                                    value={formValues.personal_about_self}
-                                    onChangeText={(text) => handleChange('personal_about_self', text)}
-                                />
-                                {validationErrors.personal_about_self && <Text style={styles.error}>{validationErrors.personal_about_self}</Text>}
+                                {/* {validationErrors.personal_hobbies && <Text style={styles.error}>{validationErrors.personal_hobbies}</Text>} */}
 
                                 <Text style={styles.labelNew}>Physical Status</Text>
                                 <RNPickerSelect
@@ -723,18 +923,19 @@ export const ProfileDetailsEdit = () => {
                                     )}
                                     placeholder={{ label: "Physical Status", value: null }}
                                     style={pickerSelectStyles}
-
                                 />
-                                {validationErrors.personal_pysically_changed && <Text style={styles.error}>{validationErrors.personal_pysically_changed}</Text>}
 
-                                <Text style={styles.labelNew}>Hobbies</Text>
+                                <Text style={styles.labelNew}>Registered Mobile</Text>
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="Hobbies"
-                                    value={formValues.personal_hobbies}
-                                    onChangeText={(text) => handleChange('personal_hobbies', text)}
+                                    placeholder="Registered Mobile"
+                                    value={formValues.Mobile_no}
+                                    onChangeText={(text) => handleChange('Mobile_no', text)}
+                                    keyboardType="numeric"
+                                    minLength={10}
+                                    maxLength={15}
                                 />
-                                {validationErrors.personal_hobbies && <Text style={styles.error}>{validationErrors.personal_hobbies}</Text>}
+                                {/* {validationErrors.personal_pysically_changed && <Text style={styles.error}>{validationErrors.personal_pysically_changed}</Text>} */}
 
                                 {/* <Text style={styles.labelNew}>Profile Created For</Text>
                                 <RNPickerSelect
@@ -755,73 +956,13 @@ export const ProfileDetailsEdit = () => {
                                 />
                                 {validationErrors.personal_profile_for_id && <Text style={styles.error}>{validationErrors.personal_profile_for_id}</Text>} */}
 
-
-
-                                <Text style={styles.labelNew}>Eye Wear</Text>
-                                <RNPickerSelect
-                                    onValueChange={(value) => handleChange('personal_eye_wear', value)}
-                                    items={[
-                                        { label: 'Yes', value: 'yes' },
-                                        { label: 'No', value: 'no' },
-                                        // { label: 'Glasses', value: 'glasses' },
-                                        // { label: 'Contact Lenses', value: 'contact_lenses' },
-                                    ]}
-                                    value={formValues.personal_eye_wear}
-                                    useNativeAndroidPickerStyle={false} // Important for custom styles on Android
-                                    Icon={() => (
-                                        <Ionicons
-                                            name="chevron-down" // Name of the icon
-                                            size={24}
-                                            color="gray"
-                                            style={{ marginTop: 10 }}
-                                        />
-                                    )}
-                                    placeholder={{ label: "Eye Wear", value: null }}
-                                    style={pickerSelectStyles}
-                                />
-                                {validationErrors.personal_eye_wear && (
-                                    <Text style={styles.error}>{validationErrors.personal_eye_wear}</Text>
-                                )}
-
-
-
-                                <Text style={styles.labelNew}>Body Type</Text>
-                                {/* <TextInput
-                                    style={styles.input}
-                                    placeholder="Body Type"
-                                    value={formValues.personal_body_type}
-                                    onChangeText={(text) => handleChange('personal_body_type', text)}
-                                /> */}
-                                <RNPickerSelect
-                                    onValueChange={(value) => handleChange('personal_body_type', value)}
-                                    items={[
-                                        { label: 'Yes', value: 'yes' },
-                                        { label: 'No', value: 'no' },
-                                        // { label: 'Glasses', value: 'glasses' },
-                                        // { label: 'Contact Lenses', value: 'contact_lenses' },
-                                    ]}
-                                    value={formValues.personal_body_type}
-                                    useNativeAndroidPickerStyle={false} // Important for custom styles on Android
-                                    Icon={() => (
-                                        <Ionicons
-                                            name="chevron-down" // Name of the icon
-                                            size={24}
-                                            color="gray"
-                                            style={{ marginTop: 10 }}
-                                        />
-                                    )}
-                                    placeholder={{ label: "Body Type", value: null }}
-                                    style={pickerSelectStyles}
-                                />
-                                {validationErrors.personal_body_type && <Text style={styles.error}>{validationErrors.personal_body_type}</Text>}
-
-                                <Text style={styles.labelNew}>Video URL</Text>
+                                {/* <Text style={styles.labelNew}>Video URL</Text>
                                 <TextInput
                                     style={styles.labelNew}
                                     placeholder="Video URL"
                                     value={formValues.personal_video_url}
                                     onChangeText={(text) => handleChange('personal_video_url', text)}
-                                />
+                                /> */}
                                 {/* {validationErrors.personal_body_type && <Text style={styles.error}>{validationErrors.personal_body_type}</Text>} */}
 
                                 {/* {[2, 3, 5].includes(Number(formValues.personal_profile_marital_status_id)) && (
@@ -888,17 +1029,18 @@ export const ProfileDetailsEdit = () => {
                                         <Text style={styles.labelNew}>DOB : <Text style={styles.valueNew}>{personalDetails.personal_profile_dob}</Text></Text>
                                         <Text style={styles.labelNew}>Place of Birth : <Text style={styles.valueNew}>{personalDetails.personal_place_of_birth}</Text></Text>
                                         <Text style={styles.labelNew}>Time of Birth : <Text style={styles.valueNew}>{personalDetails.personal_time_of_birth}</Text></Text>
-                                        <Text style={styles.labelNew}>Weight : <Text style={styles.valueNew}>{personalDetails.personal_weight}</Text></Text>
                                         <Text style={styles.labelNew}>Height : <Text style={styles.valueNew}>{personalDetails.personal_profile_height}</Text></Text>
+                                        <Text style={styles.labelNew}>Weight : <Text style={styles.valueNew}>{personalDetails.personal_weight}</Text></Text>
+                                        <Text style={styles.labelNew}>Body Type : <Text style={styles.valueNew}>{personalDetails.personal_body_type}</Text></Text>
+                                        <Text style={styles.labelNew}>Eye Wear : <Text style={styles.valueNew}>{personalDetails.personal_eye_wear}</Text></Text>
                                         <Text style={styles.labelNew}>Marital Status : <Text style={styles.valueNew}>{personalDetails.personal_profile_marital_status_name}</Text></Text>
                                         <Text style={styles.labelNew}>Blood Group : <Text style={styles.valueNew}>{personalDetails.personal_blood_group}</Text></Text>
-                                        <Text style={styles.labelNew}>Body Type : <Text style={styles.valueNew}>{personalDetails.personal_body_type}</Text></Text>
                                         <Text style={styles.labelNew}>About Myself : <Text style={styles.valueNew}>{personalDetails.personal_about_self}</Text></Text>
                                         <Text style={styles.labelNew}>Complexion : <Text style={styles.valueNew}>{personalDetails.personal_profile_complexion_name}</Text></Text>
                                         <Text style={styles.labelNew}>Hobbies : <Text style={styles.valueNew}>{personalDetails.personal_hobbies}</Text></Text>
                                         <Text style={styles.labelNew}>Physical Status : <Text style={styles.valueNew}>{personalDetails.personal_pysically_changed}</Text></Text>
-                                        <Text style={styles.labelNew}>Eye Wear : <Text style={styles.valueNew}>{personalDetails.personal_eye_wear}</Text></Text>
-                                        <Text style={styles.labelNew}>Profile Created By : <Text style={styles.valueNew}>{personalDetails.personal_profile_for_name}</Text></Text>
+                                        <Text style={styles.labelNew}>Registered Mobile : <Text style={styles.valueNew}>{personalDetails.mobile_no}</Text></Text>
+                                        {/* <Text style={styles.labelNew}>Profile Created By : <Text style={styles.valueNew}>{personalDetails.personal_profile_for_name}</Text></Text> */}
                                         {/* {[2, 3, 5].includes(Number(personalDetails.personal_profile_marital_status_id)) && (
                                                 <Text style={styles.labelNew}>
                                                     No. of Children : <Text style={styles.valueNew}>{personalDetails.no_of_children}</Text>
@@ -1172,6 +1314,22 @@ const styles = StyleSheet.create({
     //     shadowOpacity: 0.25,
     //     shadowRadius: 3.84,
     // },
+    timeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 15,
+    },
+    timePicker: {
+        flex: 1,
+        marginHorizontal: 2,
+    },
+    timeSeparator: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#000',
+        marginHorizontal: 5,
+    },
 });
 
 const pickerSelectStyles = StyleSheet.create({
@@ -1183,7 +1341,8 @@ const pickerSelectStyles = StyleSheet.create({
         borderColor: '#ccc',
         borderRadius: 4,
         color: 'black',
-        paddingRight: 30, // to ensure the text is never behind the icon
+        paddingRight: 30,
+        textAlign: 'center',
     },
     inputAndroid: {
         fontSize: 16,
@@ -1193,6 +1352,7 @@ const pickerSelectStyles = StyleSheet.create({
         borderColor: '#ccc',
         borderRadius: 4,
         color: 'black',
-        paddingRight: 30, // to ensure the text is never behind the icon
+        paddingRight: 30,
+        textAlign: 'center',
     },
 });

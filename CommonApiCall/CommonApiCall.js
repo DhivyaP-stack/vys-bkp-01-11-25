@@ -2108,14 +2108,23 @@ export const fetchPhotoRequest = async (perPage, page, sortBy = "datetime") => {
         );
 
         if (response.data.Status === 1) {
-            return { success: true, profiles: response.data.data.profiles };
+            // Return the complete data structure
+            return { 
+                success: true, 
+                data: response.data.data,
+                Status: response.data.Status 
+            };
         } else {
             Toast.show({
                 type: "error",
                 text1: "Error",
                 text2: response.data.message,
             });
-            return { success: false, profiles: [] };
+            return { 
+                success: false, 
+                data: null,
+                Status: response.data.Status 
+            };
         }
     } catch (error) {
         Toast.show({
@@ -2124,7 +2133,11 @@ export const fetchPhotoRequest = async (perPage, page, sortBy = "datetime") => {
             text2: "Failed to load profiles.",
         });
         console.error(error);
-        return { success: false, profiles: [] };
+        return { 
+            success: false, 
+            data: null,
+            Status: 0 
+        };
     }
 };
 

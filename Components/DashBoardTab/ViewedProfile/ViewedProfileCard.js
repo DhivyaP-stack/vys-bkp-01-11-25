@@ -109,7 +109,7 @@ export const ViewedProfileCard = ({ sortBy = "datetime" }) => {
                     setProfiles(newProfiles);
                     setBookmarkedProfiles(bookmarkedIds);
                 } else {
-                    setProfiles((prevProfiles) => [...prevProfiles, ...newProfiles]);
+                   setProfiles((prevProfiles) => [...prevProfiles, ...newProfiles] );
                     setBookmarkedProfiles(prev => new Set([...prev, ...bookmarkedIds]));
                 }
 

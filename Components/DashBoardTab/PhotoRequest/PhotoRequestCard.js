@@ -22,7 +22,8 @@ import {
     updatePhotoRequest,
     updatePhotoRequestReject,
     logProfileVisit,
-    fetchProfileDataCheck
+    fetchProfileDataCheck,
+    handleBookmark
 } from '../../../CommonApiCall/CommonApiCall';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from "@react-navigation/native";
@@ -86,45 +87,64 @@ export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
             const perPage = 10;
             const response = await fetchPhotoRequest(perPage, page, sortBy);
 
+            console.log('API Response:', response); // Add this for debugging
+
             if (response && response.Status === 0) {
                 setProfiles([]);
-                setTotalPages(1);
-                setTotalRecords(0);
-                setCurrentPage(1);
-            } else if (response && response.data) {
+                setBookmarkedProfiles(new Set()); // Reset bookmarks
+                // Remove setTotalPages, setTotalRecords, setCurrentPage, setAllProfileIds 
+                // if they're not defined in your component
+            } else if (response && response.success && response.data) {
+                const profilesData = response.data.profiles || [];
+
                 if (isInitialLoad) {
-                    setProfiles(response.data.profiles || []);
+                    setProfiles(profilesData);
+                    const initialBookmarks = new Set();
+                    profilesData.forEach(profile => {
+                        if (profile.req_profile_wishlist === 1) {
+                            initialBookmarks.add(profile.req_profileid);
+                        }
+                    });
+                    setBookmarkedProfiles(initialBookmarks);
                 } else {
-                    setProfiles(prevProfiles => [...prevProfiles, ...(response.data.profiles || [])]);
+                    setProfiles(prevProfiles => [...prevProfiles, ...profilesData]);
+                    setBookmarkedProfiles(prev => {
+                        const updated = new Set(prev);
+                        profilesData.forEach(profile => {
+                            if (profile.req_profile_wishlist === 1) {
+                                updated.add(profile.req_profileid);
+                            } else {
+                                updated.delete(profile.req_profileid);
+                            }
+                        });
+                        return updated;
+                    });
                 }
 
-                // Update profile IDs mapping
-                const profileIds = response.data.profiles.reduce((acc, profile, index) => {
-                    const globalIndex = (page - 1) * 10 + index; // Calculate global index based on page
-                    acc[globalIndex] = profile.viwed_profileid;
-                    return acc;
-                }, {});
+                // Only set these if you have the corresponding state variables
+                // setTotalPages(response.data.total_pages || 1);
+                // setTotalRecords(response.data.total_records || 0);
+                // setCurrentPage(page);
 
-                setAllProfileIds(prev => ({
-                    ...prev,
-                    ...profileIds
-                }));
-                setTotalPages(response.data.total_pages || 1);
-                setTotalRecords(response.data.total_records || 0);
-                setCurrentPage(page);
+                // If you need all_profile_ids, make sure you have the state variable
+                // setAllProfileIds(prev => ({
+                //     ...prev,
+                //     ...response.data.all_profile_ids
+                // }));
             } else {
                 console.warn("No profiles found or error in response.");
                 setProfiles([]);
+                setBookmarkedProfiles(new Set());
             }
         } catch (error) {
             console.error("Error loading profiles:", error);
             setProfiles([]);
+            setBookmarkedProfiles(new Set());
         } finally {
             setIsLoading(false);
             setIsLoadingMore(false);
         }
     };
-
 
     useEffect(() => {
         loadProfiles(1, true);
@@ -132,15 +152,11 @@ export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
 
 
     const handleSavePress = async (profileId) => {
-        const updatedBookmarkedProfiles = new Set(bookmarkedProfiles);
-        const newStatus = updatedBookmarkedProfiles.has(profileId) ? "0" : "1";
+        const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";
+        const success = await handleBookmark(profileId, newStatus);
 
-        try {
-            await axios.post(`${config.apiUrl}/auth/Mark_profile_wishlist/`, {
-                profile_id: "VY240002",
-                profile_to: profileId,
-                status: newStatus
-            });
+        if (success) {
+            const updatedBookmarkedProfiles = new Set(bookmarkedProfiles);
             if (newStatus === "1") {
                 updatedBookmarkedProfiles.add(profileId);
                 Toast.show({
@@ -158,8 +174,17 @@ export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
                     position: "bottom",
                 });
             }
-        } catch (error) {
-            console.error('Error updating bookmark status:', error);
+            setBookmarkedProfiles(updatedBookmarkedProfiles);
+
+            // Update the profiles state to reflect the bookmark change
+            setProfiles(prevProfiles =>
+                prevProfiles.map(profile =>
+                    profile.viwed_profileid === profileId
+                        ? { ...profile, viwed_profile_wishlist: newStatus === "1" ? 1 : 0 }
+                        : profile
+                )
+            );
+        } else {
             Toast.show({
                 type: "error",
                 text1: "Error",
@@ -167,8 +192,6 @@ export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
                 position: "bottom",
             });
         }
-
-        setBookmarkedProfiles(updatedBookmarkedProfiles);
     };
 
     const handleAcceptClick = async (selectedId) => {
@@ -292,10 +315,10 @@ export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
                                 </Text>
                                 <Text style={styles.profileAge}>
                                     {profile.req_profile_age} Yrs{" "}
-                                    <Text style={styles.line}>|</Text> 5ft 10in (177 cms)
+                                    <Text style={styles.line}>|</Text> {profile.req_height}
                                 </Text>
-                                <Text style={styles.zodiac}>Uthiram</Text>
-                                <Text style={styles.employed}>Employed</Text>
+                                <Text style={styles.zodiac}>{profile.req_star}</Text>
+                                <Text style={styles.employed}>{profile.req_profession}</Text>
 
                                 {/* Buttons */}
                                 <View style={styles.buttonContainer}>

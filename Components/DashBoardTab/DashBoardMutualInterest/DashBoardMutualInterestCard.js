@@ -55,14 +55,23 @@ export const DashBoardMutualInterestCard = ({ sortBy = "datetime" }) => {
         setTotalPages(1);
         setTotalRecords(0);
         setCurrentPage(1);
+        setBookmarkedProfiles(new Set());
       } else if (response && response.data) {
+        const newProfiles = response.data.profiles || [];
+
+        const bookmarkedIds = new Set();
+        newProfiles.forEach(profile => {
+          if (profile.mutint_profile_wishlist === 1) {
+            bookmarkedIds.add(profile.mutint_profileid);
+          }
+        });
+
         if (isInitialLoad) {
-          setProfiles(response.data.profiles || []);
+          setProfiles(newProfiles);
+          setBookmarkedProfiles(bookmarkedIds);
         } else {
-          setProfiles((prevProfiles) => [
-            ...prevProfiles,
-            ...(response.data.profiles || []),
-          ]);
+          setProfiles((prevProfiles) => [...prevProfiles, ...newProfiles]);
+          setBookmarkedProfiles(prev => new Set([...prev, ...bookmarkedIds]));
         }
 
         setTotalPages(response.data.total_pages || 1);
