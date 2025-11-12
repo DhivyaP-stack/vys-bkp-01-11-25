@@ -1047,7 +1047,10 @@ export const HoroDetails = () => {
         setMonthOptions([{ label: 'Months', value: '' }, ...months]);
 
 
-        const years = Array.from({ length: 30 }, (_, i) => ({ label: `${i + 1}`, value: `${i + 1}` }));
+        const years = Array.from({ length: 30 }, (_, i) => ({
+            label: `${i}`,
+            value: `${i}`
+        }));
         setYearOptions([{ label: 'Years', value: '' }, ...years]);
         fetchBirthStar();
         fetchRasiList();
@@ -1177,11 +1180,27 @@ export const HoroDetails = () => {
                 throw new Error("ProfileId not found in sessionStorage");
             }
 
-            // <--- FIX: Format Dasa Balance as "Y Years, M Months, D Days"
-            const year = data.year || '0';
-            const month = data.month || '0';
-            const day = data.day || '0';
-            const dasabalance = `${year} Years, ${month} Months, ${day} Days`;
+            // Get the values from form data
+            const yearVal = data.year;
+            const monthVal = data.month;
+            const dayVal = data.day;
+
+            // Check if any value is selected (is not null or empty string)
+            const isAnyFieldSet = (yearVal !== null && yearVal !== undefined && yearVal !== '') ||
+                (monthVal !== null && monthVal !== undefined && monthVal !== '') ||
+                (dayVal !== null && dayVal !== undefined && dayVal !== '');
+
+            let dasabalance = ''; // Default to empty string
+
+            if (isAnyFieldSet) {
+                // If at least one field is set, default others to '0'
+                const finalYear = yearVal || '0';
+                const finalMonth = monthVal || '0';
+                const finalDay = dayVal || '0';
+
+                dasabalance = `${finalYear} Years, ${finalMonth} Months, ${finalDay} Days`;
+            }
+
 
             console.log(data.stValue);
             await AsyncStorage.setItem('birthStarValue', data.stValue);
@@ -1197,7 +1216,7 @@ export const HoroDetails = () => {
                 lagnam_didi: data.laValue || "",
 
                 // <--- FIX: Add || "" to prevent sending 'undefined'
-                chevvai_dosham: data.chdoshamValue || "",
+                chevvai_dosaham: data.chdoshamValue || "",
                 ragu_dosham: data.sarDoshamValue || "",
                 nalikai: data.naalikaiValue,
                 dasa_name: data.dasaNameValue,

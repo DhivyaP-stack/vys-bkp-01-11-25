@@ -1750,6 +1750,120 @@ export const downloadPdf = async (idparam) => {
     }
 };
 
+// Function to download the Matching Report PDF
+export const downloadMatchingReportPdf = async (viewedProfileId) => {
+    console.log("viewedProfileId for Matching Report ==>", viewedProfileId);
+    
+    // The current user's profile ID (the one generating the report)
+    const currentProfileId = await retrieveProfileId(); 
+    
+    if (!currentProfileId) {
+        console.warn('Current Profile ID is empty, skipping Matching Report API call.');
+        return null;
+    }
+
+    // Construct the URL using the required format: /auth/generate-porutham-pdf-mobile/{currentProfileId}/{viewedProfileId}/
+    const url = `https://app.vysyamala.com/auth/generate-porutham-pdf-mobile/${currentProfileId}/${viewedProfileId}/`;
+    
+    // Set the file name
+    const fileName = `matching_report_${viewedProfileId}.pdf`;
+
+    // --- The rest of the download logic is similar to downloadPdf ---
+
+    // Request storage permission
+    const hasPermission = await requestStoragePermission(); // You need this function defined globally or passed in
+    if (!hasPermission) {
+        Alert.alert('Permission Denied', 'Storage permission is required to download the file.');
+        return null;
+    }
+
+    // Request notification permission
+    const notificationPermission = await Notifications.requestPermissionsAsync(); // You need Notifications imported
+    if (!notificationPermission.granted) {
+        console.warn('Notification permission not granted');
+        // return; // Don't return here, just warn, as the download can still proceed.
+    }
+
+    // Show initial download notification
+    let notificationId;
+    try {
+        notificationId = await Notifications.scheduleNotificationAsync({
+            content: {
+                title: 'Matching Report Download Started',
+                body: `Downloading ${fileName}...`,
+                data: { viewedProfileId },
+            },
+            trigger: null,
+        });
+    } catch (e) {
+        console.warn("Could not schedule notification:", e);
+    }
+    
+
+    try {
+        let fileUri;
+        let progress = 0;
+
+        // You'll need the same logic for Android SAF and FileSystem download/writing
+        // For simplicity, sticking to the existing logic from downloadPdf for demonstration:
+        
+        const downloadCallback = (downloadProgress) => {
+            progress = Math.round(
+                (downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite) * 100
+            );
+            if (notificationId) {
+                updateDownloadNotification(notificationId, progress); // You need this function defined
+            }
+        };
+
+        const downloadResumable = FileSystem.createDownloadResumable(
+            url,
+            FileSystem.documentDirectory + fileName,
+            {},
+            downloadCallback
+        );
+
+        const { uri } = await downloadResumable.downloadAsync();
+        fileUri = uri;
+
+        // If Android >= 29 (SAF logic) is implemented: 
+        // You'd repeat the check from downloadPdf here and potentially write the file
+        // to the user-selected location after downloading it to a temporary location (uri).
+        
+        // Complete notification
+        if (notificationId) {
+             await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: 'Download Complete',
+                    body: `Matching Report saved to: ${fileUri}`,
+                },
+                trigger: null,
+            });
+        }
+
+        console.log('Matching Report PDF downloaded successfully:', fileUri);
+
+        // Automatically open the downloaded PDF
+        // openPdf(fileUri); // You need this function defined globally or imported
+
+        return fileUri;
+
+    } catch (error) {
+        console.log('Error downloading Matching Report PDF:', error.message);
+        if (notificationId) {
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: 'Download Error',
+                    body: `Failed to download: ${error.message}`,
+                },
+                trigger: null,
+            });
+        }
+        return null;
+    }
+};
+
+
 // Function to request storage permission
 async function requestStoragePermission() {
     if (Platform.OS === 'android') {

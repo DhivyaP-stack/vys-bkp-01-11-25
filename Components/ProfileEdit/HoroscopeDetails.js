@@ -192,7 +192,7 @@ export const HoroscopeDetails = () => {
         }));
         setMonthOptions(months);
 
-        const years = Array.from({ length: 30 }, (_, i) => ({ label: `${i + 1}`, value: `${i + 1}` }));
+        const years = Array.from({ length: 30 }, (_, i) => ({ label: `${i}`, value: `${i}` }));
         setYearOptions(years);
     }, []);
 
@@ -231,8 +231,8 @@ export const HoroscopeDetails = () => {
                 personal_bth_rasi_name: horoscopeDetails.personal_bth_rasi_name || '',
                 personal_lagnam_didi_name: horoscopeDetails.personal_lagnam_didi_name || '',
                 personal_didi: horoscopeDetails.personal_didi || '',
-                personal_chevvai_dos: horoscopeDetails.personal_chevvai_dos?.toLowerCase() || 'unknown',
-                personal_ragu_dos: horoscopeDetails.personal_ragu_dos?.toLowerCase() || 'unknown',
+                personal_chevvai_dos: horoscopeDetails.personal_chevvai_dos|| '',
+                personal_ragu_dos: horoscopeDetails.personal_ragu_dos|| '',
                 personal_nalikai: horoscopeDetails.personal_nalikai || '',
                 personal_surya_goth: horoscopeDetails.personal_surya_goth || '',
                 personal_madulamn: horoscopeDetails.personal_madulamn || '',

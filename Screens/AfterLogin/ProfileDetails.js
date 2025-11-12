@@ -45,6 +45,7 @@ import {
   callRequestDetails,
   logProfileVisit,
   getProfileListMatch,
+  downloadMatchingReportPdf,
 } from '../../CommonApiCall/CommonApiCall';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { Picker } from '@react-native-picker/picker';
@@ -863,6 +864,37 @@ export const ProfileDetails = () => {
     }
   };
 
+  // Inside ProfileDetails functional component (before the return statement)
+
+  const handleDownloadMatchingReport = async () => {
+    console.log("handleDownloadMatchingReport called for:", viewedProfileId);
+    bottomSheetRef.current.close(); // Close the bottom sheet
+    setLoading(true); // Start loading indicator
+
+    try {
+      // Call the new API function
+      const filePath = await downloadMatchingReportPdf(viewedProfileId);
+      console.log("downloadMatchingReportPdf", filepath)
+      // if (filePath) {
+      //   // Optional: Show a toast/alert for success if the internal function didn't already
+      //   Toast.show({
+      //     type: 'success',
+      //     text1: 'Success',
+      //     text2: 'Matching Report Download Complete!',
+      //     position: "bottom",
+      //   });
+      // } else {
+      //   // Error handling from the API function
+      //   Alert.alert("Error", "Failed to download the Matching Report file.");
+      // }
+    } catch (error) {
+      console.error("Error initiating Matching Report download:", error);
+      Alert.alert("Error", "An unexpected error occurred during download.");
+    } finally {
+      setLoading(false); // Stop loading indicator
+    }
+  };
+
   const openPopup = () => {
     console.log("open pop up check ==>")
     setShowVysassist(!showVysassist);
@@ -1128,8 +1160,8 @@ export const ProfileDetails = () => {
       { icon: 'document-text', text: 'Personal Notes', onPress: toggleModal, type: 'Ionicons' },
       { icon: 'account-voice', text: 'Vys Assist', onPress: openPopup, type: 'MaterialCommunityIcons' },
       { icon: 'print-outline', text: 'Download Pdf', onPress: handleDownloadPdf, type: 'Ionicons' },
-      { icon: 'star', text: 'Show Matching Report', onPress: () => { }, type: 'MaterialIcons' },
-      { icon: 'report-problem', text: 'Report Profile', onPress: () => { }, type: 'MaterialIcons' },
+      { icon: 'star', text: 'Show Matching Report', onPress: handleDownloadMatchingReport, type: 'MaterialIcons' },
+      // { icon: 'report-problem', text: 'Report Profile', onPress: () => { }, type: 'MaterialIcons' },
     ];
 
     return (

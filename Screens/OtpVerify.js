@@ -195,7 +195,7 @@ export const OtpVerify = () => {
     } catch (error) {
       console.error("OTP verification error:", error);
       Alert.alert("Error", "An error occurred during OTP verification.");
-    }finally {
+    } finally {
       setSubmitting(false); // Reset submitting state after API call
     }
   };
@@ -441,7 +441,7 @@ export const OtpVerify = () => {
         </TouchableOpacity>
       ) : (
         <TouchableOpacity style={styles.btn} onPress={handleVerify} disabled={submitting} // Disable button when submitting
->
+        >
           <LinearGradient
             colors={["#BD1225", "#FF4050"]}
             start={{ x: 0, y: 0 }}
@@ -453,7 +453,7 @@ export const OtpVerify = () => {
           >
             {/* <Text style={styles.verify}>Verify</Text> */}
             <Text style={styles.verify}>{submitting ? "Submitting..." : "Verify"}</Text>
-            
+
           </LinearGradient>
         </TouchableOpacity>
       )}

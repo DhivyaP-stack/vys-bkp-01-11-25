@@ -283,7 +283,9 @@ export const EduDetails = () => {
 
     const fetchCityList = async (districtId) => {
         try {
-            const response = await axios.post(`${config.apiUrl}/auth/Get_City/`, { district_id: districtId });
+            const response = await axios.post(`${config.apiUrl}/auth/Get_City/`, {
+                district_id: districtId  // ✅ This is correct
+            });
             const cityData = Object.values(response.data).map(city => ({
                 label: city.city_name.trim(),
                 value: city.city_id.toString(),
@@ -293,7 +295,6 @@ export const EduDetails = () => {
             console.error('Error fetching cities:', error);
         }
     };
-
 
     useEffect(() => {
         const fetchFieldOfStudy = async () => {
@@ -456,7 +457,7 @@ export const EduDetails = () => {
                 // work_city: formData.ciValue,
                 work_place: formData.workPlace,
                 status: "1",
-                Profile_district: formData.district,
+                work_district: formData.district,
                 field_ofstudy: formData.fieldofvalue,
                 company_name: (formData.boxValue === "1" || formData.boxValue === "6" || formData.boxValue === "7") ? companyName : "",
                 designation: (formData.boxValue === "1" || formData.boxValue === "6" || formData.boxValue === "7") ? designation : "",
@@ -944,7 +945,7 @@ export const EduDetails = () => {
 
                     {/* Country */}
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Country<Text style={styles.redText}></Text></Text>
+                        <Text style={styles.label}>Work Country<Text style={styles.redText}></Text></Text>
                         <Dropdown
                             style={styles.dropdown}
                             placeholderStyle={styles.placeholderStyle}
@@ -967,7 +968,7 @@ export const EduDetails = () => {
                     {/* State */}
                     {selectedCountry === "1" && (
                         <View style={styles.inputContainer}>
-                            <Text style={styles.label}>State<Text style={styles.redText}></Text></Text>
+                            <Text style={styles.label}>Work State<Text style={styles.redText}></Text></Text>
                             <Dropdown
                                 style={styles.dropdown}
                                 placeholderStyle={styles.placeholderStyle}
@@ -995,6 +996,7 @@ export const EduDetails = () => {
                     )}
 
                     {/* District */}
+
                     {selectedCountry === "1" && (
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>District<Text style={styles.redText}></Text></Text>
@@ -1009,12 +1011,16 @@ export const EduDetails = () => {
                                 value={formData.district}
                                 onChange={(item) => {
                                     handleChange('district', item.value);
-                                    fetchCityList(item.value);
-                                    setSelectedDistrict(item.value); // Set selected district
+                                    setSelectedDistrict(item.value); // This stores the district ID
+                                    fetchCityList(item.value); // This fetches cities for the district
+
+                                    // Reset city when district changes
+                                    handleChange('ciValue', '');
+                                    setIsOtherSelected(false);
+
                                     setErrors(prev => ({ ...prev, district: undefined }));
                                 }}
                             />
-                            {/* {errors.district && <Text style={styles.error}>{errors.district}</Text>} */}
                         </View>
                     )}
 
@@ -1040,10 +1046,10 @@ export const EduDetails = () => {
                         </View>
                     )} */}
 
-                    {selectedCountry === "1" && (
+                    {/* {selectedCountry === "1" && (
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>
-                                City<Text style={styles.redText}></Text>
+                                Work City<Text style={styles.redText}></Text>
                             </Text>
                             {!isOtherSelected ? (
                                 <Dropdown
@@ -1081,9 +1087,55 @@ export const EduDetails = () => {
                             )}
                             {errors.ciValue && <Text style={styles.error}>{errors.ciValue}</Text>}
                         </View>
+                    )} */}
+
+                    {selectedCountry === "1" && (
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>
+                                Work City<Text style={styles.redText}></Text>
+                            </Text>
+                            {!isOtherSelected ? (
+                                <Dropdown
+                                    style={styles.dropdown}
+                                    placeholderStyle={styles.placeholderStyle}
+                                    selectedTextStyle={styles.selectedTextStyle}
+                                    data={[...cityList, { label: "Others", value: "Others" }]}
+                                    placeholder="Select city"
+                                    labelField="label"
+                                    valueField="value"
+                                    value={formData.ciValue}
+                                    onChange={(item) => {
+                                        if (item.value === "Others") {
+                                            setIsOtherSelected(true);
+                                            handleChange('ciValue', '');
+                                        } else {
+                                            handleChange('ciValue', item.value);
+                                            setErrors((prev) => ({ ...prev, ciValue: undefined }));
+
+                                            // Call fetchCityList again with the selected district
+                                            if (formData.district) {
+                                                fetchCityList(formData.district);
+                                            }
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <TextInput
+                                    style={[
+                                        styles.input,
+                                        errors.ciValue ? styles.inputError : null,
+                                    ]}
+                                    placeholder="Enter your city"
+                                    value={formData.ciValue}
+                                    onChangeText={(text) => {
+                                        handleChange('ciValue', text);
+                                        setErrors((prev) => ({ ...prev, ciValue: undefined }));
+                                    }}
+                                />
+                            )}
+                            {errors.ciValue && <Text style={styles.error}>{errors.ciValue}</Text>}
+                        </View>
                     )}
-
-
 
                     {/* Work Place */}
                     {selectedCountry !== "1" && (

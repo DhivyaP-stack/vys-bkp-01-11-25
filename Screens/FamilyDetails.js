@@ -382,8 +382,8 @@ export const FamilyDetails = () => {
         uncle_gothram: data.uncleGothram,
         suya_gothram: data.suyaGothram,
         weight: data.weight,
-        bodytype: data.bodytype,
-        eyewear: data.eyewear,
+        body_type: data.bodytype,
+        eye_wear: data.eyewear,
         // Include other fields as necessary
         no_of_children: data.noOfChildren || "0", // <-- Add no_of_children if present
         father_alive: data.fatherAlive || "yes", // Add father_alive
