@@ -576,9 +576,17 @@ export const ProfileDetails = () => {
           console.warn("Profile data missing or deleted:", data);
           return; // Stop further execution
         }
-
+        if (typeof data.user_images === 'string') {
+          // Convert the single image URL string into an object/map structure
+          data.user_images = {
+            "0": data.user_images // Assign it to a key (e.g., "0" or "image1")
+          };
+        }
         // ✅ Continue with valid profile data
         setProfileData(data);
+        if (data?.basic_details?.personal_notes) {
+          setNotes(data.basic_details.personal_notes);
+        }
         if (data?.basic_details) {
           const profileId = data.basic_details.profile_id;
           if (data.basic_details.wish_list === 1) {
@@ -1116,7 +1124,7 @@ export const ProfileDetails = () => {
   const renderBottomSheetContent = () => {
     const options = [
       { icon: 'phone', text: 'Call', onPress: handlePhoneCall, type: 'MaterialCommunityIcons' },
-      { icon: 'share', text: 'Share', onPress: handleShare, type: 'MaterialIcons' },
+      // { icon: 'share', text: 'Share', onPress: handleShare, type: 'MaterialIcons' },
       { icon: 'document-text', text: 'Personal Notes', onPress: toggleModal, type: 'Ionicons' },
       { icon: 'account-voice', text: 'Vys Assist', onPress: openPopup, type: 'MaterialCommunityIcons' },
       { icon: 'print-outline', text: 'Download Pdf', onPress: handleDownloadPdf, type: 'Ionicons' },
