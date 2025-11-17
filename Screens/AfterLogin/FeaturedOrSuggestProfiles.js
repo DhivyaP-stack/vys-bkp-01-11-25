@@ -157,6 +157,7 @@ export const FeaturedOrSuggestProfiles = ({ route }) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>
           {type === "featured" ? "Featured Profiles" : "Suggested Profiles"}
+          <Text style={styles.profileId}> ({profiles.length})</Text>
         </Text>
       </View>
       <FlatList

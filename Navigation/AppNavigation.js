@@ -25,6 +25,7 @@ import { ThankYouReg } from "../Screens/ThankYouReg";
 import { Home } from "../Screens/Home";
 import HomeWithToast from "../Tabs/HomeWithToast";
 import { SearchResults } from "../Screens/AfterLogin/SearchResults";
+import { FilterScreen } from "../Screens/AfterLogin/FilterScreen";
 import { ProfileDetails } from "../Screens/AfterLogin/ProfileDetails";
 import { ProfileDetailsRequest } from "../Screens/AfterLogin/ProfileDetailsRequest";
 import { DashBoardMatchingProfiles } from "../Screens/AfterLogin/DashBoardMatchingProfiles";
@@ -147,7 +148,7 @@ export const AppNavigation = () => {
         component={ForgotPasswordOtp}
         options={{ headerShown: false }}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="ResetPassword"
         component={ResetPassword}
         options={{ headerShown: false }}
@@ -242,7 +243,7 @@ export const AppNavigation = () => {
         component={TabNavigation}
         options={{ headerShown: false }}
       />
-       {/* <Stack.Screen
+      {/* <Stack.Screen
         name="HomeWithToastt"
         component={TabNavigation}
         options={{ headerShown: false }}
@@ -427,6 +428,11 @@ export const AppNavigation = () => {
       <Stack.Screen
         name="SearchResults"
         component={SearchResults}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="FilterScreen"
+        component={FilterScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

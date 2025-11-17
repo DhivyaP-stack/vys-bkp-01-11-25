@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, Dimensions, TouchableOpacity, FlatList }
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { logProfileVisit, fetchProfileDataCheck } from "../../../CommonApiCall/CommonApiCall";
+import Toast from 'react-native-toast-message';
 
 export const FeaturedProfileCard = ({ profiles }) => {
     const navigation = useNavigation();
@@ -14,36 +15,91 @@ export const FeaturedProfileCard = ({ profiles }) => {
     //     navigation.navigate("ProfileDetails", { viewedProfileId });
     // };
 
-    const handleProfileClick = async (viewedProfileId) => {
-        const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
-        console.log('profile view msg', profileCheckResponse)
+    // const handleProfileClick = async (viewedProfileId) => {
+    //     const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+    //     console.log('profile view msg', profileCheckResponse)
 
-        // 2. Check if the API returned any failure
+    //     // 2. Check if the API returned any failure
+    //     if (profileCheckResponse?.status === "failure") {
+    //         Toast.show({
+    //             type: "error",
+    //             // text1: "Profile Error", // You can keep this general
+    //             text1: profileCheckResponse.message, // <-- This displays the exact API message
+    //             position: "bottom",
+    //         });
+    //         return; // Stop the function
+    //     }
+
+    //     const success = await logProfileVisit(viewedProfileId);
+
+    //     if (success) {
+    //         Toast.show({
+    //             type: "success",
+    //             text1: "Profile Viewed",
+    //             text2: `You have viewed profile ${viewedProfileId}.`,
+    //             position: "bottom",
+    //         });
+    //         // navigation.navigate("ProfileDetails", { id });
+    //         navigation.navigate("ProfileDetails", {
+    //             viewedProfileId,
+    //             // profileId: allProfileIds,
+    //         });
+    //     } else {
+    //         Toast.show({
+    //             type: "error",
+    //             text1: "Error",
+    //             text2: "Failed to log profile visit.",
+    //             position: "bottom",
+    //         });
+    //     }
+    // };
+
+    const handleProfileClick = async (viewedProfileId) => {
+        // 1. Check profile data validity
+        const profileCheckResponse = await fetchProfileDataCheck(viewedProfileId);
+        console.log('profile view msg', profileCheckResponse);
+
         if (profileCheckResponse?.status === "failure") {
             Toast.show({
                 type: "error",
-                // text1: "Profile Error", // You can keep this general
-                text1: profileCheckResponse.message, // <-- This displays the exact API message
+                text1: profileCheckResponse.message,
                 position: "bottom",
             });
             return; // Stop the function
         }
 
+        // 2. Log profile visit and wait for success result
         const success = await logProfileVisit(viewedProfileId);
 
         if (success) {
-            Toast.show({
-                type: "success",
-                text1: "Profile Viewed",
-                text2: `You have viewed profile ${viewedProfileId}.`,
-                position: "bottom",
-            });
-            // navigation.navigate("ProfileDetails", { id });
-            navigation.navigate("ProfileDetails", {
-                viewedProfileId,
-                // profileId: allProfileIds,
-            });
+            try {
+                
+                // Log successful visit with Toast
+                Toast.show({
+                    type: "success",
+                    text1: "Profile Viewed",
+                    text2: `You have viewed profile ${viewedProfileId}.`,
+                    position: "bottom",
+                });
+
+                // 3. Navigate to the profile details page
+                // The navigation should happen immediately after the Toast is queued/shown
+                navigation.navigate("ProfileDetails", {
+                    viewedProfileId,
+                });
+                
+            } catch (error) {
+                // Catch any potential errors during navigation itself
+                console.error("Navigation Error:", error);
+                Toast.show({
+                    type: "error",
+                    text1: "Navigation Failed",
+                    text2: "Could not open profile details screen.",
+                    position: "bottom",
+                });
+            }
         } else {
+            // Handle failure in logging the visit
             Toast.show({
                 type: "error",
                 text1: "Error",

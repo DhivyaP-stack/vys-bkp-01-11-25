@@ -793,27 +793,26 @@ export const Search_By_profileId = async (searchProfileId) => {
     const profileId = await retrieveProfileId();
     if (!profileId) {
         console.warn('Profile ID is empty, skipping API call.');
-        return null;
+        // Return a structure that mimics a failure/empty response for robustness
+        return { status: "failure", data: { message: "User not logged in." } };
     }
     try {
         const response = await axios.post(`${BASE_URL}/Search_byprofile_id/`,
             {
-                profile_id: profileId, // Ensure this value is available or passed appropriately
+                profile_id: profileId,
                 search_profile_id: searchProfileId,
             }
         );
 
-        if (response.data.status === "success") {
-            return response.data; // Return the profile data from the API response
-        } else {
-            return response.data; // Return the profile data from the API response
-        }
+        // ALWAYS return the full response body (which contains status and data)
+        return response.data;
+
     } catch (error) {
         console.error("Error fetching profile:", error);
-        throw new Error("Profile not found. Please check the profile ID.");
+        // Throwing the error here will be caught by the catch block in handleFilterPress
+        throw error;
     }
 };
-
 
 export const Search_By_profileId_matchingProfile = async (searchProfileId) => {
 
@@ -1753,10 +1752,10 @@ export const downloadPdf = async (idparam) => {
 // Function to download the Matching Report PDF
 export const downloadMatchingReportPdf = async (viewedProfileId) => {
     console.log("viewedProfileId for Matching Report ==>", viewedProfileId);
-    
+
     // The current user's profile ID (the one generating the report)
-    const currentProfileId = await retrieveProfileId(); 
-    
+    const currentProfileId = await retrieveProfileId();
+
     if (!currentProfileId) {
         console.warn('Current Profile ID is empty, skipping Matching Report API call.');
         return null;
@@ -1764,7 +1763,7 @@ export const downloadMatchingReportPdf = async (viewedProfileId) => {
 
     // Construct the URL using the required format: /auth/generate-porutham-pdf-mobile/{currentProfileId}/{viewedProfileId}/
     const url = `https://app.vysyamala.com/auth/generate-porutham-pdf-mobile/${currentProfileId}/${viewedProfileId}/`;
-    
+
     // Set the file name
     const fileName = `matching_report_${viewedProfileId}.pdf`;
 
@@ -1798,7 +1797,7 @@ export const downloadMatchingReportPdf = async (viewedProfileId) => {
     } catch (e) {
         console.warn("Could not schedule notification:", e);
     }
-    
+
 
     try {
         let fileUri;
@@ -1806,7 +1805,7 @@ export const downloadMatchingReportPdf = async (viewedProfileId) => {
 
         // You'll need the same logic for Android SAF and FileSystem download/writing
         // For simplicity, sticking to the existing logic from downloadPdf for demonstration:
-        
+
         const downloadCallback = (downloadProgress) => {
             progress = Math.round(
                 (downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite) * 100
@@ -1829,10 +1828,10 @@ export const downloadMatchingReportPdf = async (viewedProfileId) => {
         // If Android >= 29 (SAF logic) is implemented: 
         // You'd repeat the check from downloadPdf here and potentially write the file
         // to the user-selected location after downloading it to a temporary location (uri).
-        
+
         // Complete notification
         if (notificationId) {
-             await Notifications.scheduleNotificationAsync({
+            await Notifications.scheduleNotificationAsync({
                 content: {
                     title: 'Download Complete',
                     body: `Matching Report saved to: ${fileUri}`,

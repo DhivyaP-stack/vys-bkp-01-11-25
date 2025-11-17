@@ -11,7 +11,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 export const SearchResults = ({ route }) => {
   const navigation = useNavigation();
-  const { results = [] } = route.params || {}; // Provide a default value and handle missing params
+ const { results = [], totalCount = 0 } = route.params || {};
+ // Provide a default value and handle missing params
 
   return (
     <SafeAreaView style={styles.container}>
@@ -20,6 +21,7 @@ export const SearchResults = ({ route }) => {
           <Ionicons name="arrow-back" size={24} color="#ED1E24" />
         </TouchableOpacity>
         <Text style={styles.headerText}>{"Search Results"}</Text>
+        <Text style={styles.matchNumber}>({totalCount})</Text>
       </View>
 
       <View style={styles.searchResultsContainer}>

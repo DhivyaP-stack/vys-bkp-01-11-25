@@ -4,11 +4,19 @@ import { FontAwesome6 } from '@expo/vector-icons';
 import { FeaturedProfileCard } from './FeaturedProfiles/FeaturedProfileCard'; // Adjust path
 import { getFeaturedProfiles } from '../../CommonApiCall/CommonApiCall';
 import { useNavigation } from '@react-navigation/native';
+
+
 export const FeaturedProfiles = ({ }) => {
 
     const [profiles, setProfiles] = useState([]);
     const [error, setError] = useState(null);
     const navigation = useNavigation();
+
+    const handleScrollToTop = () => {
+        if (scrollViewRef.current) {
+            scrollViewRef.current.scrollTo({ y: 0, animated: true });
+        }
+    };
 
     useEffect(() => {
         const fetchProfiles = async () => {
@@ -16,7 +24,7 @@ export const FeaturedProfiles = ({ }) => {
                 const data = await getFeaturedProfiles();
                 console.log("fetchProfiles", data);
                 // Validate that data is an array and each profile has a valid profile_img
-                const validProfiles = data.filter(profile => 
+                const validProfiles = data.filter(profile =>
                     profile && typeof profile.profile_img === 'string' && profile.profile_img
                 );
                 setProfiles(validProfiles);
@@ -45,9 +53,9 @@ export const FeaturedProfiles = ({ }) => {
                     </View>
 
                     <View style={styles.viewAllFlex}>
-                        <TouchableOpacity 
-                            style={styles.viewAllButton} 
-                            onPress={() => navigation.navigate('FeaturedOrSuggestProfiles',{type: 'featured', profiles: profiles})}
+                        <TouchableOpacity
+                            style={styles.viewAllButton}
+                            onPress={() => navigation.navigate('FeaturedOrSuggestProfiles', { type: 'featured', profiles: profiles })}
                         >
                             <Text style={styles.viewAllText}>View all</Text>
                             <FontAwesome6 name="chevron-right" size={12} color="#FFF" />
@@ -56,9 +64,9 @@ export const FeaturedProfiles = ({ }) => {
                 </View>
 
                 {profiles.length > 0 ? (
-                // <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    // <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <FeaturedProfileCard profiles={profiles} />
-                // </ScrollView>
+                    // </ScrollView>
                 ) : (
                     <Text style={styles.errorText}>No profiles found</Text>
                 )}

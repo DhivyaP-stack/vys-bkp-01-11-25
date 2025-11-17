@@ -156,6 +156,7 @@ export const ProfileDetails = () => {
   // Add state for profile navigation
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [profileIds, setProfileIds] = useState([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Initialize profile IDs and current index
   useEffect(() => {
@@ -537,6 +538,7 @@ export const ProfileDetails = () => {
 
   useEffect(() => {
     const loadProfileData = async () => {
+        setIsInitialLoading(true);
       try {
         const loginuser_profileId = await AsyncStorage.getItem("loginuser_profileId");
         const formattedMessage = `We have shared the horoscope to ${loginuser_profileId}`;
@@ -651,10 +653,16 @@ export const ProfileDetails = () => {
           position: "bottom",
         });
       }
+      finally {
+        // Hide loading state after data is loaded
+        setIsInitialLoading(false);
+      }
     };
 
     loadProfileData();
   }, [viewedProfileId]);
+
+  
 
   useEffect(() => {
     const loadWishlistProfiles = async () => {
@@ -805,9 +813,9 @@ export const ProfileDetails = () => {
   };
 
   // Check if data is available
-  if (!profileData) {
-    return <ProfileDetailsShimmer />;
-  }
+ if (isInitialLoading || !profileData) {
+  return <ProfileDetailsShimmer />;
+}
 
   const {
     basic_details,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     StyleSheet,
     Text,
@@ -16,29 +16,15 @@ import { useNavigation } from "@react-navigation/native";
 import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios"; // Import axios
+import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import config from "../API/Apiurl";
-import { updatePartnerPreferences, fetchPartnerProfile } from '../CommonApiCall/CommonApiCall'; // Adjust the path as needed
-import Toast from 'react-native-toast-message'; // Import the toast library
+import { updatePartnerPreferences, fetchPartnerProfile } from '../CommonApiCall/CommonApiCall'; 
+import Toast from 'react-native-toast-message'; 
 import MatchingStars from '../Components/MatchingStars/MatchingStars';
 
 
-
-// const schema = z.object({
-//     ageDifference: z.string().min(1, "Age difference is required"),
-//     heightFrom: z.string().min(1, "Height from is required"),
-//     heightTo: z.string().min(1, "Height to is required"),
-//     chevvai: z.string().min(1, "Chevvai is required"),
-//     rehu: z.string().min(1, "Rehu is required"),
-//     maritalStatus: z.array(z.string()).min(1, "At least one marital status is required"),
-//     education: z.array(z.string()).min(1, "At least one education option is required"),
-//     profession: z.array(z.string()).min(1, "At least one profession option is required"),
-//     annualIncome: z.array(z.string()).min(1, "At least one income option is required"),
-//     foreignInterest: z.string().min(1, "Foreign interest is required"),
-
-// });
-
+// Zod Schema (no change needed here)
 const schema = z.object({
     ageDifference: z.string().min(1, "Age Difference is required"),
     heightFrom: z.string().min(1, "Height From is required"),
@@ -53,7 +39,7 @@ const schema = z.object({
     annualIncomeMax: z.string().optional(),
     foreignInterest: z.string().optional(),
     matchingStars: z.array(z.object({
-        id: z.any(), // Using any() for flexibility on ID type
+        id: z.any(),
         rasi: z.any(),
         star: z.any(),
         label: z.string(),
@@ -73,18 +59,7 @@ const age = [
     { label: '8', value: '8' },
     { label: '9', value: '9' },
     { label: '10', value: '10' }
-
-    // Add more options as needed
 ];
-
-const foreignInterest = [
-    { label: 'Yes', value: 'Yes' },
-    { label: 'No', value: 'No' },
-    { label: 'both', value: 'both' },
-    // Add more options as needed
-];
-
-// Add this array at the top (if you want to easily add more professions later)
 
 export const PartnerSettings = () => {
     const navigation = useNavigation();
@@ -114,32 +89,19 @@ export const PartnerSettings = () => {
     const [annualIncomeOptions, setAnnualIncomeOptions] = useState([]);
     const [professionOptions, setProfessionOptions] = useState([]);
     const [fieldOfStudyOptions, setFieldOfStudyOptions] = useState([]);
-    const [selectedIncomeMinIds, setSelectedIncomeMinIds] = useState(''); // Store selected IDs as a string
+    const [selectedIncomeMinIds, setSelectedIncomeMinIds] = useState('');
     const [selectedIncomeMaxIds, setSelectedIncomeMaxIds] = useState('');
-    const [matchingStarsData, setMatchingStarsData] = useState([]); // Holds grouped star data for rendering
-    const [allStarOptions, setAllStarOptions] = useState([]); // Holds a flat list of all stars for pre-selection
-    console.log('allStarOptions', allStarOptions);
+    const [matchingStarsData, setMatchingStarsData] = useState([]);
+    const [allStarOptions, setAllStarOptions] = useState([]);
     const [selectedStarIds, setSelectedStarIds] = useState([]);
 
-    useEffect(() => {
-        fetchMaritalStatus();
-        fetchProfessionOptions();
-        fetchHighestEdu();
-        fetchAnnualIncome();
-        fetchFieldOfStudy();
-        //fetchMatchingStars();
-        // fetchMatchList();
-        //fetchMatchStars();
-    }, []);
+    // --- API Fetch Functions ---
 
-    const handleCheckboxChange = (updatedIds) => {
+    const handleCheckboxChange = useCallback((updatedIds) => {
         setSelectedStarIds(updatedIds);
-        // Add this line to update the form's value
         setValue('matchingStars', updatedIds, { shouldValidate: true });
-
-        // You now have access to rasi and star information as well
         console.log('Updated Selected Stars:', updatedIds);
-    };
+    }, [setValue]);
 
     const fetchMaritalStatus = async () => {
         try {
@@ -176,10 +138,9 @@ export const PartnerSettings = () => {
                 label: response.data[key].income_description,
                 value: response.data[key].income_id.toString(),
             }));
-            console.log("Annual Income:", annualIncomeArray);
             setAnnualIncomeOptions(annualIncomeArray);
         } catch (error) {
-            console.error("Error fetching UG Degree:", error);
+            console.error("Error fetching annual income:", error);
         }
     };
 
@@ -209,192 +170,156 @@ export const PartnerSettings = () => {
         }
     };
 
+    const fetchMatchingStars = async () => {
+        const birthstar = await AsyncStorage.getItem("birthStarValue");
+        const gender = await AsyncStorage.getItem("gender");
+        const birthrasiId = await AsyncStorage.getItem("birthStaridValue");
 
+        if (birthstar && gender && birthrasiId) {
+            try {
+                const response = await axios.post(`${config.apiUrl}/auth/Get_Matchstr_Pref/`, {
+                    birth_star_id: birthstar,
+                    gender: gender,
+                    birth_rasi_id: birthrasiId
+                });
+
+                const matchCountArrays = Object.values(response.data)
+                    .map(matchCount => matchCount)
+                    .sort((a, b) => b[0].match_count - a[0].match_count);
+
+                setMatchingStarsData(matchCountArrays);
+
+                const allAvailableStars = matchCountArrays.flatMap(matchCountArray =>
+                    matchCountArray.map(star => ({
+                        id: star.id.toString(),
+                        rasi: star.dest_rasi_id.toString(),
+                        star: star.dest_star_id.toString(),
+                        label: `${star.matching_starname} - ${star.matching_rasiname}`,
+                        match_count: star.match_count
+                    }))
+                );
+
+                setAllStarOptions(allAvailableStars);
+                return allAvailableStars;
+            } catch (error) {
+                console.error('Error fetching matching star options:', error);
+                return [];
+            }
+        }
+        return [];
+    };
+
+    // --- 1. Initial Options Fetch (runs once) ---
     useEffect(() => {
-        const fetchProfileData = async () => {
+        fetchMaritalStatus();
+        fetchProfessionOptions();
+        fetchHighestEdu();
+        fetchAnnualIncome();
+        fetchFieldOfStudy();
+        fetchMatchingStars(); // Start loading stars immediately
+    }, []);
+
+    // --- 2. Consolidated Form Data Initialization ---
+    // This hook runs when all necessary options/star data are available
+    useEffect(() => {
+        const initializeFormData = async () => {
+            // Wait for essential dropdown options to load
+            if (maritalStatusOptions.length === 0 || highestEduOptions.length === 0 || annualIncomeOptions.length === 0 || professionOptions.length === 0 || fieldOfStudyOptions.length === 0 || allStarOptions.length === 0) {
+                return;
+            }
+
+            // 1. Fetch saved partner preferences from the main endpoint
             try {
                 const partnerProfileData = await fetchPartnerProfile();
-                console.log("partnerProfileData", partnerProfileData)
+                console.log("partnerProfileData", partnerProfileData);
+                
+                // 2. Set standard dropdown/checkbox values
+                setValue('ageDifference', partnerProfileData.fromAge || '');
+                setValue('heightFrom', partnerProfileData.fromHeight || '');
+                setValue('heightTo', partnerProfileData.toHeight || '');
+                // Ensure array types for multi-selects
+                setValue('education', Array.isArray(partnerProfileData.education) ? partnerProfileData.education : (partnerProfileData.education ? partnerProfileData.education.split(',') : []));
+                setValue('fieldOfStudy', Array.isArray(partnerProfileData.fieldofstudy) ? partnerProfileData.fieldofstudy : (partnerProfileData.fieldofstudy ? partnerProfileData.fieldofstudy.split(',') : []));
+                setValue('maritalStatus', Array.isArray(partnerProfileData.maritalStatus) ? partnerProfileData.maritalStatus : (partnerProfileData.maritalStatus ? partnerProfileData.maritalStatus.split(',') : []));
+                setValue('profession', Array.isArray(partnerProfileData.profession) ? partnerProfileData.profession : (partnerProfileData.profession ? partnerProfileData.profession.split(',') : []));
+                
+                setValue('rehu', partnerProfileData.rahuKetuDhosam || '');
+                setValue('chevvai', partnerProfileData.chevvaiDhosam || '');
+                setValue('foreignInterest', partnerProfileData.foreignInterest || '');
 
-                // Set the form values using the data returned from the API
-                setValue('ageDifference', partnerProfileData.fromAge);
-                setValue('heightFrom', partnerProfileData.fromHeight);
-                setValue('heightTo', partnerProfileData.toHeight);
-                setValue('education', partnerProfileData.education);
-                setValue('education', partnerProfileData.education);
-                setValue('maritalStatus', partnerProfileData.maritalStatus);
-                setValue('profession', partnerProfileData.profession);
-                setValue('rehu', partnerProfileData.rahuKetuDhosam);
-                setValue('chevvai', partnerProfileData.chevvaiDhosam);
-                setValue('foreignInterest', partnerProfileData.foreignInterest);
-
-                // Handle annual income min...
+                // Income
                 if (partnerProfileData.income !== undefined && partnerProfileData.income !== null) {
                     const minIncome = String(partnerProfileData.income);
                     setValue('annualIncomeMin', minIncome);
                     setSelectedIncomeMinIds(minIncome);
                 }
-                // ...and max
                 if (partnerProfileData.incomeStatusMax !== undefined && partnerProfileData.incomeStatusMax !== null) {
                     const maxIncome = String(partnerProfileData.incomeStatusMax);
                     setValue('annualIncomeMax', maxIncome);
                     setSelectedIncomeMaxIds(maxIncome);
                 }
 
-                // NOTE: Star selection is now handled in the initializeStarSelection useEffect above
-                // This ensures proper initialization with either saved preferences or defaults
+                // 3. Handle Matching Stars Initialization
+                const savedStarIdsString = partnerProfileData.partner_porutham_ids;
 
-            } catch (error) {
-                console.error('Error setting form values:', error);
-            }
-        };
+                if (savedStarIdsString && savedStarIdsString.trim() !== '') {
+                    // Saved data exists: use it
+                    const selectedIds = savedStarIdsString.split(',');
 
-        fetchProfileData();
-    }, [setValue]); // Remove allStarOptions dependency since stars are handled separately
-
-    // Enhanced star initialization with all conditions
-    useEffect(() => {
-        const initializeStarSelection = async () => {
-            const birthstar = await AsyncStorage.getItem("birthStarValue");
-            const gender = await AsyncStorage.getItem("gender");
-            const birthstarid = await AsyncStorage.getItem("birthStaridValue");
-            const profileId = await AsyncStorage.getItem("profile_id_new"); // Get profile ID from AsyncStorage
-
-            let hasExistingData = false;
-
-            // Check if user has existing partner preference data from Get_save_details endpoint
-            if (profileId) {
-                try {
-                    const requestData = {
-                        profile_id: profileId,
-                        page_id: 6,
-                    };
-
-                    const response = await axios.post(
-                        `${config.apiUrl}/auth/Get_save_details/`,
-                        requestData
-                    );
-
-                    const profileData = response.data.data;
-
-                    // Check if user has existing star preferences
-                    if (profileData.pref_porutham_star && profileData.pref_porutham_star.trim() !== '') {
-                        hasExistingData = true;
-
-                        // Parse existing data and set it temporarily
-                        const poruthamStarIds = profileData.pref_porutham_star
-                            .split(",")
-                            .map(id => id.trim());
-
-                        // Set temporary selection with basic structure
-                        const tempSelections = poruthamStarIds.map(id => ({
-                            id,
-                            rasi: "",
-                            star: "",
-                            label: "",
+                    // Map saved IDs to the full star objects (from allStarOptions)
+                    const selectedStarObjects = allStarOptions
+                        .filter(option => selectedIds.includes(option.id.toString()))
+                        .map(item => ({
+                            id: item.id,
+                            rasi: item.rasi,
+                            star: item.star,
+                            label: item.label,
                         }));
 
-                        setSelectedStarIds(tempSelections);
-                        setValue('matchingStars', tempSelections);
-                    }
-                } catch (error) {
-                    console.error("Error fetching profile data:", error);
+                    setValue('matchingStars', selectedStarObjects);
+                    setSelectedStarIds(selectedStarObjects);
+                    console.log("Stars: Loaded saved preferences.", selectedStarObjects.length);
+
+                } else {
+                    // No saved data: set default (exclude porutham 0)
+                    const defaultSelectedIds = allStarOptions
+                        .filter(item => item.match_count !== 0)
+                        .map(item => ({
+                            id: item.id.toString(),
+                            rasi: item.rasi,
+                            star: item.star,
+                            label: item.label,
+                        }));
+
+                    setSelectedStarIds(defaultSelectedIds);
+                    setValue('matchingStars', defaultSelectedIds);
+                    console.log("Stars: Set default (non-zero match count) preferences.", defaultSelectedIds.length);
                 }
-            }
 
-            // Fetch matching stars and set proper data structure
-            if (birthstar && gender && birthstarid) {
-                try {
-                    const response = await axios.post(`${config.apiUrl}/auth/Get_Matchstr_Pref/`, {
-                        birth_star_id: birthstar,
-                        gender: gender,
-                        birth_rasi_id: birthstarid
-                    });
-
-                    // Sort the match count arrays by match_count in descending order
-                    const matchCountArrays = Object.values(response.data)
-                        .map(matchCount => matchCount)
-                        .sort((a, b) => b[0].match_count - a[0].match_count);
-
-                    console.log("Sorted matchCountArrays =====>", matchCountArrays);
-                    setMatchingStarsData(matchCountArrays);
-
-                    // Create a flat list of all stars
-                    const allAvailableStars = matchCountArrays.flatMap(matchCountArray =>
-                        matchCountArray.map(star => ({
-                            id: star.id.toString(),
-                            rasi: star.dest_rasi_id.toString(),
-                            star: star.dest_star_id.toString(),
-                            label: `${star.matching_starname} - ${star.matching_rasiname}`,
-                            match_count: star.match_count
-                        }))
-                    );
-
-                    setAllStarOptions(allAvailableStars);
-
-                    // If no existing data was found, set default selections (exclude porutham 0)
-                    if (!hasExistingData) {
-                        const defaultSelectedIds = allAvailableStars
-                            .filter(item => item.match_count !== 0)
-                            .map(item => ({
-                                id: item.id.toString(),
-                                rasi: item.rasi,
-                                star: item.star,
-                                label: item.label,
-                            }));
-
-                        setSelectedStarIds(defaultSelectedIds);
-                        setValue('matchingStars', defaultSelectedIds);
-                    } else {
-                        // If we had existing data, now we can map it to the full star objects
-                        const savedStarIds = selectedStarIds.map(item => item.id);
-                        const fullStarSelections = allAvailableStars
-                            .filter(star => savedStarIds.includes(star.id))
-                            .map(star => ({
-                                id: star.id,
-                                rasi: star.rasi,
-                                star: star.star,
-                                label: star.label,
-                            }));
-
-                        // Only update if we found matching stars
-                        if (fullStarSelections.length > 0) {
-                            setSelectedStarIds(fullStarSelections);
-                            setValue('matchingStars', fullStarSelections);
-                        }
-                    }
-
-                    console.log("Stars with porutham 0 (excluded):",
-                        allAvailableStars.filter(item => item.match_count === 0).length);
-                    console.log("Selected stars count:", selectedStarIds.length);
-
-                } catch (error) {
-                    console.error('Error fetching matching star options:', error);
-                }
+            } catch (error) {
+                console.error('Error setting form values or fetching profile data:', error);
             }
         };
 
-        initializeStarSelection();
-    }, [setValue]);
-
+        initializeFormData();
+    }, [
+        setValue, 
+        maritalStatusOptions.length, 
+        highestEduOptions.length, 
+        annualIncomeOptions.length, 
+        professionOptions.length, 
+        fieldOfStudyOptions.length,
+        allStarOptions.length // Re-run when options or stars are loaded
+    ]);
+    
     const onSubmit = async (data) => {
         try {
-            // Combine income min and max into a comma-separated string
-            const incomeValues = [];
-            if (data.annualIncomeMin) incomeValues.push(data.annualIncomeMin);
-            if (data.annualIncomeMax) incomeValues.push(data.annualIncomeMax);
-
             const starArray = selectedStarIds.map(item => item.id);
             const rasiArray = selectedStarIds.map(item => item.rasi);
             const starRasiArray = selectedStarIds.map(item => `${item.star}-${item.rasi}`);
 
-            // Create a comma-separated string for each array
             const StarString = starArray.join(',');
-            const RasiString = rasiArray.join(',');
             const combinedString = starRasiArray.join(',');
-
-            console.log(StarString);
-            console.log(combinedString);
 
             const formattedData = {
                 pref_age_differences: data.ageDifference || '',
@@ -409,14 +334,11 @@ export const PartnerSettings = () => {
                 pref_chevvai: data.chevvai || '',
                 pref_ragukethu: data.rehu || '',
                 pref_foreign_intrest: data.foreignInterest || '',
-                pref_porutham_star: StarString, // Star IDs as a comma-separated string
-                pref_porutham_star_rasi: combinedString, // Combined star-rasi as a comma-separated string
+                pref_porutham_star: StarString,
+                pref_porutham_star_rasi: combinedString,
             };
 
-            console.log("Post Data:", formattedData);
-
             const result = await updatePartnerPreferences(formattedData);
-            console.log("Registration response:", result);
 
             if (result.data.status === "success") {
                 Toast.show({
@@ -444,12 +366,8 @@ export const PartnerSettings = () => {
         }
     };
 
-    // ... Inside your PartnerSettings component, after the onSubmit function ...
-
     const onError = (errors, e) => {
         console.log("--- VALIDATION FAILED ---", errors);
-
-        // Find the first error message to show in the toast
         const firstErrorKey = Object.keys(errors)[0];
         const firstErrorMessage = errors[firstErrorKey]?.message;
 
@@ -461,717 +379,598 @@ export const PartnerSettings = () => {
         });
     };
 
-    useEffect(() => {
-        const fetchProfileData = async () => {
-            // Wait until allStarOptions is populated
-            if (allStarOptions.length === 0) {
-                return;
-            }
-
-            try {
-                const partnerProfileData = await fetchPartnerProfile();
-                console.log("partnerProfileData", partnerProfileData)
-
-                // Set the form values using the data returned from the API
-                setValue('ageDifference', partnerProfileData.fromAge);
-                setValue('heightFrom', partnerProfileData.fromHeight);
-                setValue('heightTo', partnerProfileData.toHeight);
-                setValue('education', partnerProfileData.education);
-                setValue('fieldOfStudy', partnerProfileData.fieldofstudy);
-                setValue('maritalStatus', partnerProfileData.maritalStatus);
-                setValue('profession', partnerProfileData.profession);
-                setValue('rehu', partnerProfileData.rahuKetuDhosam);
-                setValue('chevvai', partnerProfileData.chevvaiDhosam);
-                setValue('foreignInterest', partnerProfileData.foreignInterest);
-
-                // Handle annual income min...
-                if (partnerProfileData.income !== undefined && partnerProfileData.income !== null) {
-                    const minIncome = String(partnerProfileData.income);
-                    setValue('annualIncomeMin', minIncome);
-                    setSelectedIncomeMinIds(minIncome);
-                }
-                // ...and max
-                if (partnerProfileData.incomeStatusMax !== undefined && partnerProfileData.incomeStatusMax !== null) {
-                    const maxIncome = String(partnerProfileData.incomeStatusMax);
-                    setValue('annualIncomeMax', maxIncome);
-                    setSelectedIncomeMaxIds(maxIncome);
-                }
-
-                // *** THIS IS THE UPDATED LOGIC FOR STARS ***
-                const savedStarIds = partnerProfileData.partner_porutham_ids;
-
-                // Only override the default if savedStarIds is NOT an empty string
-                if (savedStarIds) {
-                    const selectedIds = savedStarIds.split(',');
-
-                    // Find the full star objects from our complete list
-                    const selectedStarObjects = allStarOptions
-                        .filter(option => selectedIds.includes(option.id.toString()))
-                        .map(item => ({ // Re-create the object structure
-                            id: item.id,
-                            rasi: item.rasi,
-                            star: item.star,
-                            label: item.label,
-                        }));
-
-                    // Set both the form value and the visual state
-                    setValue('matchingStars', selectedStarObjects);
-                    setSelectedStarIds(selectedStarObjects);
-                }
-                // ELSE: If savedStarIds is "", do nothing.
-                // The default (all non-zero) set by fetchMatchingStars will be used.
-
-            } catch (error) {
-                console.error('Error setting form values:', error);
-            }
-        };
-
-        fetchProfileData();
-    }, [setValue, allStarOptions]); // <-- Add allStarOptions as a dependency
-
     return (
         <SafeAreaView style={styles.container}>
-            {/* <Text style={styles.partnerHead}>Partner Preference</Text> */}
-            {/* <Text style={styles.search}>Advanced Search</Text> */}
-
-            {/* Age */}
-            <View style={styles.searchContainer}>
-                <Text style={styles.redText}>Age Difference</Text>
-                <View style={styles.formContainer}>
-                    <View style={styles.inputContainer}>
-                        <Controller
-                            control={control}
-                            name="ageDifference"
-                            render={({ field: { onChange, value } }) => (
-                                <Dropdown
-                                    style={styles.dropdown}
-                                    data={age}
-                                    maxHeight={180}
-                                    labelField="label"
-                                    valueField="value"
-                                    placeholder="Age Difference"
-                                    value={value}
-                                    onChange={(item) => {
-                                        onChange(item.value);
-                                    }}
-                                />
-                            )}
-                        />
-                    </View>
-                    {errors.ageDifference && <Text style={styles.errorText}>{errors.ageDifference.message}</Text>}
-                </View>
-            </View>
-
-            {/* Height */}
-            <View style={styles.searchContainer}>
-                <Text style={styles.redText}>Height</Text>
-                <View style={styles.formContainer}>
-                    <View style={styles.inputFlexContainer}>
-                        {/* Height From */}
-                        <Controller
-                            control={control}
-                            name="heightFrom"
-                            rules={{ required: 'Height from is required' }}
-                            render={({ field: { onChange, value } }) => (
-                                <View style={styles.inputFlexFirst}>
-                                    <TextInput
-                                        placeholder="From"
-                                        keyboardType="numeric"
+            <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
+                {/* Age */}
+                <View style={styles.searchContainer}>
+                    <Text style={styles.redText}>Age Difference</Text>
+                    <View style={styles.formContainer}>
+                        <View style={styles.inputContainer}>
+                            <Controller
+                                control={control}
+                                name="ageDifference"
+                                render={({ field: { onChange, value } }) => (
+                                    <Dropdown
+                                        style={styles.dropdown}
+                                        data={age}
+                                        maxHeight={180}
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Age Difference"
                                         value={value}
-                                        onChangeText={onChange}
+                                        onChange={(item) => {
+                                            onChange(item.value);
+                                        }}
                                     />
-                                    {errors.heightFrom && (
-                                        <Text style={styles.errorText}>{errors.heightFrom.message}</Text>
-                                    )}
-                                </View>
-                            )}
-                        />
+                                )}
+                            />
+                        </View>
+                        {errors.ageDifference && <Text style={styles.errorText}>{errors.ageDifference.message}</Text>}
+                    </View>
+                </View>
 
-                        {/* Height To */}
-                        <Controller
-                            control={control}
-                            name="heightTo"
-                            rules={{ required: 'Height to is required' }}
-                            render={({ field: { onChange, value } }) => (
-                                <View style={styles.inputFlex}>
-                                    <TextInput
-                                        placeholder="To"
-                                        keyboardType="numeric"
+                {/* Height */}
+                <View style={styles.searchContainer}>
+                    <Text style={styles.redText}>Height</Text>
+                    <View style={styles.formContainer}>
+                        <View style={styles.inputFlexContainer}>
+                            {/* Height From */}
+                            <Controller
+                                control={control}
+                                name="heightFrom"
+                                rules={{ required: 'Height from is required' }}
+                                render={({ field: { onChange, value } }) => (
+                                    <View style={styles.inputFlexFirst}>
+                                        <TextInput
+                                            placeholder="From"
+                                            keyboardType="numeric"
+                                            value={value}
+                                            onChangeText={onChange}
+                                        />
+                                    </View>
+                                )}
+                            />
+                            {/* Height To */}
+                            <Controller
+                                control={control}
+                                name="heightTo"
+                                rules={{ required: 'Height to is required' }}
+                                render={({ field: { onChange, value } }) => (
+                                    <View style={styles.inputFlex}>
+                                        <TextInput
+                                            placeholder="To"
+                                            keyboardType="numeric"
+                                            value={value}
+                                            onChangeText={onChange}
+                                        />
+                                    </View>
+                                )}
+                            />
+                        </View>
+                        {errors.heightFrom && (<Text style={styles.errorText}>{errors.heightFrom.message}</Text>)}
+                        {errors.heightTo && (<Text style={styles.errorText}>{errors.heightTo.message}</Text>)}
+                    </View>
+                </View>
+
+                {/* Marital Status */}
+                <View style={styles.checkContainer}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                        <Pressable
+                            style={[
+                                styles.checkboxBase,
+                                maritalStatusSelected?.length === maritalStatusOptions.length && maritalStatusOptions.length > 0 && styles.checkboxChecked,
+                            ]}
+                            onPress={() => {
+                                const allValues = maritalStatusOptions.map(opt => opt.value);
+                                if (maritalStatusSelected?.length === maritalStatusOptions.length) {
+                                    setValue("maritalStatus", []);
+                                } else {
+                                    setValue("maritalStatus", allValues);
+                                }
+                            }}
+                        >
+                            {maritalStatusSelected?.length === maritalStatusOptions.length && maritalStatusOptions.length > 0 && (
+                                <Ionicons name="checkmark" size={14} color="white" />
+                            )}
+                        </Pressable>
+
+                        <Pressable
+                            onPress={() => {
+                                const allValues = maritalStatusOptions.map(opt => opt.value);
+                                if (maritalStatusSelected?.length === maritalStatusOptions.length) {
+                                    setValue("maritalStatus", []);
+                                } else {
+                                    setValue("maritalStatus", allValues);
+                                }
+                            }}
+                        >
+                            <Text style={styles.checkRedText}>Marital Status</Text>
+                        </Pressable>
+                    </View>
+                    <Controller
+                        control={control}
+                        name="maritalStatus"
+                        render={({ field: { onChange, value } }) => (
+                            <View style={styles.checkboxDivColFlex}>
+                                {maritalStatusOptions.map((status) => (
+                                    <View key={status.value} style={styles.checkboxContainer}>
+                                        <Pressable
+                                            style={[
+                                                styles.checkboxBase,
+                                                (value || []).includes(status.value) && styles.checkboxChecked,
+                                            ]}
+                                            onPress={() => {
+                                                const currentValues = value || [];
+                                                const newValue = currentValues.includes(status.value)
+                                                    ? currentValues.filter((item) => item !== status.value)
+                                                    : [...currentValues, status.value];
+                                                onChange(newValue);
+                                            }}
+                                        >
+                                            {(value || []).includes(status.value) && (
+                                                <Ionicons name="checkmark" size={14} color="white" />
+                                            )}
+                                        </Pressable>
+                                        <Pressable onPress={() => {
+                                            const currentValues = value || [];
+                                            const newValue = currentValues.includes(status.value)
+                                                ? currentValues.filter((item) => item !== status.value)
+                                                : [...currentValues, status.value];
+                                            onChange(newValue);
+                                        }}>
+                                            <Text style={styles.checkboxLabel}>{status.label}</Text>
+                                        </Pressable>
+                                    </View>
+                                ))}
+
+                            </View>
+                        )}
+                    />
+                    {errors.maritalStatus && <Text style={styles.errorTextCheckBox}>{errors.maritalStatus.message}</Text>}
+                </View>
+
+                {/* Education */}
+                <View style={styles.checkContainer}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                        <Pressable
+                            style={[
+                                styles.checkboxBase,
+                                (watch("education")?.length === highestEduOptions.length && highestEduOptions.length > 0) && styles.checkboxChecked,
+                            ]}
+                            onPress={() => {
+                                const allValues = highestEduOptions.map(opt => opt.value);
+                                if (watch("education")?.length === highestEduOptions.length) {
+                                    setValue("education", []);
+                                } else {
+                                    setValue("education", allValues);
+                                }
+                            }}
+                        >
+                            {(watch("education")?.length === highestEduOptions.length && highestEduOptions.length > 0) && (
+                                <Ionicons name="checkmark" size={14} color="white" />
+                            )}
+                        </Pressable>
+                        <Pressable
+                            onPress={() => {
+                                const allValues = highestEduOptions.map(opt => opt.value);
+                                if (watch("education")?.length === highestEduOptions.length) {
+                                    setValue("education", []);
+                                } else {
+                                    setValue("education", allValues);
+                                }
+                            }}
+                        >
+                            <Text style={styles.checkRedText}>Education</Text>
+                        </Pressable>
+                    </View>
+                    <Controller
+                        control={control}
+                        name="education"
+                        render={({ field: { onChange, value } }) => (
+                            <View style={styles.checkboxDivColFlex}>
+                                {highestEduOptions.map((education) => (
+                                    <View key={education.value} style={styles.checkboxContainer}>
+                                        <Pressable
+                                            style={[
+                                                styles.checkboxBase,
+                                                (value || []).includes(education.value) && styles.checkboxChecked,
+                                            ]}
+                                            onPress={() => {
+                                                const currentValues = value || [];
+                                                const newValue = currentValues.includes(education.value)
+                                                    ? currentValues.filter((item) => item !== education.value)
+                                                    : [...currentValues, education.value];
+                                                onChange(newValue);
+                                            }}
+                                        >
+                                            {(value || []).includes(education.value) && (
+                                                <Ionicons name="checkmark" size={14} color="white" />
+                                            )}
+                                        </Pressable>
+                                        <Pressable onPress={() => {
+                                            const currentValues = value || [];
+                                            const newValue = currentValues.includes(education.value)
+                                                ? currentValues.filter((item) => item !== education.value)
+                                                : [...currentValues, education.value];
+                                            onChange(newValue);
+                                        }}>
+                                            <Text style={styles.checkboxLabel}>{education.label}</Text>
+                                        </Pressable>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+                    />
+                    {errors.education && <Text style={styles.errorTextCheckBox}>{errors.education.message}</Text>}
+                </View>
+
+                {/* Field of Study */}
+                <View style={styles.checkContainer}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                        <Pressable
+                            style={[
+                                styles.checkboxBase,
+                                (watch("fieldOfStudy")?.length === fieldOfStudyOptions.length && fieldOfStudyOptions.length > 0) && styles.checkboxChecked,
+                            ]}
+                            onPress={() => {
+                                const allValues = fieldOfStudyOptions.map(opt => opt.value);
+                                if (watch("fieldOfStudy")?.length === fieldOfStudyOptions.length) {
+                                    setValue("fieldOfStudy", []);
+                                } else {
+                                    setValue("fieldOfStudy", allValues);
+                                }
+                            }}
+                        >
+                            {(watch("fieldOfStudy")?.length === fieldOfStudyOptions.length && fieldOfStudyOptions.length > 0) && (
+                                <Ionicons name="checkmark" size={14} color="white" />
+                            )}
+                        </Pressable>
+                        <Pressable
+                            onPress={() => {
+                                const allValues = fieldOfStudyOptions.map(opt => opt.value);
+                                if (watch("fieldOfStudy")?.length === fieldOfStudyOptions.length) {
+                                    setValue("fieldOfStudy", []);
+                                } else {
+                                    setValue("fieldOfStudy", allValues);
+                                }
+                            }}
+                        >
+                            <Text style={styles.checkRedText}>Field of Study</Text>
+                        </Pressable>
+                    </View>
+                    <Controller
+                        control={control}
+                        name="fieldOfStudy"
+                        render={({ field: { onChange, value } }) => (
+                            <View style={styles.checkboxDivColFlex}>
+                                {fieldOfStudyOptions.map((field) => (
+                                    <View key={field.value} style={styles.checkboxContainer}>
+                                        <Pressable
+                                            style={[
+                                                styles.checkboxBase,
+                                                (value || []).includes(field.value) && styles.checkboxChecked,
+                                            ]}
+                                            onPress={() => {
+                                                const currentValues = value || [];
+                                                const newValue = currentValues.includes(field.value)
+                                                    ? currentValues.filter((item) => item !== field.value)
+                                                    : [...currentValues, field.value];
+                                                onChange(newValue);
+                                            }}
+                                        >
+                                            {(value || []).includes(field.value) && (
+                                                <Ionicons name="checkmark" size={14} color="white" />
+                                            )}
+                                        </Pressable>
+                                        <Pressable onPress={() => {
+                                            const currentValues = value || [];
+                                            const newValue = currentValues.includes(field.value)
+                                                ? currentValues.filter((item) => item !== field.value)
+                                                : [...currentValues, field.value];
+                                            onChange(newValue);
+                                        }}>
+                                            <Text style={styles.checkboxLabel}>{field.label}</Text>
+                                        </Pressable>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+                    />
+                    {errors.fieldOfStudy && <Text style={styles.errorTextCheckBox}>{errors.fieldOfStudy.message}</Text>}
+                </View>
+
+                {/* Profession */}
+                <View style={styles.checkContainer}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                        <Pressable
+                            style={[
+                                styles.checkboxBase,
+                                (watch("profession")?.length === professionOptions.length && professionOptions.length > 0) && styles.checkboxChecked,
+                            ]}
+                            onPress={() => {
+                                const allValues = professionOptions.map(opt => opt.value);
+                                if (watch("profession")?.length === professionOptions.length) {
+                                    setValue("profession", []);
+                                } else {
+                                    setValue("profession", allValues);
+                                }
+                            }}
+                        >
+                            {(watch("profession")?.length === professionOptions.length && professionOptions.length > 0) && (
+                                <Ionicons name="checkmark" size={14} color="white" />
+                            )}
+                        </Pressable>
+                        <Pressable
+                            onPress={() => {
+                                const allValues = professionOptions.map(opt => opt.value);
+                                if (watch("profession")?.length === professionOptions.length) {
+                                    setValue("profession", []);
+                                } else {
+                                    setValue("profession", allValues);
+                                }
+                            }}
+                        >
+                            <Text style={styles.checkRedText}>Profession</Text>
+                        </Pressable>
+                    </View>
+                    <Controller
+                        control={control}
+                        name="profession"
+                        render={({ field: { onChange, value } }) => (
+                            <View style={styles.checkboxDivColFlex}>
+                                {professionOptions.map((professionOpt) => (
+                                    <View key={professionOpt.value} style={styles.checkboxContainer}>
+                                        <Pressable
+                                            style={[
+                                                styles.checkboxBase,
+                                                (value || []).includes(professionOpt.value) && styles.checkboxChecked,
+                                            ]}
+                                            onPress={() => {
+                                                const currentValues = value || [];
+                                                const newValue = currentValues.includes(professionOpt.value)
+                                                    ? currentValues.filter((item) => item !== professionOpt.value)
+                                                    : [...currentValues, professionOpt.value];
+                                                onChange(newValue);
+                                            }}
+                                        >
+                                            {(value || []).includes(professionOpt.value) && (
+                                                <Ionicons name="checkmark" size={14} color="white" />
+                                            )}
+                                        </Pressable>
+                                        <Pressable onPress={() => {
+                                            const currentValues = value || [];
+                                            const newValue = currentValues.includes(professionOpt.value)
+                                                ? currentValues.filter((item) => item !== professionOpt.value)
+                                                : [...currentValues, professionOpt.value];
+                                            onChange(newValue);
+                                        }}>
+                                            <Text style={styles.checkboxLabel}>{professionOpt.label}</Text>
+                                        </Pressable>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+                    />
+                    {errors.profession && <Text style={styles.errorTextCheckBox}>{errors.profession.message}</Text>}
+                </View>
+
+                {/* Annual Income Min */}
+                <View style={styles.searchContainer}>
+                    <Text style={styles.redText}>Annual Income Min</Text>
+                    <View style={styles.formContainer}>
+                        <View style={styles.inputContainer}>
+                            <Controller
+                                control={control}
+                                name="annualIncomeMin"
+                                render={({ field: { onChange, value } }) => (
+                                    <Dropdown
+                                        style={styles.dropdown}
+                                        placeholderStyle={styles.placeholderStyle}
+                                        selectedTextStyle={styles.selectedTextStyle}
+                                        data={[{ label: 'Select Annual Income Min', value: '' }, ...annualIncomeOptions]}
+                                        maxHeight={180}
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Select min Annual Income"
                                         value={value}
-                                        onChangeText={onChange}
+                                        onChange={(item) => {
+                                            onChange(item.value);
+                                            setSelectedIncomeMinIds(item.value);
+                                        }}
                                     />
-                                    {errors.heightTo && (
-                                        <Text style={styles.errorText}>{errors.heightTo.message}</Text>
-                                    )}
-                                </View>
-                            )}
-                        />
+                                )}
+                            />
+                        </View>
                     </View>
                 </View>
-            </View>
 
-            {/* Marital Status */}
-            <View style={styles.checkContainer}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                    <Pressable
-                        style={[
-                            styles.checkboxBase,
-                            maritalStatusSelected?.length === maritalStatusOptions.length && maritalStatusOptions.length > 0 && styles.checkboxChecked,
-                        ]}
-                        onPress={() => {
-                            const allValues = maritalStatusOptions.map(opt => opt.value);
-                            if (maritalStatusSelected?.length === maritalStatusOptions.length) {
-                                setValue("maritalStatus", []);
-                            } else {
-                                setValue("maritalStatus", allValues);
-                            }
-                        }}
-                    >
-                        {maritalStatusSelected?.length === maritalStatusOptions.length && maritalStatusOptions.length > 0 && (
-                            <Ionicons name="checkmark" size={14} color="white" />
-                        )}
-                    </Pressable>
-
-                    <Pressable
-                        onPress={() => {
-                            const allValues = maritalStatusOptions.map(opt => opt.value);
-                            if (maritalStatusSelected?.length === maritalStatusOptions.length) {
-                                setValue("maritalStatus", []);
-                            } else {
-                                setValue("maritalStatus", allValues);
-                            }
-                        }}
-                    >
-                        <Text style={styles.checkRedText}>Marital Status</Text>
-                    </Pressable>
-                </View>
-                <Controller
-                    control={control}
-                    name="maritalStatus"
-                    render={({ field: { onChange, value } }) => (
-                        <View style={styles.checkboxDivColFlex}>
-                            {maritalStatusOptions.map((status) => (
-                                <View key={status.value} style={styles.checkboxContainer}>
-                                    <Pressable
-                                        style={[
-                                            styles.checkboxBase,
-                                            value.includes(status.value) && styles.checkboxChecked,
-                                        ]}
-                                        onPress={() => {
-                                            const newValue = value.includes(status.value)
-                                                ? value.filter((item) => item !== status.value)
-                                                : [...value, status.value];
-                                            onChange(newValue);
+                {/* Annual Income Max */}
+                <View style={styles.searchContainer}>
+                    <Text style={styles.redText}>Annual Income Max</Text>
+                    <View style={styles.formContainer}>
+                        <View style={styles.inputContainer}>
+                            <Controller
+                                control={control}
+                                name="annualIncomeMax"
+                                render={({ field: { onChange, value } }) => (
+                                    <Dropdown
+                                        style={styles.dropdown}
+                                        placeholderStyle={styles.placeholderStyle}
+                                        selectedTextStyle={styles.selectedTextStyle}
+                                        data={[{ label: 'Select Annual Income Max', value: '' }, ...annualIncomeOptions]}
+                                        maxHeight={180}
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Select max Annual Income"
+                                        value={value}
+                                        onChange={(item) => {
+                                            onChange(item.value);
+                                            setSelectedIncomeMaxIds(item.value);
                                         }}
-                                    >
-                                        {value.includes(status.value) && (
-                                            <Ionicons name="checkmark" size={14} color="white" />
-                                        )}
-                                    </Pressable>
-                                    <Pressable onPress={() => {
-                                        const newValue = value.includes(status.value)
-                                            ? value.filter((item) => item !== status.value)
-                                            : [...value, status.value];
-                                        onChange(newValue);
-                                    }}>
-                                        <Text style={styles.checkboxLabel}>{status.label}</Text>
-                                    </Pressable>
-                                </View>
-                            ))}
-
+                                    />
+                                )}
+                            />
                         </View>
-                    )}
-                />
-                {errors.maritalStatus && <Text style={styles.errorTextCheckBox}>{errors.maritalStatus.message}</Text>}
-            </View>
-
-            {/* Education */}
-            <View style={styles.checkContainer}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                    <Pressable
-                        style={[
-                            styles.checkboxBase,
-                            (watch("education")?.length === highestEduOptions.length && highestEduOptions.length > 0) && styles.checkboxChecked,
-                        ]}
-                        onPress={() => {
-                            const allValues = highestEduOptions.map(opt => opt.value);
-                            if (watch("education")?.length === highestEduOptions.length) {
-                                setValue("education", []);
-                            } else {
-                                setValue("education", allValues);
-                            }
-                        }}
-                    >
-                        {(watch("education")?.length === highestEduOptions.length && highestEduOptions.length > 0) && (
-                            <Ionicons name="checkmark" size={14} color="white" />
-                        )}
-                    </Pressable>
-                    <Pressable
-                        onPress={() => {
-                            const allValues = highestEduOptions.map(opt => opt.value);
-                            if (watch("education")?.length === highestEduOptions.length) {
-                                setValue("education", []);
-                            } else {
-                                setValue("education", allValues);
-                            }
-                        }}
-                    >
-                        <Text style={styles.checkRedText}>Education</Text>
-                    </Pressable>
+                    </View>
                 </View>
-                <Controller
-                    control={control}
-                    name="education"
-                    render={({ field: { onChange, value } }) => (
-                        <View style={styles.checkboxDivColFlex}>
-                            {highestEduOptions.map((education) => (
-                                <View key={education.value} style={styles.checkboxContainer}>
-                                    <Pressable
-                                        style={[
-                                            styles.checkboxBase,
-                                            value.includes(education.value) && styles.checkboxChecked,
+
+                {/* Chevvai Dropdown */}
+                <View style={styles.searchContainer}>
+                    <Text style={styles.redText}>Chevvai</Text>
+                    <View style={styles.formContainer}>
+                        <View style={styles.inputContainer}>
+                            <Controller
+                                control={control}
+                                name="chevvai"
+                                render={({ field: { onChange, value } }) => (
+                                    <Dropdown
+                                        style={styles.dropdown}
+                                        data={[
+                                            { label: "Select Chevvai", value: "" },
+                                            { label: "Yes", value: "Yes" },
+                                            { label: "No", value: "No" },
+                                            { label: "Both", value: "Both" }
                                         ]}
-                                        onPress={() => {
-                                            const newValue = value.includes(education.value)
-                                                ? value.filter((item) => item !== education.value)
-                                                : [...value, education.value];
-                                            onChange(newValue);
+                                        maxHeight={180}
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Select Chevvai"
+                                        value={value}
+                                        onChange={(item) => {
+                                            onChange(item.value);
                                         }}
-                                    >
-                                        {value.includes(education.value) && (
-                                            <Ionicons name="checkmark" size={14} color="white" />
-                                        )}
-                                    </Pressable>
-                                    <Pressable onPress={() => {
-                                        const newValue = value.includes(education.value)
-                                            ? value.filter((item) => item !== education.value)
-                                            : [...value, education.value];
-                                        onChange(newValue);
-                                    }}>
-                                        <Text style={styles.checkboxLabel}>{education.label}</Text>
-                                    </Pressable>
-                                </View>
-                            ))}
+                                    />
+                                )}
+                            />
                         </View>
-                    )}
-                />
-                {errors.education && <Text style={styles.errorTextCheckBox}>{errors.education.message}</Text>}
-            </View>
-
-            {/* Field of Study */}
-            <View style={styles.checkContainer}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                    <Pressable
-                        style={[
-                            styles.checkboxBase,
-                            (watch("fieldOfStudy")?.length === fieldOfStudyOptions.length && fieldOfStudyOptions.length > 0) && styles.checkboxChecked,
-                        ]}
-                        onPress={() => {
-                            const allValues = fieldOfStudyOptions.map(opt => opt.value);
-                            if (watch("fieldOfStudy")?.length === fieldOfStudyOptions.length) {
-                                setValue("fieldOfStudy", []);
-                            } else {
-                                setValue("fieldOfStudy", allValues);
-                            }
-                        }}
-                    >
-                        {(watch("fieldOfStudy")?.length === fieldOfStudyOptions.length && fieldOfStudyOptions.length > 0) && (
-                            <Ionicons name="checkmark" size={14} color="white" />
-                        )}
-                    </Pressable>
-                    <Pressable
-                        onPress={() => {
-                            const allValues = fieldOfStudyOptions.map(opt => opt.value);
-                            if (watch("fieldOfStudy")?.length === fieldOfStudyOptions.length) {
-                                setValue("fieldOfStudy", []);
-                            } else {
-                                setValue("fieldOfStudy", allValues);
-                            }
-                        }}
-                    >
-                        <Text style={styles.checkRedText}>Field of Study</Text>
-                    </Pressable>
+                        {errors.chevvai && <Text style={styles.errorText}>{errors.chevvai.message}</Text>}
+                    </View>
                 </View>
-                <Controller
-                    control={control}
-                    name="fieldOfStudy"
-                    render={({ field: { onChange, value } }) => (
-                        <View style={styles.checkboxDivColFlex}>
-                            {fieldOfStudyOptions.map((field) => (
-                                <View key={field.value} style={styles.checkboxContainer}>
-                                    <Pressable
-                                        style={[
-                                            styles.checkboxBase,
-                                            value.includes(field.value) && styles.checkboxChecked,
+
+                {/* Rehu Dropdown */}
+                <View style={styles.searchContainer}>
+                    <Text style={styles.redText}> Rahu/Ketu Dhosam</Text>
+                    <View style={styles.formContainer}>
+                        <View style={styles.inputContainer}>
+                            <Controller
+                                control={control}
+                                name="rehu"
+                                render={({ field: { onChange, value } }) => (
+                                    <Dropdown
+                                        style={styles.dropdown}
+                                        data={[
+                                            { label: "Select Rahu/Ketu Dhosam", value: "" },
+                                            { label: "Yes", value: "Yes" },
+                                            { label: "No", value: "No" },
+                                            { label: "Both", value: "Both" }
                                         ]}
-                                        onPress={() => {
-                                            const newValue = value.includes(field.value)
-                                                ? value.filter((item) => item !== field.value)
-                                                : [...value, field.value];
-                                            onChange(newValue);
+                                        maxHeight={180}
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Select Rahu/Ketu Dhosam"
+                                        value={value}
+                                        onChange={(item) => {
+                                            onChange(item.value);
                                         }}
-                                    >
-                                        {value.includes(field.value) && (
-                                            <Ionicons name="checkmark" size={14} color="white" />
-                                        )}
-                                    </Pressable>
-                                    <Pressable onPress={() => {
-                                        const newValue = value.includes(field.value)
-                                            ? value.filter((item) => item !== field.value)
-                                            : [...value, field.value];
-                                        onChange(newValue);
-                                    }}>
-                                        <Text style={styles.checkboxLabel}>{field.label}</Text>
-                                    </Pressable>
-                                </View>
-                            ))}
+                                    />
+                                )}
+                            />
                         </View>
-                    )}
-                />
-                {errors.fieldOfStudy && <Text style={styles.errorTextCheckBox}>{errors.fieldOfStudy.message}</Text>}
-            </View>
-
-            {/* Profession */}
-            <View style={styles.checkContainer}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                    <Pressable
-                        style={[
-                            styles.checkboxBase,
-                            (watch("profession")?.length === professionOptions.length && professionOptions.length > 0) && styles.checkboxChecked,
-                        ]}
-                        onPress={() => {
-                            // --- THIS IS THE FIX ---
-                            const allValues = professionOptions.map(opt => opt.value);
-                            if (watch("profession")?.length === professionOptions.length) {
-                                setValue("profession", []);
-                            } else {
-                                setValue("profession", allValues);
-                            }
-                        }}
-                    >
-                        {(watch("profession")?.length === professionOptions.length && professionOptions.length > 0) && (
-                            <Ionicons name="checkmark" size={14} color="white" />
-                        )}
-                    </Pressable>
-                    <Pressable
-                        onPress={() => {
-                            const allValues = professionOptions.map(opt => opt.value);
-                            if (watch("profession")?.length === professionOptions.length) {
-                                setValue("profession", []);
-                            } else {
-                                setValue("profession", allValues);
-                            }
-                        }}
-                    >
-                        <Text style={styles.checkRedText}>Profession</Text>
-                    </Pressable>
+                        {errors.rehu && <Text style={styles.errorText}>{errors.rehu.message}</Text>}
+                    </View>
                 </View>
-                <Controller
-                    control={control}
-                    name="profession"
-                    render={({ field: { onChange, value } }) => (
-                        <View style={styles.checkboxDivColFlex}>
-                            {professionOptions.map((professionOpt) => (
-                                <View key={professionOpt.value} style={styles.checkboxContainer}>
-                                    <Pressable
-                                        style={[
-                                            styles.checkboxBase,
-                                            value.includes(professionOpt.value) && styles.checkboxChecked,
-                                        ]}
-                                        onPress={() => {
-                                            const newValue = value.includes(professionOpt.value)
-                                                ? value.filter((item) => item !== professionOpt.value)
-                                                : [...value, professionOpt.value];
-                                            onChange(newValue);
+
+                {/* Foreign Interest */}
+                <View style={styles.searchContainer}>
+                    <Text style={styles.redText}>Foreign Interest</Text>
+                    <View style={styles.formContainer}>
+                        <View style={styles.inputContainer}>
+
+                            <Controller
+                                control={control}
+                                name="foreignInterest"
+                                render={({ field: { onChange, value } }) => (
+                                    <Dropdown
+                                        style={styles.dropdown}
+                                        data={[
+                                            { label: 'Select Foreign Interest', value: '' },
+                                            { label: 'Yes', value: 'Yes' },
+                                            { label: 'No', value: 'No' },
+                                            { label: 'Both', value: 'Both' }]}
+                                        maxHeight={180}
+                                        labelField="label"
+                                        valueField="value"
+                                        placeholder="Select Foreign Interest"
+                                        value={value}
+                                        onChange={(item) => {
+                                            onChange(item.value);
                                         }}
-                                    >
-                                        {value.includes(professionOpt.value) && (
-                                            <Ionicons name="checkmark" size={14} color="white" />
-                                        )}
-                                    </Pressable>
-                                    <Pressable onPress={() => {
-                                        const newValue = value.includes(professionOpt.value)
-                                            ? value.filter((item) => item !== professionOpt.value)
-                                            : [...value, professionOpt.value];
-                                        onChange(newValue);
-                                    }}>
-                                        <Text style={styles.checkboxLabel}>{professionOpt.label}</Text>
-                                    </Pressable>
-                                </View>
-                            ))}
+                                    />
+                                )}
+                            />
                         </View>
+                    </View>
+                </View>
+
+                {/* Porutham */}
+                <View style={styles.checkContainer}>
+                    {matchingStarsData.length > 0 ? (
+                        matchingStarsData
+                            .sort((a, b) => b[0].match_count - a[0].match_count)
+                            .map((matchCountArray, index) => {
+                                const starAndRasi = matchCountArray.map(star => ({
+                                    id: star.id.toString(),
+                                    matching_starId: star.dest_star_id.toString(),
+                                    matching_starname: star.matching_starname,
+                                    matching_rasiId: star.dest_rasi_id.toString(),
+                                    matching_rasiname: star.matching_rasiname,
+                                }));
+
+                                const matchCountValue = matchCountArray[0].match_count;
+
+                                return (
+                                    <MatchingStars
+                                        key={`${index}`}
+                                        matchCountValue={matchCountValue}
+                                        starAndRasi={starAndRasi}
+                                        selectedStarIds={selectedStarIds}
+                                        onCheckboxChange={handleCheckboxChange}
+                                    />
+                                );
+                            })
+                    ) : (
+                        <Text>Loading match stars...</Text>
                     )}
-                />
-                {errors.profession && <Text style={styles.errorTextCheckBox}>{errors.profession.message}</Text>}
-            </View>
-
-            {/* Annual Income */}
-            <View style={styles.searchContainer}>
-                <Text style={styles.redText}>Annual Income Min</Text>
-                <View style={styles.formContainer}>
-                    <View style={styles.inputContainer}>
-                        <Controller
-                            control={control}
-                            name="annualIncomeMin"
-                            render={({ field: { onChange, value } }) => (
-                                <Dropdown
-                                    style={styles.dropdown}
-                                    placeholderStyle={styles.placeholderStyle}
-                                    selectedTextStyle={styles.selectedTextStyle}
-                                    data={[{ label: 'Select Annual Income Min', value: '' }, ...annualIncomeOptions]} // Use the incomeOptions array
-                                    maxHeight={180}
-                                    labelField="label"
-                                    valueField="value"
-                                    placeholder="Select min Annual Income"
-                                    value={value}
-                                    onChange={(item) => {
-                                        onChange(item.value);
-                                        setSelectedIncomeMinIds(item.value); // Update selectedIncomeIds state
-                                    }}
-                                />
-                            )}
-                        />
-                    </View>
                 </View>
 
-
-                {/* <Controller
-                    control={control}
-                    name="annualIncome"
-                    render={({ field: { onChange, value } }) => (
-                        <View style={styles.checkboxDivColFlex}>
-                            {annualIncomeOptions.map((income) => (
-                                <View key={income.value} style={styles.checkboxContainer}>
-                                    <Pressable
-                                        style={[
-                                            styles.checkboxBase,
-                                            value.includes(income.value) && styles.checkboxChecked,
-                                        ]}
-                                        onPress={() => {
-                                            const newValue = value.includes(income.value)
-                                                ? value.filter((item) => item !== income.value)
-                                                : [...value, income.value];
-                                            onChange(newValue);
-                                        }}
-                                    >
-                                        {value.includes(income.value) && (
-                                            <Ionicons name="checkmark" size={14} color="white" />
-                                        )}
-                                    </Pressable>
-                                    <Pressable onPress={() => {
-                                        const newValue = value.includes(income.value)
-                                            ? value.filter((item) => item !== income.value)
-                                            : [...value, income.value];
-                                        onChange(newValue);
-                                    }}>
-                                        <Text style={styles.checkboxLabel}>{income.label}</Text>
-                                    </Pressable>
-                                </View>
-                            ))}
-                        </View>
-                    )}
-                /> */}
-                {/* {errors.annualIncome && <Text style={styles.errorTextCheckBox}>{errors.annualIncome.message}</Text>} */}
-            </View>
-
-            {/* Annual Income */}
-            <View style={styles.searchContainer}>
-                <Text style={styles.redText}>Annual Income Max</Text>
+                {/* Find Match Button */}
                 <View style={styles.formContainer}>
-                    <View style={styles.inputContainer}>
-                        <Controller
-                            control={control}
-                            name="annualIncomeMax"
-                            render={({ field: { onChange, value } }) => (
-                                <Dropdown
-                                    style={styles.dropdown}
-                                    placeholderStyle={styles.placeholderStyle}
-                                    selectedTextStyle={styles.selectedTextStyle}
-                                    data={[{ label: 'Select Annual Income Max', value: '' }, ...annualIncomeOptions]}// Use the incomeOptions array
-                                    maxHeight={180}
-                                    labelField="label"
-                                    valueField="value"
-                                    placeholder="Select max Annual Income"
-                                    value={value}
-                                    onChange={(item) => {
-                                        onChange(item.value);
-                                        setSelectedIncomeMinIds(item.value); // Update selectedIncomeIds state
-                                    }}
-                                />
-                            )}
-                        />
-                    </View>
-                </View>
-                {/* {errors.annualIncome && <Text style={styles.errorText}>{errors.annualIncome.message}</Text>} */}
-            </View>
-
-
-            {/* Native State */}
-
-
-
-
-
-            {/* Chevvai Dropdown */}
-            <View style={styles.searchContainer}>
-                <Text style={styles.redText}>Chevvai</Text>
-                <View style={styles.formContainer}>
-                    <View style={styles.inputContainer}>
-                        <Controller
-                            control={control}
-                            name="chevvai"
-                            render={({ field: { onChange, value } }) => (
-                                <Dropdown
-                                    style={styles.dropdown}
-                                    data={[
-                                        { label: "Select Chevvai", value: "" },
-                                        { label: "Yes", value: "Yes" },
-                                        { label: "No", value: "No" },
-                                        { label: "Both", value: "Both" }
-                                    ]}
-                                    maxHeight={180}
-                                    labelField="label"
-                                    valueField="value"
-                                    placeholder="Select Chevvai"
-                                    value={value}
-                                    onChange={(item) => {
-                                        onChange(item.value);
-                                    }}
-                                />
-                            )}
-                        />
-                    </View>
-                    {errors.chevvai && <Text style={styles.errorText}>{errors.chevvai.message}</Text>}
-                </View>
-            </View>
-
-            {/* Rehu Dropdown */}
-            <View style={styles.searchContainer}>
-                <Text style={styles.redText}> Rahu/Ketu Dhosam</Text>
-                <View style={styles.formContainer}>
-                    <View style={styles.inputContainer}>
-                        <Controller
-                            control={control}
-                            name="rehu"
-                            render={({ field: { onChange, value } }) => (
-                                <Dropdown
-                                    style={styles.dropdown}
-                                    data={[
-                                        { label: "Select Rahu/Ketu Dhosam", value: "" },
-                                        { label: "Yes", value: "Yes" },
-                                        { label: "No", value: "No" },
-                                        { label: "Both", value: "Both" }
-                                    ]}
-                                    maxHeight={180}
-                                    labelField="label"
-                                    valueField="value"
-                                    placeholder="Select Rahu/Ketu Dhosam"
-                                    value={value}
-                                    onChange={(item) => {
-                                        onChange(item.value);
-                                    }}
-                                />
-                            )}
-                        />
-                    </View>
-                    {errors.rehu && <Text style={styles.errorText}>{errors.rehu.message}</Text>}
-                </View>
-            </View>
-
-            {/* Foreign Interest */}
-            <View style={styles.searchContainer}>
-                <Text style={styles.redText}>Foreign Interest</Text>
-                <View style={styles.formContainer}>
-                    <View style={styles.inputContainer}>
-
-                        <Controller
-                            control={control}
-                            name="foreignInterest"
-                            render={({ field: { onChange, value } }) => (
-                                <Dropdown
-                                    style={styles.dropdown}
-                                    data={[
-                                        { label: 'Select Foreign Interest', value: '' },
-                                        { label: 'Yes', value: 'Yes' },
-                                        { label: 'No', value: 'No' },
-                                        { label: 'Both', value: 'Both' }]}
-                                    maxHeight={180}
-                                    labelField="label"
-                                    valueField="value"
-                                    placeholder="Select Foreign Interest"
-                                    value={value}
-                                    onChange={(item) => {
-                                        onChange(item.value);
-                                    }}
-                                />
-                            )}
-                        />
-                    </View>
-
-                    {/* {errors.foreignInterest && <Text style={styles.errorText}>{errors.foreignInterest.message}</Text>} */}
-                </View>
-            </View>
-
-            {/* Porutham */}
-
-
-            {/* Work Location */}
-            <View style={styles.checkContainer}>
-                {matchingStarsData.length > 0 ? (
-                    matchingStarsData
-                        .sort((a, b) => b[0].match_count - a[0].match_count) // Sort by match_count
-                        .map((matchCountArray, index) => {
-                            const starAndRasi = matchCountArray.map(star => ({
-                                id: star.id.toString(),
-                                matching_starId: star.dest_star_id.toString(),
-                                matching_starname: star.matching_starname,
-                                matching_rasiId: star.dest_rasi_id.toString(),
-                                matching_rasiname: star.matching_rasiname,
-                            }));
-
-                            const matchCountValue = matchCountArray[0].match_count;
-
-                            return (
-                                <MatchingStars
-                                    key={`${index}`}
-                                    matchCountValue={matchCountValue} // Pass matchCountValue
-                                    starAndRasi={starAndRasi}
-                                    selectedStarIds={selectedStarIds}
-                                    onCheckboxChange={handleCheckboxChange}
-                                />
-                            );
-                        })
-                ) : (
-                    <Text>No match stars available</Text>
-                )}
-            </View>
-
-            {/* Find Match Button */}
-            <View style={styles.formContainer}>
-                <TouchableOpacity
-                    style={styles.btn}
-                    onPress={handleSubmit(onSubmit, onError)}
-                >
-                    <LinearGradient
-                        colors={["#BD1225", "#FF4050"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        useAngle={true}
-                        angle={92.08}
-                        angleCenter={{ x: 0.5, y: 0.5 }}
-                        style={styles.linearGradient}
+                    <TouchableOpacity
+                        style={styles.btn}
+                        onPress={handleSubmit(onSubmit, onError)}
                     >
-                        <View style={styles.loginContainer}>
-                            <Text style={styles.login}>Save</Text>
-                        </View>
-                    </LinearGradient>
-                </TouchableOpacity>
-            </View>
-
+                        <LinearGradient
+                            colors={["#BD1225", "#FF4050"]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            useAngle={true}
+                            angle={92.08}
+                            angleCenter={{ x: 0.5, y: 0.5 }}
+                            style={styles.linearGradient}
+                        >
+                            <View style={styles.loginContainer}>
+                                <Text style={styles.login}>Save</Text>
+                            </View>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
         </SafeAreaView>
     );
 };
 
+// ... Styles (included for completeness)
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -1327,7 +1126,7 @@ const styles = StyleSheet.create({
     checkContainer: {
         alignSelf: "flex-start",
         paddingHorizontal: 20,
-        width: "80%",
+        width: "100%", // Changed from 80% to 100% to fill space better
     },
 
     newCheckContainer: {

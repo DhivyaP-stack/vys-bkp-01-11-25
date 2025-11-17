@@ -738,7 +738,10 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
+    width: "100%", // Takes full width
+    height: "100%", // Takes full height
+    backgroundColor: "#F4F4F4", // Match the main container background
   },
   menuContainer: {
     width: "100%",

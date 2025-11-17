@@ -9,6 +9,7 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  ActivityIndicator
 } from "react-native";
 import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -62,6 +63,8 @@ export const Search = () => {
   const [workLocation, setWorkLocation] = useState(''); // ✨ NEW: For Work Location
   const [selectedIncomeMinLabel, setSelectedIncomeMinLabel] = useState('Select min Annual Income'); // ✨ NEW: For min income placeholder
   const [selectedIncomeMaxLabel, setSelectedIncomeMaxLabel] = useState('Select Max Annual Income'); // ✨ NEW: For max income placeholder
+  const [btnLoading, setBtnLoading] = useState(false);
+
 
   const handleSavePress = async (viewedProfileId) => {
     const newStatus = bookmarkedProfiles.has(viewedProfileId) ? "0" : "1";
@@ -388,7 +391,7 @@ export const Search = () => {
         await AsyncStorage.setItem('totalcount', count.toString());
 
 
-        navigation.navigate('SearchResults', { results: searchResults.data });
+        navigation.navigate('SearchResults', { results: searchResults.data, totalCount: searchResults.total_count });
       } else {
         console.error('Failed to fetch search results:', searchResults.data.message || 'Unknown error');
       }
@@ -448,11 +451,72 @@ export const Search = () => {
 
 
   // Function to handle filter icon press
-  const handleFilterPress = () => {
-    // Implement your filter functionality here
-    console.log("Filter icon pressed");
-  };
+  // Replace the current handleFilterPress function
+  // const handleFilterPress = () => {
+  //   navigation.navigate('FilterScreen');
+  // };
+  const MIN_SEARCH_LENGTH = 3;
 
+  const handleFilterPress = async () => {
+    if (btnLoading) return;     // ⛔ avoid double click
+    setBtnLoading(true);
+    const searchId = (searchProfileId || '').trim();
+    console.log("searchId", searchId)
+
+    if (searchId.length >= MIN_SEARCH_LENGTH) {
+      try {
+        // 2. Call API to search by Profile ID or Name
+        const response = await Search_By_profileId(searchId); // Now receives { status: "success", data: [...] }
+        console.log('Search_By_profileId', response)
+
+        // 3. The check for SUCCESS STATUS and non-empty DATA ARRAY now works correctly:
+        if (response && response.status === "success" && Array.isArray(response.data) && response.data.length > 0) {
+
+          // SUCCESS: Navigate to FilterScreen
+          const profileCount = response.data.length;
+          console.log(profileCount, "profileCount")
+          // SUCCESS: Navigate to FilterScreen with count
+
+          navigation.navigate('FilterScreen', {
+            searchProfileId: searchId,
+            isProfileIdSearch: true,
+            profileCount: profileCount, // Pass the count
+          });
+        } else {
+          // Handle cases where:
+          // a) status is 'success' but data is empty (no matches found)
+          // b) status is 'failure' (API error message)
+
+          // Use the message from the API response if it exists, otherwise use a default "No profiles found"
+          const errorMessage = response?.data?.message || "No profiles found matching your search term.";
+
+          Toast.show({
+            type: "info",
+            text1: "No Matches",
+            text2: errorMessage,
+            position: "bottom",
+          });
+        }
+      } catch (error) {
+        console.error("Error during profile search:", error);
+        Toast.show({
+          type: "error",
+          text1: "Search Error",
+          text2: "Failed to fetch profile data.",
+          position: "bottom",
+        });
+      }
+    } else {
+      // Input Error (MIN_SEARCH_LENGTH)
+      Toast.show({
+        type: "error",
+        text1: "Input Error",
+        text2: `Please enter at least ${MIN_SEARCH_LENGTH} characters to search.`,
+        position: "bottom",
+      });
+    }
+    setBtnLoading(false);
+  };
   // Profile Photo
   const [ppChecked, ppSetChecked] = useState(false);
 
@@ -608,7 +672,7 @@ export const Search = () => {
           />
           <TextInput
             style={styles.input}
-            placeholder="Search profile ID"
+            placeholder="Search profile ID or profile Name"
             value={searchProfileId}
             onChangeText={(text) => {
               setSearchProfileId(text); // Update the state
@@ -626,9 +690,31 @@ export const Search = () => {
         </View>
 
         {/* Filter Icon */}
-        <TouchableOpacity style={styles.filterIcon} onPress={handleFilterPress}>
-          <MaterialIcons name="filter-list" size={18} color="#FF6666" />
+        <TouchableOpacity
+          style={[
+            styles.filterIcon,
+            {
+              backgroundColor: "#FF6666",
+              paddingHorizontal: 10,
+              paddingVertical: 3,
+              borderRadius: 5,
+              alignItems: "center",
+              justifyContent: "center",
+          
+            },
+          ]}
+          onPress={handleFilterPress}
+          disabled={btnLoading}
+        >
+          {btnLoading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />   // loader white
+          ) : (
+            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600" }}>
+              Search
+            </Text>
+          )}
         </TouchableOpacity>
+
 
         {/* Search Button */}
         {/* <TouchableOpacity style={styles.searchButton} onPress={handleSearchPress}>
@@ -636,7 +722,7 @@ export const Search = () => {
         </TouchableOpacity> */}
       </View>
 
-      {searchProfileId ? (
+      {/* {searchProfileId ? (
         <View style={styles.profileScrollView}>
           {profiles.length > 0 ? (
             profiles.map((profile) => (
@@ -685,247 +771,247 @@ export const Search = () => {
           )}
         </View>
       ) : (
-        <>
-          <View style={{ flexDirection: 'row' }}>
-            <Text style={styles.searchAdvanced}>Advanced Search</Text>
-            <TouchableOpacity onPress={clearFields}>
-              <Text style={styles.searchClear}>Clear Search</Text>
-            </TouchableOpacity>
+        <> */}
+      <View style={{ flexDirection: 'row' }}>
+        <Text style={styles.searchAdvanced}>Advanced Search</Text>
+        <TouchableOpacity onPress={clearFields}>
+          <Text style={styles.searchClear}>Clear Search</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView>
+        <View style={styles.searchContainer}>
+          <Text style={styles.redText}>Age</Text>
+          <View style={styles.formContainer}>
+            <View style={styles.inputFlexContainer}>
+              <View style={styles.inputFlexFirst}>
+                <TextInput
+                  placeholder="From"
+                  keyboardType="numeric"
+                  value={fromAge}
+                  onChangeText={setFromAge}
+                />
+              </View>
+              <View style={styles.inputFlex}>
+                <TextInput
+                  placeholder="To"
+                  keyboardType="numeric"
+                  value={toAge}
+                  onChangeText={setToAge}
+                />
+              </View>
+            </View>
           </View>
-          <ScrollView>
-            <View style={styles.searchContainer}>
-              <Text style={styles.redText}>Age</Text>
-              <View style={styles.formContainer}>
-                <View style={styles.inputFlexContainer}>
-                  <View style={styles.inputFlexFirst}>
-                    <TextInput
-                      placeholder="From"
-                      keyboardType="numeric"
-                      value={fromAge}
-                      onChangeText={setFromAge}
-                    />
-                  </View>
-                  <View style={styles.inputFlex}>
-                    <TextInput
-                      placeholder="To"
-                      keyboardType="numeric"
-                      value={toAge}
-                      onChangeText={setToAge}
-                    />
-                  </View>
-                </View>
+        </View>
+
+        <View style={styles.searchContainer}>
+          <Text style={styles.redText}>Height</Text>
+          <View style={styles.formContainer}>
+            <View style={styles.inputFlexContainer}>
+              <View style={styles.inputFlexFirst}>
+                <TextInput
+                  placeholder="From"
+                  keyboardType="numeric"
+                  value={fromHeight}
+                  onChangeText={setFromHeight}
+                />
+              </View>
+              <View style={styles.inputFlex}>
+                <TextInput
+                  placeholder="To"
+                  keyboardType="numeric"
+                  value={toHeight}
+                  onChangeText={setToHeight}
+                />
               </View>
             </View>
+          </View>
+        </View>
 
-            <View style={styles.searchContainer}>
-              <Text style={styles.redText}>Height</Text>
-              <View style={styles.formContainer}>
-                <View style={styles.inputFlexContainer}>
-                  <View style={styles.inputFlexFirst}>
-                    <TextInput
-                      placeholder="From"
-                      keyboardType="numeric"
-                      value={fromHeight}
-                      onChangeText={setFromHeight}
-                    />
-                  </View>
-                  <View style={styles.inputFlex}>
-                    <TextInput
-                      placeholder="To"
-                      keyboardType="numeric"
-                      value={toHeight}
-                      onChangeText={setToHeight}
-                    />
-                  </View>
+        <View style={styles.checkContainer}>
+          <Text style={styles.checkRedText}>Marital Status</Text>
+          <View style={styles.checkboxDivFlex}>
+            <View style={styles.checkboxRow}>
+              {maritalStatuses.map((status, index) => (
+                <View key={status.marital_sts_id} style={styles.checkboxContainer}>
+                  <Pressable
+                    style={[
+                      styles.checkboxBase,
+                      checkedStatuses.has(status.marital_sts_id) && styles.checkboxChecked,
+                    ]}
+                    onPress={() => handleCheckboxToggle(status.marital_sts_id)}
+                  >
+                    {checkedStatuses.has(status.marital_sts_id) && (
+                      <Ionicons name="checkmark" size={14} color="white" />
+                    )}
+                  </Pressable>
+
+                  <Pressable onPress={() => handleCheckboxToggle(status.marital_sts_id)}>
+                    <Text style={styles.checkboxLabel}>{status.marital_sts_name}</Text>
+                  </Pressable>
                 </View>
-              </View>
+              ))}
             </View>
+          </View>
+        </View>
 
-            <View style={styles.checkContainer}>
-              <Text style={styles.checkRedText}>Marital Status</Text>
-              <View style={styles.checkboxDivFlex}>
-                <View style={styles.checkboxRow}>
-                  {maritalStatuses.map((status, index) => (
-                    <View key={status.marital_sts_id} style={styles.checkboxContainer}>
-                      <Pressable
-                        style={[
-                          styles.checkboxBase,
-                          checkedStatuses.has(status.marital_sts_id) && styles.checkboxChecked,
-                        ]}
-                        onPress={() => handleCheckboxToggle(status.marital_sts_id)}
-                      >
-                        {checkedStatuses.has(status.marital_sts_id) && (
-                          <Ionicons name="checkmark" size={14} color="white" />
-                        )}
-                      </Pressable>
+        <View style={styles.checkContainer}>
+          <Text style={styles.checkRedText}>Profession</Text>
 
-                      <Pressable onPress={() => handleCheckboxToggle(status.marital_sts_id)}>
-                        <Text style={styles.checkboxLabel}>{status.marital_sts_name}</Text>
-                      </Pressable>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </View>
+          <View style={styles.checkboxDivFlex}>
+            {/* Chunk professions into pairs */}
+            {professions.reduce((acc, profession, index) => {
+              if (index % 2 === 0) acc.push([]); // Start a new row
+              acc[acc.length - 1].push(profession); // Add profession to the current row
+              return acc;
+            }, []).map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.checkboxRow}>
+                {row.map((profession) => (
+                  <View key={profession.Profes_Pref_id} style={styles.checkboxContainer}>
+                    <Pressable
+                      style={[
+                        styles.checkboxBase,
+                        checkedProfessions.has(profession.Profes_Pref_id) && styles.checkboxChecked,
+                      ]}
+                      onPress={() => handleProfessionToggle(profession.Profes_Pref_id)}
+                    >
+                      {checkedProfessions.has(profession.Profes_Pref_id) && (
+                        <Ionicons name="checkmark" size={14} color="white" />
+                      )}
+                    </Pressable>
 
-            <View style={styles.checkContainer}>
-              <Text style={styles.checkRedText}>Profession</Text>
-
-              <View style={styles.checkboxDivFlex}>
-                {/* Chunk professions into pairs */}
-                {professions.reduce((acc, profession, index) => {
-                  if (index % 2 === 0) acc.push([]); // Start a new row
-                  acc[acc.length - 1].push(profession); // Add profession to the current row
-                  return acc;
-                }, []).map((row, rowIndex) => (
-                  <View key={rowIndex} style={styles.checkboxRow}>
-                    {row.map((profession) => (
-                      <View key={profession.Profes_Pref_id} style={styles.checkboxContainer}>
-                        <Pressable
-                          style={[
-                            styles.checkboxBase,
-                            checkedProfessions.has(profession.Profes_Pref_id) && styles.checkboxChecked,
-                          ]}
-                          onPress={() => handleProfessionToggle(profession.Profes_Pref_id)}
-                        >
-                          {checkedProfessions.has(profession.Profes_Pref_id) && (
-                            <Ionicons name="checkmark" size={14} color="white" />
-                          )}
-                        </Pressable>
-
-                        <Pressable onPress={() => handleProfessionToggle(profession.Profes_Pref_id)}>
-                          <Text style={styles.checkboxLabel}>{profession.Profes_name}</Text>
-                        </Pressable>
-                      </View>
-                    ))}
+                    <Pressable onPress={() => handleProfessionToggle(profession.Profes_Pref_id)}>
+                      <Text style={styles.checkboxLabel}>{profession.Profes_name}</Text>
+                    </Pressable>
                   </View>
                 ))}
               </View>
-            </View>
+            ))}
+          </View>
+        </View>
 
-            <View style={styles.searchContainer}>
-              <Text style={styles.redText}>Highest Education</Text>
-              <View style={styles.formContainer}>
-                <View style={styles.inputContainer}>
-                  <Dropdown
-                    style={styles.dropdown}
-                    placeholderStyle={styles.placeholderStyle}
-                    selectedTextStyle={styles.selectedTextStyle}
-                    data={educationOptions.map(edu => ({
-                      label: edu.education_description,
-                      value: edu.education_id.toString()
-                    }))}
-                    maxHeight={180}
-                    labelField="label"
-                    valueField="value"
-                    placeholder="Select Education"
-                    value={selectedEducationId}
-                    onChange={(item) => setSelectedEducationId(item.value)}
-                  />
+        <View style={styles.searchContainer}>
+          <Text style={styles.redText}>Highest Education</Text>
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                data={educationOptions.map(edu => ({
+                  label: edu.education_description,
+                  value: edu.education_id.toString()
+                }))}
+                maxHeight={180}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Education"
+                value={selectedEducationId}
+                onChange={(item) => setSelectedEducationId(item.value)}
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.checkContainer}>
+          <Text style={styles.checkRedText}>Field of Study</Text>
+
+          <View style={styles.checkboxDivFlex}>
+            <View style={styles.checkboxRow}>
+              {fieldOfStudyOptions.map((fieldofstudy) => (
+                <View key={fieldofstudy.study_id} style={styles.checkboxContainer}>
+                  <Pressable
+                    style={[
+                      styles.checkboxBase,
+                      checkFieldoStudy.has(fieldofstudy.study_id) && styles.checkboxChecked,
+                    ]}
+                    onPress={() => handleFieldofStudyToggle(fieldofstudy.study_id)}
+                  >
+                    {checkFieldoStudy.has(fieldofstudy.study_id) && (
+                      <Ionicons name="checkmark" size={14} color="white" />
+                    )}
+                  </Pressable>
+
+                  <Pressable onPress={() => handleFieldofStudyToggle(fieldofstudy.study_id)}>
+                    <Text style={styles.checkboxLabel}>{fieldofstudy.study_description}</Text>
+                  </Pressable>
                 </View>
-              </View>
+              ))}
             </View>
-
-            <View style={styles.checkContainer}>
-              <Text style={styles.checkRedText}>Field of Study</Text>
-
-              <View style={styles.checkboxDivFlex}>
-                <View style={styles.checkboxRow}>
-                  {fieldOfStudyOptions.map((fieldofstudy) => (
-                    <View key={fieldofstudy.study_id} style={styles.checkboxContainer}>
-                      <Pressable
-                        style={[
-                          styles.checkboxBase,
-                          checkFieldoStudy.has(fieldofstudy.study_id) && styles.checkboxChecked,
-                        ]}
-                        onPress={() => handleFieldofStudyToggle(fieldofstudy.study_id)}
-                      >
-                        {checkFieldoStudy.has(fieldofstudy.study_id) && (
-                          <Ionicons name="checkmark" size={14} color="white" />
-                        )}
-                      </Pressable>
-
-                      <Pressable onPress={() => handleFieldofStudyToggle(fieldofstudy.study_id)}>
-                        <Text style={styles.checkboxLabel}>{fieldofstudy.study_description}</Text>
-                      </Pressable>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </View>
+          </View>
+        </View>
 
 
-            <View style={styles.checkContainer}>
-              {/* <Text style={styles.checkRedText}>Annual Income</Text> */}
-              <View style={styles.searchContainer}>
-                <Text style={styles.redText}>Annual Income Min</Text>
-                <View style={styles.formContainer}>
-                  <View style={styles.inputContainer}>
-                    <Controller
-                      control={control}
-                      name="annualIncomeMin"
-                      defaultValue={selectedIncomeMinIds}
-                      render={({ field: { onChange, value } }) => (
-                        <Dropdown
-                          style={styles.dropdown}
-                          placeholderStyle={styles.placeholderStyle}
-                          selectedTextStyle={styles.selectedTextStyle}
-                          data={incomeOptions} // Use the incomeOptions array
-                          maxHeight={180}
-                          labelField="label"
-                          valueField="value"
-                          // placeholder="Select min Annual Income"
-                          placeholder={selectedIncomeMinLabel}
-                          value={selectedIncomeMinIds}
-                          // value={value}
-                          onChange={(item) => {
-                            onChange(item.value);
-                            setSelectedIncomeMinIds(item.value); // Update selectedIncomeIds state
-                            setSelectedIncomeMinLabel(item.label);
-                          }}
-                        />
-                      )}
+        <View style={styles.checkContainer}>
+          {/* <Text style={styles.checkRedText}>Annual Income</Text> */}
+          <View style={styles.searchContainer}>
+            <Text style={styles.redText}>Annual Income Min</Text>
+            <View style={styles.formContainer}>
+              <View style={styles.inputContainer}>
+                <Controller
+                  control={control}
+                  name="annualIncomeMin"
+                  defaultValue={selectedIncomeMinIds}
+                  render={({ field: { onChange, value } }) => (
+                    <Dropdown
+                      style={styles.dropdown}
+                      placeholderStyle={styles.placeholderStyle}
+                      selectedTextStyle={styles.selectedTextStyle}
+                      data={incomeOptions} // Use the incomeOptions array
+                      maxHeight={180}
+                      labelField="label"
+                      valueField="value"
+                      // placeholder="Select min Annual Income"
+                      placeholder={selectedIncomeMinLabel}
+                      value={selectedIncomeMinIds}
+                      // value={value}
+                      onChange={(item) => {
+                        onChange(item.value);
+                        setSelectedIncomeMinIds(item.value); // Update selectedIncomeIds state
+                        setSelectedIncomeMinLabel(item.label);
+                      }}
                     />
-                    {/* {errors.annualIncome && <Text style={styles.errorText}>{errors.annualIncome.message}</Text>} */}
-                  </View>
-                </View>
+                  )}
+                />
+                {/* {errors.annualIncome && <Text style={styles.errorText}>{errors.annualIncome.message}</Text>} */}
               </View>
+            </View>
+          </View>
 
-              <View style={styles.searchContainer}>
-                <Text style={styles.redText}>Annual Income Max</Text>
-                <View style={styles.formContainer}>
-                  <View style={styles.inputContainer}>
-                    <Controller
-                      control={control}
-                      name="annualIncomeMax"
-                      defaultValue={selectedIncomeMaxIds}
-                      render={({ field: { onChange, value } }) => (
-                        <Dropdown
-                          style={styles.dropdown}
-                          placeholderStyle={styles.placeholderStyle}
-                          selectedTextStyle={styles.selectedTextStyle}
-                          data={incomeOptions} // Use the incomeOptions array
-                          maxHeight={180}
-                          labelField="label"
-                          valueField="value"
-                          // placeholder="Select Max Annual Income"
-                          // value={value}
-                          placeholder={selectedIncomeMaxLabel} // ✨ UPDATED: Use the dynamic label
-                          value={selectedIncomeMaxIds}
-                          onChange={(item) => {
-                            onChange(item.value);
-                            setSelectedIncomeMaxIds(item.value); // Update selectedIncomeIds state
-                            setSelectedIncomeMaxLabel(item.label);
-                          }}
-                        />
-                      )}
+          <View style={styles.searchContainer}>
+            <Text style={styles.redText}>Annual Income Max</Text>
+            <View style={styles.formContainer}>
+              <View style={styles.inputContainer}>
+                <Controller
+                  control={control}
+                  name="annualIncomeMax"
+                  defaultValue={selectedIncomeMaxIds}
+                  render={({ field: { onChange, value } }) => (
+                    <Dropdown
+                      style={styles.dropdown}
+                      placeholderStyle={styles.placeholderStyle}
+                      selectedTextStyle={styles.selectedTextStyle}
+                      data={incomeOptions} // Use the incomeOptions array
+                      maxHeight={180}
+                      labelField="label"
+                      valueField="value"
+                      // placeholder="Select Max Annual Income"
+                      // value={value}
+                      placeholder={selectedIncomeMaxLabel} // ✨ UPDATED: Use the dynamic label
+                      value={selectedIncomeMaxIds}
+                      onChange={(item) => {
+                        onChange(item.value);
+                        setSelectedIncomeMaxIds(item.value); // Update selectedIncomeIds state
+                        setSelectedIncomeMaxLabel(item.label);
+                      }}
                     />
-                    {/* {errors.annualIncome && <Text style={styles.errorText}>{errors.annualIncome.message}</Text>} */}
-                  </View>
-                </View>
+                  )}
+                />
+                {/* {errors.annualIncome && <Text style={styles.errorText}>{errors.annualIncome.message}</Text>} */}
               </View>
+            </View>
+          </View>
 
-              {/* <View style={styles.checkboxDivFlex}>
+          {/* <View style={styles.checkboxDivFlex}>
                   {incomeOptions.map((income) => (
                     <View key={income.income_id} style={styles.checkboxContainer}>
                       <Pressable
@@ -946,10 +1032,10 @@ export const Search = () => {
                     </View>
                   ))}
                 </View> */}
-            </View>
+        </View>
 
 
-            {/* <View style={styles.searchContainer}>
+        {/* <View style={styles.searchContainer}>
               <Text style={styles.redText}>Dhosam</Text>
 
               <View style={styles.dhosamFlex}>
@@ -991,192 +1077,192 @@ export const Search = () => {
                 </View>
               </View>
             </View> */}
-            <View style={styles.searchContainer}>
-              <Text style={styles.redText}>Chevvai Dosham</Text>
-              <RadioButtonGroup
-                options={[
-                  { label: 'Yes', value: 'Yes' },
-                  { label: 'No', value: 'No' },
-                  { label: 'Both', value: 'Both' },
-                ]}
-                selectedValue={chevvaiDhosam}
-                onValueChange={setChevvaiDhosam}
+        <View style={styles.searchContainer}>
+          <Text style={styles.redText}>Chevvai Dosham</Text>
+          <RadioButtonGroup
+            options={[
+              { label: 'Yes', value: 'Yes' },
+              { label: 'No', value: 'No' },
+              { label: 'Both', value: 'Both' },
+            ]}
+            selectedValue={chevvaiDhosam}
+            onValueChange={setChevvaiDhosam}
+          />
+        </View>
+        <View style={styles.searchContainer}>
+          <Text style={styles.redText}>Rahu/Ketu Dosham</Text>
+          <RadioButtonGroup
+            options={[
+              { label: 'Yes', value: 'Yes' },
+              { label: 'No', value: 'No' },
+              { label: 'Both', value: 'Both' },
+            ]}
+            selectedValue={rahuKetuDhosam}
+            onValueChange={setRahuKetuDhosam}
+          />
+        </View>
+
+        <View style={styles.searchContainer}></View>
+
+
+
+        <View style={styles.searchContainer}>
+          <Text style={styles.redText}>Birth Star</Text>
+          <View style={styles.formContainer}>
+            <View style={styles.dropdownContainer}>
+              {/* The RNPickerSelect is the selection tool */}
+              <RNPickerSelect
+                onValueChange={(value) => {
+                  if (value && !selectedBirthStarIds.includes(value)) {
+                    setSelectedBirthStarIds(prev => [...prev, value]);
+                  }
+                }}
+                items={birthStars.map(star => ({
+                  label: star.birth_star,
+                  value: star.birth_id.toString(),
+                }))}
+                useNativeAndroidPickerStyle={false}
+                // ... (Icon and placeholder remain the same)
+                placeholder={{ label: "Select Birth Stars", value: null }}
+                value={null}
+                style={pickerSelectStyles}
+                Icon={() => {
+                  return <AntDesign name="down" size={18} color="gray" style={{ right: 10, top: 12 }} />;
+                }}
               />
             </View>
-            <View style={styles.searchContainer}>
-              <Text style={styles.redText}>Rahu/Ketu Dosham</Text>
-              <RadioButtonGroup
-                options={[
-                  { label: 'Yes', value: 'Yes' },
-                  { label: 'No', value: 'No' },
-                  { label: 'Both', value: 'Both' },
-                ]}
-                selectedValue={rahuKetuDhosam}
-                onValueChange={setRahuKetuDhosam}
-              />
-            </View>
+          </View>
 
-            <View style={styles.searchContainer}></View>
-
-
-
-            <View style={styles.searchContainer}>
-              <Text style={styles.redText}>Birth Star</Text>
-              <View style={styles.formContainer}>
-                <View style={styles.dropdownContainer}>
-                  {/* The RNPickerSelect is the selection tool */}
-                  <RNPickerSelect
-                    onValueChange={(value) => {
-                      if (value && !selectedBirthStarIds.includes(value)) {
-                        setSelectedBirthStarIds(prev => [...prev, value]);
-                      }
-                    }}
-                    items={birthStars.map(star => ({
-                      label: star.birth_star,
-                      value: star.birth_id.toString(),
-                    }))}
-                    useNativeAndroidPickerStyle={false}
-                    // ... (Icon and placeholder remain the same)
-                    placeholder={{ label: "Select Birth Stars", value: null }}
-                    value={null}
-                    style={pickerSelectStyles}
-                    Icon={() => {
-                      return <AntDesign name="down" size={18} color="gray" style={{ right: 10, top: 12 }} />;
-                    }}
-                  />
-                </View>
-              </View>
-
-              {/* Selected Chips Display - This is the key part */}
-              {selectedBirthStarIds.length > 0 && (
-                <View style={styles.selectedChipsContainer}>
-                  {selectedBirthStarIds.map((starId) => {
-                    const star = birthStars.find(s => s.birth_id.toString() === starId);
-                    return (
-                      <View key={starId} style={styles.chip}>
-                        <Text style={styles.chipText}>{star?.birth_star}</Text>
-                        <TouchableOpacity
-                          onPress={() => {
-                            const updatedIds = selectedBirthStarIds.filter(id => id !== starId);
-                            setSelectedBirthStarIds(updatedIds);
-                          }}
-                          style={styles.chipClose}
-                        >
-                          <Ionicons name="close" size={16} color="#fff" />
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  })}
-                </View>
-              )}
-            </View>
-
-
-
-
-            <View style={styles.checkContainer}>
-              <Text style={styles.checkRedText}>Native States</Text>
-
-              <View style={styles.checkboxDivFlex}>
-                <View style={styles.checkboxRow}>
-                  {states.map((state) => (
-                    <View key={state.State_Pref_id} style={styles.checkboxContainer}>
-                      <Pressable
-                        style={[
-                          styles.checkboxBase,
-                          checkedStates.has(state.State_Pref_id) && styles.checkboxChecked,
-                        ]}
-                        onPress={() => handleStateToggle(state.State_Pref_id)}
-                      >
-                        {checkedStates.has(state.State_Pref_id) && (
-                          <Ionicons name="checkmark" size={14} color="white" />
-                        )}
-                      </Pressable>
-
-                      <Pressable onPress={() => handleStateToggle(state.State_Pref_id)}>
-                        <Text style={styles.checkboxLabel}>{state.State_name}</Text>
-                      </Pressable>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </View>
-
-
-            <View style={styles.searchContainer}>
-              <Text style={styles.redText}>Work Location</Text>
-
-              <View style={styles.formContainer}>
-                <View style={styles.inputFlexContainer}>
-                  <View style={styles.inputFlex}>
-                    <TextInput placeholder="Work Location"
-                      value={workLocation}
-                      onChangeText={setWorkLocation}
-                    />
+          {/* Selected Chips Display - This is the key part */}
+          {selectedBirthStarIds.length > 0 && (
+            <View style={styles.selectedChipsContainer}>
+              {selectedBirthStarIds.map((starId) => {
+                const star = birthStars.find(s => s.birth_id.toString() === starId);
+                return (
+                  <View key={starId} style={styles.chip}>
+                    <Text style={styles.chipText}>{star?.birth_star}</Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        const updatedIds = selectedBirthStarIds.filter(id => id !== starId);
+                        setSelectedBirthStarIds(updatedIds);
+                      }}
+                      style={styles.chipClose}
+                    >
+                      <Ionicons name="close" size={16} color="#fff" />
+                    </TouchableOpacity>
                   </View>
-                </View>
-              </View>
+                );
+              })}
             </View>
+          )}
+        </View>
 
-            <View style={styles.searchContainer}>
-              <Text style={styles.redText}>Profile Photo</Text>
 
-              <View>
-                <View style={styles.singleCheckboxContainer}>
+
+
+        <View style={styles.checkContainer}>
+          <Text style={styles.checkRedText}>Native States</Text>
+
+          <View style={styles.checkboxDivFlex}>
+            <View style={styles.checkboxRow}>
+              {states.map((state) => (
+                <View key={state.State_Pref_id} style={styles.checkboxContainer}>
                   <Pressable
                     style={[
                       styles.checkboxBase,
-                      ppChecked && styles.checkboxChecked,
+                      checkedStates.has(state.State_Pref_id) && styles.checkboxChecked,
                     ]}
-                    onPress={ppHandleCheckboxToggle}
+                    onPress={() => handleStateToggle(state.State_Pref_id)}
                   >
-                    {ppChecked && (
+                    {checkedStates.has(state.State_Pref_id) && (
                       <Ionicons name="checkmark" size={14} color="white" />
                     )}
                   </Pressable>
 
-                  <Pressable onPress={ppHandleCheckboxToggle}>
-                    <Text style={styles.checkboxLabel}>People only with photo</Text>
+                  <Pressable onPress={() => handleStateToggle(state.State_Pref_id)}>
+                    <Text style={styles.checkboxLabel}>{state.State_name}</Text>
                   </Pressable>
                 </View>
+              ))}
+            </View>
+          </View>
+        </View>
+
+
+        <View style={styles.searchContainer}>
+          <Text style={styles.redText}>Work Location</Text>
+
+          <View style={styles.formContainer}>
+            <View style={styles.inputFlexContainer}>
+              <View style={styles.inputFlex}>
+                <TextInput placeholder="Work Location"
+                  value={workLocation}
+                  onChangeText={setWorkLocation}
+                />
               </View>
             </View>
+          </View>
+        </View>
 
-            <View style={styles.buttonContainer}>
-              {/* Cancel */}
-              {/* <TouchableOpacity onPress={clearFields}>
+        <View style={styles.searchContainer}>
+          <Text style={styles.redText}>Profile Photo</Text>
+
+          <View>
+            <View style={styles.singleCheckboxContainer}>
+              <Pressable
+                style={[
+                  styles.checkboxBase,
+                  ppChecked && styles.checkboxChecked,
+                ]}
+                onPress={ppHandleCheckboxToggle}
+              >
+                {ppChecked && (
+                  <Ionicons name="checkmark" size={14} color="white" />
+                )}
+              </Pressable>
+
+              <Pressable onPress={ppHandleCheckboxToggle}>
+                <Text style={styles.checkboxLabel}>People only with photo</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.buttonContainer}>
+          {/* Cancel */}
+          {/* <TouchableOpacity onPress={clearFields}>
                 <View style={styles.loginContainer}>
                   <Text style={styles.cancel}>Clear</Text>
                 </View>
               </TouchableOpacity> */}
 
-              <TouchableOpacity
-                style={styles.btn}
-                onPress={() => {
-                  // navigation.navigate("SearchResults");
-                  handleSubmit();
-                }}
-              >
-                <LinearGradient
-                  colors={["#BD1225", "#FF4050"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  useAngle={true}
-                  angle={92.08}
-                  angleCenter={{ x: 0.5, y: 0.5 }}
-                  style={styles.linearGradient}
-                >
-                  <View style={styles.loginContainer}>
-                    <Text style={styles.login}>Submit</Text>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </>
+          <TouchableOpacity
+            style={styles.btn}
+            onPress={() => {
+              // navigation.navigate("SearchResults");
+              handleSubmit();
+            }}
+          >
+            <LinearGradient
+              colors={["#BD1225", "#FF4050"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              useAngle={true}
+              angle={92.08}
+              angleCenter={{ x: 0.5, y: 0.5 }}
+              style={styles.linearGradient}
+            >
+              <View style={styles.loginContainer}>
+                <Text style={styles.login}>Submit</Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+      {/* </>
 
       )
-      }
+      } */}
 
     </SafeAreaView >
 
@@ -1254,7 +1340,7 @@ const styles = StyleSheet.create({
   filterIcon: {
     position: "absolute",
     right: 20,
-    bottom: 15,
+    bottom:9,
   },
 
   searchContainer: {
