@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   FlatList,
@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import {
   getVysassistList,
   handleBookmark,
@@ -110,10 +110,18 @@ export const VysassistCard = ({ sortBy = "datetime" }) => {
     }
   };
 
-  useEffect(() => {
-    // Initial load
+  // useEffect(() => {
+  //   // Initial load
+  //   loadProfiles(1, true);
+  // }, [sortBy]);
+
+  const loadProfilesCallback = useCallback(() => {
+    // Reset to page 1 and load initially when the screen is focused
     loadProfiles(1, true);
-  }, [sortBy]);
+  }, [sortBy]); // Dependency array should include sortBy
+
+  // Use useFocusEffect to call loadProfiles every time the screen is focused
+  useFocusEffect(loadProfilesCallback);
 
   // useEffect(() => {
   //   const loadWishlistProfiles = async () => {
@@ -290,7 +298,7 @@ export const VysassistCard = ({ sortBy = "datetime" }) => {
               </Text>
               <Text style={styles.profileAge}>
                 {item.vys_profile_age} Yrs <Text style={styles.line}>|</Text>{" "}
-                {item.vys_height} ft
+                {item.vys_height} Cms
               </Text>
               <Text style={styles.zodiac}>{item.vys_degree}</Text>
               <Text style={styles.employed}>{item.vys_profession}</Text>

@@ -524,10 +524,12 @@ export const HomeWithToast = () => {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
-      fetchAllData(getOrderBy());
+      if (searchProfileId.length === 0) {
+        fetchAllData(getOrderBy());
+      }
     });
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, fetchAllData, searchProfileId]);
 
   useEffect(() => {
     setModalVisible(true);

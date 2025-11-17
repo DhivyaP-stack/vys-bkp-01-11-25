@@ -20,8 +20,9 @@ import { Search_By_profileId, logProfileVisit, handleBookmark, fetchProfileDataC
 import ProfileNotFound from "../Components/ProfileNotFound/ProfileNotFound";
 import Toast from "react-native-toast-message";
 import { useForm, Controller } from "react-hook-form";
-import { Dropdown } from "react-native-element-dropdown";
+import { Dropdown, MultiSelect } from "react-native-element-dropdown";
 import config from "../API/Apiurl";
+import RNPickerSelect from 'react-native-picker-select';
 
 export const Search = () => {
   const navigation = useNavigation();
@@ -46,7 +47,7 @@ export const Search = () => {
   const [selectedIncomeMinIds, setSelectedIncomeMinIds] = useState(''); // Store selected IDs as a string
   const [selectedIncomeMaxIds, setSelectedIncomeMaxIds] = useState('');
   const [birthStars, setBirthStars] = useState([]); // Store fetched birth stars
-  const [selectedBirthStarIds, setSelectedBirthStarIds] = useState(''); // Store selected IDs as a string
+  const [selectedBirthStarIds, setSelectedBirthStarIds] = useState([]); // Store selected IDs as a string
   const [states, setStates] = useState([]); // Store fetched states
   const [checkedStates, setCheckedStates] = useState(new Set()); // Track selected state IDs
   const [selectedStateIds, setSelectedStateIds] = useState(''); // Store selected IDs as a string
@@ -58,6 +59,9 @@ export const Search = () => {
   const [chevvaiDhosam, setChevvaiDhosam] = useState(null);
   const [rahuKetuDhosam, setRahuKetuDhosam] = useState(null);
   const [bookmarkedProfiles, setBookmarkedProfiles] = useState(new Set());
+  const [workLocation, setWorkLocation] = useState(''); // ✨ NEW: For Work Location
+  const [selectedIncomeMinLabel, setSelectedIncomeMinLabel] = useState('Select min Annual Income'); // ✨ NEW: For min income placeholder
+  const [selectedIncomeMaxLabel, setSelectedIncomeMaxLabel] = useState('Select Max Annual Income'); // ✨ NEW: For max income placeholder
 
   const handleSavePress = async (viewedProfileId) => {
     const newStatus = bookmarkedProfiles.has(viewedProfileId) ? "0" : "1";
@@ -346,6 +350,7 @@ export const Search = () => {
 
 
   const handleSubmit = async () => {
+    const peopleWithPhotoParam = ppChecked ? '1' : '0';
     const params = {
       from_age: fromAge,
       to_age: toAge,
@@ -357,10 +362,11 @@ export const Search = () => {
       max_income: selectedIncomeMinIds,
       min_income: selectedIncomeMaxIds,
       field_ofstudy: selectedFieldofStudyIds,
-      search_star: selectedBirthStarIds,
+      search_star: selectedBirthStarIds.join(","),
       search_nativestate: selectedStateIds,
       search_chevvai_dosham: chevvaiDhosam,
       search_rahu_dosham: rahuKetuDhosam,
+      people_withphoto: peopleWithPhotoParam,
       // from_reg_date: fromRegDate,
       // to_reg_date: toRegDate,
     };
@@ -454,20 +460,78 @@ export const Search = () => {
     ppSetChecked(!ppChecked);
   };
 
+  // const clearFields = () => {
+  //   // Reset range inputs (Age, Height)
+  //   setFromAge(0);
+  //   setToAge(0);
+  //   setFromHeight(0);
+  //   setToHeight(0);
+
+  //   // Reset checkbox/multi-select Sets
+  //   setCheckedStatuses(new Set());
+  //   setCheckedProfessions(new Set());
+  //   setCheckFieldoStudy(new Set());
+  //   setCheckedStates(new Set());
+
+  //   // Reset single-select/dropdown values
+  //   setSelectedEducationId('');
+
+  //   // 👇 ADDED: Clear Income dropdown values and their display placeholders
+  //   setSelectedIncomeMinIds('');
+  //   setSelectedIncomeMaxIds('');
+  //   setSelectedIncomeMinLabel('Select min Annual Income'); // Reset placeholder text
+  //   setSelectedIncomeMaxLabel('Select Max Annual Income'); // Reset placeholder text
+
+  //   // Reset Dosham radio buttons
+  //   setRahuKetuDhosam(null);
+  //   setChevvaiDhosam(null);
+
+  //   // Reset Birth Star (multi-select chips)
+  //   setSelectedBirthStarIds([]);
+
+  //   // 👇 ADDED: Clear Work Location input
+  //   setWorkLocation('');
+
+  //   // Clear Profile Photo Checkbox
+  //   ppSetChecked(false);
+  //   setBirthStars([]);
+  // };// ... inside Search component
   const clearFields = () => {
-    setFromAge('');
-    setToAge('');
-    setFromHeight('');
-    setToHeight('');
-    setCheckedIncomes(new Set());
+    // 1. Reset all state variables (Existing logic)
+    setFromAge(0);
+    setToAge(0);
+    setFromHeight(0);
+    setToHeight(0);
+
     setCheckedStatuses(new Set());
     setCheckedProfessions(new Set());
-    setCheckedEducations(new Set());
     setCheckFieldoStudy(new Set());
     setCheckedStates(new Set());
+
+    setSelectedEducationId('');
+
+    setSelectedIncomeMinIds('');
+    setSelectedIncomeMaxIds('');
+    setSelectedIncomeMinLabel('Select min Annual Income');
+    setSelectedIncomeMaxLabel('Select Max Annual Income');
+
     setRahuKetuDhosam(null);
     setChevvaiDhosam(null);
+
+    setSelectedBirthStarIds([]);
+    setWorkLocation('');
+    ppSetChecked(false);
+
+    fetchMaritalStatuses();
+    fetchProfessions();
+    fetchEducationOptions();
+    fetchIncomeOptions();
+    fetchBirthStars();
+    fetchStates();
+    fetchFieldOfStudy();
   };
+
+
 
 
   const handleProfileClick = async (viewedProfileId) => {
@@ -793,7 +857,6 @@ export const Search = () => {
 
             <View style={styles.checkContainer}>
               {/* <Text style={styles.checkRedText}>Annual Income</Text> */}
-
               <View style={styles.searchContainer}>
                 <Text style={styles.redText}>Annual Income Min</Text>
                 <View style={styles.formContainer}>
@@ -801,6 +864,7 @@ export const Search = () => {
                     <Controller
                       control={control}
                       name="annualIncomeMin"
+                      defaultValue={selectedIncomeMinIds}
                       render={({ field: { onChange, value } }) => (
                         <Dropdown
                           style={styles.dropdown}
@@ -810,11 +874,14 @@ export const Search = () => {
                           maxHeight={180}
                           labelField="label"
                           valueField="value"
-                          placeholder="Select min Annual Income"
-                          value={value}
+                          // placeholder="Select min Annual Income"
+                          placeholder={selectedIncomeMinLabel}
+                          value={selectedIncomeMinIds}
+                          // value={value}
                           onChange={(item) => {
                             onChange(item.value);
                             setSelectedIncomeMinIds(item.value); // Update selectedIncomeIds state
+                            setSelectedIncomeMinLabel(item.label);
                           }}
                         />
                       )}
@@ -831,6 +898,7 @@ export const Search = () => {
                     <Controller
                       control={control}
                       name="annualIncomeMax"
+                      defaultValue={selectedIncomeMaxIds}
                       render={({ field: { onChange, value } }) => (
                         <Dropdown
                           style={styles.dropdown}
@@ -840,11 +908,14 @@ export const Search = () => {
                           maxHeight={180}
                           labelField="label"
                           valueField="value"
-                          placeholder="Select Max Annual Income"
-                          value={value}
+                          // placeholder="Select Max Annual Income"
+                          // value={value}
+                          placeholder={selectedIncomeMaxLabel} // ✨ UPDATED: Use the dynamic label
+                          value={selectedIncomeMaxIds}
                           onChange={(item) => {
                             onChange(item.value);
                             setSelectedIncomeMaxIds(item.value); // Update selectedIncomeIds state
+                            setSelectedIncomeMaxLabel(item.label);
                           }}
                         />
                       )}
@@ -947,28 +1018,60 @@ export const Search = () => {
 
             <View style={styles.searchContainer}></View>
 
+
+
             <View style={styles.searchContainer}>
               <Text style={styles.redText}>Birth Star</Text>
               <View style={styles.formContainer}>
-                <View style={styles.inputContainer}>
-                  <Dropdown
-                    style={styles.dropdown}
-                    placeholderStyle={styles.placeholderStyle}
-                    selectedTextStyle={styles.selectedTextStyle}
-                    data={birthStars.map(star => ({
+                <View style={styles.dropdownContainer}>
+                  {/* The RNPickerSelect is the selection tool */}
+                  <RNPickerSelect
+                    onValueChange={(value) => {
+                      if (value && !selectedBirthStarIds.includes(value)) {
+                        setSelectedBirthStarIds(prev => [...prev, value]);
+                      }
+                    }}
+                    items={birthStars.map(star => ({
                       label: star.birth_star,
-                      value: star.birth_id.toString()
+                      value: star.birth_id.toString(),
                     }))}
-                    maxHeight={180}
-                    labelField="label"
-                    valueField="value"
-                    placeholder="Select Birth Star"
-                    value={selectedBirthStarIds}
-                    onChange={(item) => setSelectedBirthStarIds(item.value)}
+                    useNativeAndroidPickerStyle={false}
+                    // ... (Icon and placeholder remain the same)
+                    placeholder={{ label: "Select Birth Stars", value: null }}
+                    value={null}
+                    style={pickerSelectStyles}
+                    Icon={() => {
+                      return <AntDesign name="down" size={18} color="gray" style={{ right: 10, top: 12 }} />;
+                    }}
                   />
                 </View>
               </View>
+
+              {/* Selected Chips Display - This is the key part */}
+              {selectedBirthStarIds.length > 0 && (
+                <View style={styles.selectedChipsContainer}>
+                  {selectedBirthStarIds.map((starId) => {
+                    const star = birthStars.find(s => s.birth_id.toString() === starId);
+                    return (
+                      <View key={starId} style={styles.chip}>
+                        <Text style={styles.chipText}>{star?.birth_star}</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            const updatedIds = selectedBirthStarIds.filter(id => id !== starId);
+                            setSelectedBirthStarIds(updatedIds);
+                          }}
+                          style={styles.chipClose}
+                        >
+                          <Ionicons name="close" size={16} color="#fff" />
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
             </View>
+
+
 
 
             <View style={styles.checkContainer}>
@@ -1006,7 +1109,10 @@ export const Search = () => {
               <View style={styles.formContainer}>
                 <View style={styles.inputFlexContainer}>
                   <View style={styles.inputFlex}>
-                    <TextInput placeholder="Work Location" />
+                    <TextInput placeholder="Work Location"
+                      value={workLocation}
+                      onChangeText={setWorkLocation}
+                    />
                   </View>
                 </View>
               </View>
@@ -1501,5 +1607,61 @@ const styles = StyleSheet.create({
 
   selectedTextStyle: {
     fontSize: 14,
+  },
+  selectedChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap', // Allows chips to wrap to the next line
+    marginTop: 10,
+    paddingHorizontal: 10, // Matches the padding of other sections
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#6b6b6b', // Dark gray color like the image
+    borderRadius: 15, // Highly rounded corners (pill shape)
+    paddingVertical: 5,
+    paddingLeft: 10,
+    paddingRight: 5,
+    marginRight: 8, // Space between chips
+    marginBottom: 8, // Space between rows of chips
+  },
+  chipText: {
+    color: 'white', // White text for contrast
+    fontSize: 13,
+    marginRight: 5,
+  },
+  chipClose: {
+    backgroundColor: 'transparent', // No background for the close button itself
+    padding: 3,
+  },
+  dropdownContainer: {
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: 4,
+    borderColor: "#D4D5D9",
+    backgroundColor: "white",
+    paddingHorizontal: 0, // RNPickerSelect handles its own padding
+  }
+});
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    color: 'black',
+    paddingRight: 30,
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    color: 'black',
+    paddingRight: 30,
   },
 });

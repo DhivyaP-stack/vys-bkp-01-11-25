@@ -231,8 +231,8 @@ export const HoroscopeDetails = () => {
                 personal_bth_rasi_name: horoscopeDetails.personal_bth_rasi_name || '',
                 personal_lagnam_didi_name: horoscopeDetails.personal_lagnam_didi_name || '',
                 personal_didi: horoscopeDetails.personal_didi || '',
-                personal_chevvai_dos: horoscopeDetails.personal_chevvai_dos|| '',
-                personal_ragu_dos: horoscopeDetails.personal_ragu_dos|| '',
+                personal_chevvai_dos: horoscopeDetails.personal_chevvai_dos || '',
+                personal_ragu_dos: horoscopeDetails.personal_ragu_dos || '',
                 personal_nalikai: horoscopeDetails.personal_nalikai || '',
                 personal_surya_goth: horoscopeDetails.personal_surya_goth || '',
                 personal_madulamn: horoscopeDetails.personal_madulamn || '',
@@ -348,8 +348,8 @@ export const HoroscopeDetails = () => {
                     dasa_balance: formattedDasaBalance,
                     horoscope_hints: formValues.personal_horoscope_hints || '',
                     didi: formValues.personal_didi || '',
-                    amsa_kattam: '',
-                    rasi_kattam: ''
+                    amsa_kattam: "{Grid 1: empty, Grid 2: empty, Grid 3: empty, Grid 4: empty, Grid 5: empty, Grid 6: empty, Grid 7: empty, Grid 8: empty, Grid 9: empty, Grid 10: empty, Grid 11: empty, Grid 12: empty}",
+                    rasi_kattam: "{Grid 1: empty, Grid 2: empty, Grid 3: empty, Grid 4: empty, Grid 5: empty, Grid 6: empty, Grid 7: empty, Grid 8: empty, Grid 9: empty, Grid 10: empty, Grid 11: empty, Grid 12: empty}"
                 };
 
                 // Validate that required fields are not empty strings

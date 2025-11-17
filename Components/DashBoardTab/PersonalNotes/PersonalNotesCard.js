@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback} from "react";
 import {
   StyleSheet,
   Text,
@@ -11,7 +11,7 @@ import {
 import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { fetchPersonalNotes, handleBookmark, logProfileVisit, fetchProfileDataCheck } from "../../../CommonApiCall/CommonApiCall";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
 
@@ -100,9 +100,16 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
     }
   };
 
-  useEffect(() => {
-    loadPersonalNotes(1, true);
-  }, [sortBy]);
+  // useEffect(() => {
+  //   loadPersonalNotes(1, true);
+  // }, [sortBy]);
+    const loadProfilesCallback = useCallback(() => {
+        // Reset to page 1 and load initially when the screen is focused
+        loadPersonalNotes(1, true);
+    }, [sortBy]); // Dependency array should include sortBy
+
+    // Use useFocusEffect to call loadProfiles every time the screen is focused
+    useFocusEffect(loadProfilesCallback);
 
   const handleSavePress = async (profileId) => {
     const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";
@@ -235,7 +242,7 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
               </Text>
               <Text style={styles.profileAge}>
                 {profile.notes_profile_age} Yrs{" "}
-                <Text style={styles.line}>|</Text> {profile.notes_height} cms
+                <Text style={styles.line}>|</Text> {profile.notes_height} Cms
               </Text>
               <Text style={styles.zodiac}>{profile.notes_star}</Text>
               <Text style={styles.employed}>{profile.notes_profession}</Text>

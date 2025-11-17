@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     StyleSheet,
     Text,
@@ -11,7 +11,7 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { fetchViewedProfiles, markProfileWishlist, logProfileVisit, fetchProfileDataCheck } from "../../../CommonApiCall/CommonApiCall";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
 
@@ -109,7 +109,7 @@ export const ViewedProfileCard = ({ sortBy = "datetime" }) => {
                     setProfiles(newProfiles);
                     setBookmarkedProfiles(bookmarkedIds);
                 } else {
-                   setProfiles((prevProfiles) => [...prevProfiles, ...newProfiles] );
+                    setProfiles((prevProfiles) => [...prevProfiles, ...newProfiles]);
                     setBookmarkedProfiles(prev => new Set([...prev, ...bookmarkedIds]));
                 }
 
@@ -143,9 +143,16 @@ export const ViewedProfileCard = ({ sortBy = "datetime" }) => {
         }
     };
 
-    useEffect(() => {
+    // useEffect(() => {
+    //     loadProfiles(1, true);
+    // }, [sortBy]);
+    const loadProfilesCallback = useCallback(() => {
+        // Reset to page 1 and load initially when the screen is focused
         loadProfiles(1, true);
-    }, [sortBy]);
+    }, [sortBy]); // Dependency array should include sortBy
+
+    // Use useFocusEffect to call loadProfiles every time the screen is focused
+    useFocusEffect(loadProfilesCallback);
 
     const handleSavePress = async (profileId) => {
         const updatedBookmarkedProfiles = new Set(bookmarkedProfiles);
@@ -245,7 +252,7 @@ export const ViewedProfileCard = ({ sortBy = "datetime" }) => {
                     </Text>
                     <Text style={styles.profileAge}>
                         {profile.visited_profile_age} Yrs <Text style={styles.line}>|</Text>
-                        {profile.visited_height} cms
+                        {profile.visited_height} Cms
                     </Text>
                     <Text style={styles.zodiac}>{profile.visited_star}</Text>
                     <Text style={styles.employed}>{profile.visited_profession}</Text>

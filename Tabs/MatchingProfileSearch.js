@@ -335,7 +335,7 @@ const MatchingProfileSearch = () => {
                       <Text style={styles.profileId}>({profile.profile_id})</Text>
                     </Text>
                     <Text style={styles.profileAge}>
-                      {profile.profile_age} Yrs | {profile.height}
+                      {profile.profile_age} Yrs | {profile.height} Cms
                     </Text>
                     <Text style={styles.zodiac}>{profile.star}</Text>
                     <Text style={styles.employed}>{profile.profession}</Text>

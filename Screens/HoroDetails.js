@@ -1214,15 +1214,15 @@ export const HoroDetails = () => {
                 birthstar_name: data.stValue,
                 birth_rasi_name: data.raValue,
                 lagnam_didi: data.laValue || "",
-
-                // <--- FIX: Add || "" to prevent sending 'undefined'
                 chevvai_dosaham: data.chdoshamValue || "",
                 ragu_dosham: data.sarDoshamValue || "",
                 nalikai: data.naalikaiValue,
                 dasa_name: data.dasaNameValue,
                 dasa_balance: dasabalance, // <--- Pass the new formatted string
                 horoscope_hints: data.horoscopeHintsValue,
-                didi: data.didi || "" // <--- FIX: Add || ""
+                didi: data.didi || "", // <--- FIX: Add || ""
+                amsa_kattam: "{Grid 1: empty, Grid 2: empty, Grid 3: empty, Grid 4: empty, Grid 5: empty, Grid 6: empty, Grid 7: empty, Grid 8: empty, Grid 9: empty, Grid 10: empty, Grid 11: empty, Grid 12: empty}",
+                rasi_kattam: "{Grid 1: empty, Grid 2: empty, Grid 3: empty, Grid 4: empty, Grid 5: empty, Grid 6: empty, Grid 7: empty, Grid 8: empty, Grid 9: empty, Grid 10: empty, Grid 11: empty, Grid 12: empty}"
             };
 
             console.log("Formatted Data:", formattedData);

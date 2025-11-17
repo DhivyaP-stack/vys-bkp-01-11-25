@@ -680,7 +680,7 @@ export const ProfileCard = ({ searchProfiles, isLoadingNew, orderBy = "1" }) => 
             <View style={styles.ageHeightContainer}>
               <Text style={styles.profileAge}>{item.profile_age} Yrs</Text>
               <Text style={styles.separator}>|</Text>
-              <Text style={styles.profileAge}>{item.height} cms</Text>
+              <Text style={styles.profileAge}>{item.height} Cms</Text>
             </View>
             <Text style={styles.zodiac}>{item.star}</Text>
             <Text style={styles.employed}>{item.profession}</Text>
@@ -764,7 +764,7 @@ export const ProfileCard = ({ searchProfiles, isLoadingNew, orderBy = "1" }) => 
                               {item.profile_age} Yrs
                             </Text>
                             <Text style={styles.separator}>|</Text>
-                            <Text style={styles.profileAge}>{item.height} cms</Text>
+                            <Text style={styles.profileAge}>{item.height} Cms</Text>
                           </View>
                           <Text style={styles.zodiac}>{item.star}</Text>
                           <Text style={styles.employed}>{item.profession}</Text>

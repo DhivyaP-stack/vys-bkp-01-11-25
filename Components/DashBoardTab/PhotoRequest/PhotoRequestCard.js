@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
     StyleSheet,
     Text,
@@ -26,7 +26,7 @@ import {
     handleBookmark
 } from '../../../CommonApiCall/CommonApiCall';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
@@ -146,10 +146,16 @@ export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
         }
     };
 
-    useEffect(() => {
+    // useEffect(() => {
+    //     loadProfiles(1, true);
+    // }, [sortBy]);
+    const loadProfilesCallback = useCallback(() => {
+        // Reset to page 1 and load initially when the screen is focused
         loadProfiles(1, true);
-    }, [sortBy]);
+    }, [sortBy]); // Dependency array should include sortBy
 
+    // Use useFocusEffect to call loadProfiles every time the screen is focused
+    useFocusEffect(loadProfilesCallback);
 
     const handleSavePress = async (profileId) => {
         const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";
@@ -315,7 +321,7 @@ export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
                                 </Text>
                                 <Text style={styles.profileAge}>
                                     {profile.req_profile_age} Yrs{" "}
-                                    <Text style={styles.line}>|</Text> {profile.req_height}
+                                    <Text style={styles.line}>|</Text> {profile.req_height} Cms
                                 </Text>
                                 <Text style={styles.zodiac}>{profile.req_star}</Text>
                                 <Text style={styles.employed}>{profile.req_profession}</Text>

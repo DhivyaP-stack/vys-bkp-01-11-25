@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -20,10 +20,10 @@ import {
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import CircularProgress from "react-native-circular-progress-indicator";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Toast from "react-native-toast-message"; // Make sure this is imported
 import { fetchProfileInterests, fetchDashboardData, updateProfileInterest } from '../CommonApiCall/CommonApiCall';
-
+// import { useNavigation, useFocusEffect } from "@react-navigation/native";
 
 export const DashBoard = () => {
   const [profileData, setProfileData] = useState([]);
@@ -32,31 +32,43 @@ export const DashBoard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const profiles = await fetchProfileInterests();
-        setProfileData(profiles);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    setProfileData([]); // Clear old data visually while loading
 
-        const dashboard = await fetchDashboardData();
-        setDashboardData(dashboard);
-      } catch (error) {
-        setError(error.message);
-        // Show error toast message
-        Toast.show({
-          type: "error",
-          text1: "Error",
-          text2: error.message || "Failed to fetch data.",
-          position: "bottom",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      const profiles = await fetchProfileInterests();
+      setProfileData(profiles);
 
-    fetchData();
-  }, []);
+      const dashboard = await fetchDashboardData();
+      setDashboardData(dashboard);
+    } catch (error) {
+      setError(error.message);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: error.message || "Failed to fetch data.",
+        position: "bottom",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Dependencies are empty as fetching functions are typically stable imports
 
+  // 🌟 Replace your original useEffect with useFocusEffect 🌟
+  useFocusEffect(
+    // The inner function must be wrapped in useCallback
+    useCallback(() => {
+      console.log("DashBoard screen focused. Fetching data...");
+      fetchData();
+
+      // Optional: Return a cleanup function if needed (e.g., stopping ongoing API calls)
+      return () => {
+        console.log("DashBoard screen unfocused.");
+      };
+    }, [fetchData]) // Depend on the stable fetchData function
+  );
   // if (loading) {
   //   return <Text>Loading...</Text>;
   // }

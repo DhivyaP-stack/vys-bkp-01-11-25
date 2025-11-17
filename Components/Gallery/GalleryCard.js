@@ -1,5 +1,5 @@
 // GalleryCard
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   FlatList,
@@ -12,7 +12,7 @@ import {
 
 import { MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import {
   logProfileVisit,
   getGalleryList,
@@ -153,9 +153,17 @@ export const GalleryCard = () => {
   //   }
   // }
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   loadProfiles(1, true);
+  // }, []);
+
+  const loadProfilesCallback = useCallback(() => {
+    // Reset to page 1 and load initially when the screen is focused
     loadProfiles(1, true);
-  }, []);
+  }, [sortBy]); // Dependency array should include sortBy
+
+  // Use useFocusEffect to call loadProfiles every time the screen is focused
+  useFocusEffect(loadProfilesCallback);
 
   const handleEndReached = () => {
     if (!isLoadingMore && currentPage < totalPages) {

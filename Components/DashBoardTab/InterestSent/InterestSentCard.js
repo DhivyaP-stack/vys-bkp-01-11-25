@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -16,7 +16,7 @@ import {
   logProfileVisit,
   fetchProfileDataCheck
 } from "../../../CommonApiCall/CommonApiCall"; // Import the functions
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
 import { FeaturedProfiles } from "../../HomeTab/FeaturedProfiles";
@@ -102,9 +102,16 @@ export const InterestSentCard = ({ sortBy = "datetime" }) => {
     }
   };
 
-  useEffect(() => {
-    loadProfiles(1, true);
-  }, [sortBy]);
+  // useEffect(() => {
+  //   loadProfiles(1, true);
+  // }, [sortBy]);
+    const loadProfilesCallback = useCallback(() => {
+        // Reset to page 1 and load initially when the screen is focused
+        loadProfiles(1, true);
+    }, [sortBy]); // Dependency array should include sortBy
+
+    // Use useFocusEffect to call loadProfiles every time the screen is focused
+    useFocusEffect(loadProfilesCallback);
 
   const handleEndReached = () => {
     if (!isLoadingMore && currentPage < totalPages) {
@@ -256,10 +263,10 @@ export const InterestSentCard = ({ sortBy = "datetime" }) => {
           </Text>
           <Text style={styles.profileAge}>
             {profile.myint_profile_age} Yrs <Text style={styles.line}>|</Text>{" "}
-            5ft 10in (177 cms)
+            {profile.myint_height} Cms
           </Text>
-          <Text style={styles.zodiac}>Uthiram</Text>
-          <Text style={styles.employed}>Employed</Text>
+          <Text style={styles.zodiac}> {profile.myint_star}</Text>
+          <Text style={styles.employed}> {profile.myint_profession}</Text>
         </View>
       </View>
     </TouchableOpacity>

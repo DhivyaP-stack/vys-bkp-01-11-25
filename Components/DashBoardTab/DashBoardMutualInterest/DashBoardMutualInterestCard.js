@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -17,7 +17,7 @@ import {
   logProfileVisit,
   fetchProfileDataCheck
 } from "../../../CommonApiCall/CommonApiCall"; // Update import path
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
 
@@ -106,9 +106,17 @@ export const DashBoardMutualInterestCard = ({ sortBy = "datetime" }) => {
     }
   };
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   loadProfiles(1, true);
+  // }, [sortBy]);
+
+  const loadProfilesCallback = useCallback(() => {
+    // Reset to page 1 and load initially when the screen is focused
     loadProfiles(1, true);
-  }, [sortBy]);
+  }, [sortBy]); // Dependency array should include sortBy
+
+  // Use useFocusEffect to call loadProfiles every time the screen is focused
+  useFocusEffect(loadProfilesCallback);
 
   const handleSavePress = async (profileId) => {
     const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";

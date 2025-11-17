@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -11,7 +11,7 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import { fetchVisitorProfiles, handleBookmark, logProfileVisit, fetchProfileDataCheck } from "../../../CommonApiCall/CommonApiCall"; // Adjust the import path as necessary
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
 
@@ -97,9 +97,16 @@ export const MyVisitorsCard = ({ sortBy = "datetime" }) => {
     }
   };
 
-  useEffect(() => {
-    loadProfiles(1, true);
-  }, [sortBy]);
+  // useEffect(() => {
+  //   loadProfiles(1, true);
+  // }, [sortBy]);
+    const loadProfilesCallback = useCallback(() => {
+        // Reset to page 1 and load initially when the screen is focused
+        loadProfiles(1, true);
+    }, [sortBy]); // Dependency array should include sortBy
+
+    // Use useFocusEffect to call loadProfiles every time the screen is focused
+    useFocusEffect(loadProfilesCallback);
 
   const handleSavePress = async (profileId) => {
     const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";
@@ -230,7 +237,7 @@ export const MyVisitorsCard = ({ sortBy = "datetime" }) => {
           </Text>
           <Text style={styles.profileAge}>
             {profile.viwed_profile_age} Yrs <Text style={styles.line}>|</Text>{" "}
-            {profile.viwed_height} cms
+            {profile.viwed_height} Cms
           </Text>
           <Text style={styles.zodiac}>{profile.viwed_star}</Text>
           <Text style={styles.employed}>{profile.viwed_profession}</Text>
