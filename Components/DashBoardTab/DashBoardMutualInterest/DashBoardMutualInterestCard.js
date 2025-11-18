@@ -20,6 +20,7 @@ import {
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
+import { TopAlignedImage } from "../../ReuseImageAlign/TopAlignedImage";
 
 export const DashBoardMutualInterestCard = ({ sortBy = "datetime" }) => {
   const navigation = useNavigation();
@@ -226,9 +227,14 @@ export const DashBoardMutualInterestCard = ({ sortBy = "datetime" }) => {
       onPress={() => handleProfileClick(profile.mutint_profileid)}
     >
       <View style={styles.profileContainer}>
-        <Image
+        {/* <Image
           source={getImageSource(profile.mutint_Profile_img)}
           style={styles.profileImage}
+        /> */}
+        <TopAlignedImage
+          uri={Array.isArray(profile.mutint_Profile_img) ? profile.mutint_Profile_img[0] : profile.mutint_Profile_img}
+          width={120}
+          height={120}
         />
         <TouchableOpacity
           onPress={() => handleSavePress(profile.mutint_profileid)}
@@ -247,15 +253,18 @@ export const DashBoardMutualInterestCard = ({ sortBy = "datetime" }) => {
 
         <View style={styles.profileContent}>
           <Text style={styles.profileName}>
-            {profile.mutint_profile_name}{" "}
+            {profile.mutint_profile_name || "N/A"}
             <Text style={styles.profileId}>({profile.mutint_profileid})</Text>
           </Text>
           <Text style={styles.profileAge}>
-            {profile.mutint_profile_age} Yrs <Text style={styles.line}>|</Text>
-            {profile.mutint_height} Cms{" "}
+            {profile.mutint_profile_age || "N/A"} Yrs <Text style={styles.line}>|</Text>
+            {profile.mutint_height || "N/A"} Cms
           </Text>
-          <Text style={styles.zodiac}>{profile.mutint_star}</Text>
-          <Text style={styles.employed}>{profile.mutint_profession}</Text>
+          <Text style={styles.zodiac}>{profile.mutint_star || "N/A"}</Text>
+          <Text style={styles.employed}>{profile.mutint_profession || "N/A"}</Text>
+          <Text style={styles.lastVisit}>
+            Last visit on {profile.mutint_lastvisit || "N/A"}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -418,5 +427,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFDE594D',
     paddingTop: 10,
     marginTop: 20,
+  },
+  lastVisit: {
+    fontSize: 14,
+    color: "#4F515D",
+    marginTop: 5,
   },
 });

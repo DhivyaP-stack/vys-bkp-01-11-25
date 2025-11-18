@@ -1053,6 +1053,59 @@ export const fetchPartnerProfile = async () => {
     }
 };
 
+export const fetchPartnerProfilenew = async () => {
+    // Assuming retrieveProfileId and BASE_URL are defined elsewhere
+    const profileId = await retrieveProfileId();
+    if (!profileId) {
+        console.warn('Profile ID is empty, skipping API call.');
+        return null;
+    }
+    try {
+        const response = await axios.post(`${BASE_URL}/Get_myprofile_partner/`, { profile_id: profileId });
+        const data = response.data.data;
+
+        // Helper function for safe splitting
+        const safeSplit = (value) => {
+            // Check if value is null/undefined or an empty string, if so return an empty array.
+            // Otherwise, split the string.
+            return (value && typeof value === 'string' && value.trim() !== '') 
+                ? value.split(',').map((id) => id.trim()) 
+                : [];
+        };
+
+        // Apply safeSplit to all comma-separated fields
+        const selectedEducation = safeSplit(data.partner_edu_id);
+        const selectedFieldofStudy = safeSplit(data.partner_field_of_study);
+        const selectedProfession = safeSplit(data.partner_profe);
+        const selectedIncome = safeSplit(data.partner_ann_inc);
+        const selectedIncomeMax = safeSplit(data.partner_ann_inc_max);
+        const selectedStatus = safeSplit(data.partner_marital_status);
+
+        return {
+            fromAge: data.partner_age || '',
+            fromHeight: data.partner_height_from || '',
+            toHeight: data.partner_height_to || '',
+            // Now these fields are guaranteed to be Arrays (or empty Arrays)
+            education: selectedEducation, 
+            fieldofstudy: selectedFieldofStudy, 
+            maritalStatus: selectedStatus,
+            profession: selectedProfession, 
+            
+            // Income should be passed as the first element of the array if it exists, or empty string if array is empty
+            // We use [0] because your original code mapped income to a single selection value
+            income: selectedIncome[0] || '',
+            incomeStatusMax: selectedIncomeMax[0] || '', 
+
+            rahuKetuDhosam: data.partner_rahu_kethu || '',
+            chevvaiDhosam: data.partner_chev_dho || '',
+            foreignInterest: data.partner_forign_int || '',
+            partner_porutham_ids: data.partner_porutham_ids || '', // Ensure this is also safely retrieved
+        };
+    } catch (error) {
+        console.error('Error fetching partner profile:', error);
+        throw error; 
+    }
+};
 
 
 

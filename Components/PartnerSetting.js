@@ -19,8 +19,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import config from "../API/Apiurl";
-import { updatePartnerPreferences, fetchPartnerProfile } from '../CommonApiCall/CommonApiCall'; 
-import Toast from 'react-native-toast-message'; 
+import { updatePartnerPreferences, fetchPartnerProfilenew } from '../CommonApiCall/CommonApiCall';
+import Toast from 'react-native-toast-message';
 import MatchingStars from '../Components/MatchingStars/MatchingStars';
 
 
@@ -230,34 +230,45 @@ export const PartnerSettings = () => {
 
             // 1. Fetch saved partner preferences from the main endpoint
             try {
-                const partnerProfileData = await fetchPartnerProfile();
+                const partnerProfileData = await fetchPartnerProfilenew();
                 console.log("partnerProfileData", partnerProfileData);
-                
+
                 // 2. Set standard dropdown/checkbox values
                 setValue('ageDifference', partnerProfileData.fromAge || '');
                 setValue('heightFrom', partnerProfileData.fromHeight || '');
                 setValue('heightTo', partnerProfileData.toHeight || '');
                 // Ensure array types for multi-selects
-                setValue('education', Array.isArray(partnerProfileData.education) ? partnerProfileData.education : (partnerProfileData.education ? partnerProfileData.education.split(',') : []));
-                setValue('fieldOfStudy', Array.isArray(partnerProfileData.fieldofstudy) ? partnerProfileData.fieldofstudy : (partnerProfileData.fieldofstudy ? partnerProfileData.fieldofstudy.split(',') : []));
-                setValue('maritalStatus', Array.isArray(partnerProfileData.maritalStatus) ? partnerProfileData.maritalStatus : (partnerProfileData.maritalStatus ? partnerProfileData.maritalStatus.split(',') : []));
-                setValue('profession', Array.isArray(partnerProfileData.profession) ? partnerProfileData.profession : (partnerProfileData.profession ? partnerProfileData.profession.split(',') : []));
-                
+                // setValue('education', Array.isArray(partnerProfileData.education) ? partnerProfileData.education : (partnerProfileData.education ? partnerProfileData.education.split(',') : []));
+                // setValue('fieldOfStudy', Array.isArray(partnerProfileData.fieldofstudy) ? partnerProfileData.fieldofstudy : (partnerProfileData.fieldofstudy ? partnerProfileData.fieldofstudy.split(',') : []));
+                // setValue('maritalStatus', Array.isArray(partnerProfileData.maritalStatus) ? partnerProfileData.maritalStatus : (partnerProfileData.maritalStatus ? partnerProfileData.maritalStatus.split(',') : []));
+                // setValue('profession', Array.isArray(partnerProfileData.profession) ? partnerProfileData.profession : (partnerProfileData.profession ? partnerProfileData.profession.split(',') : []));
+                setValue('education', partnerProfileData.education);
+                setValue('fieldOfStudy', partnerProfileData.fieldofstudy);
+                setValue('maritalStatus', partnerProfileData.maritalStatus);
+                setValue('profession', partnerProfileData.profession);
+
                 setValue('rehu', partnerProfileData.rahuKetuDhosam || '');
                 setValue('chevvai', partnerProfileData.chevvaiDhosam || '');
                 setValue('foreignInterest', partnerProfileData.foreignInterest || '');
 
                 // Income
-                if (partnerProfileData.income !== undefined && partnerProfileData.income !== null) {
-                    const minIncome = String(partnerProfileData.income);
-                    setValue('annualIncomeMin', minIncome);
-                    setSelectedIncomeMinIds(minIncome);
-                }
-                if (partnerProfileData.incomeStatusMax !== undefined && partnerProfileData.incomeStatusMax !== null) {
-                    const maxIncome = String(partnerProfileData.incomeStatusMax);
-                    setValue('annualIncomeMax', maxIncome);
-                    setSelectedIncomeMaxIds(maxIncome);
-                }
+                // if (partnerProfileData.income !== undefined && partnerProfileData.income !== null) {
+                //     const minIncome = String(partnerProfileData.income);
+                //     setValue('annualIncomeMin', minIncome);
+                //     setSelectedIncomeMinIds(minIncome);
+                // }
+                // if (partnerProfileData.incomeStatusMax !== undefined && partnerProfileData.incomeStatusMax !== null) {
+                //     const maxIncome = String(partnerProfileData.incomeStatusMax);
+                //     setValue('annualIncomeMax', maxIncome);
+                //     setSelectedIncomeMaxIds(maxIncome);
+                // }
+                const minIncome = partnerProfileData.income || ''; // Now guaranteed to be string or ''
+                setValue('annualIncomeMin', minIncome);
+                setSelectedIncomeMinIds(minIncome);
+
+                const maxIncome = partnerProfileData.incomeStatusMax || ''; // Now guaranteed to be string or ''
+                setValue('annualIncomeMax', maxIncome);
+                setSelectedIncomeMaxIds(maxIncome);
 
                 // 3. Handle Matching Stars Initialization
                 const savedStarIdsString = partnerProfileData.partner_porutham_ids;
@@ -303,15 +314,15 @@ export const PartnerSettings = () => {
 
         initializeFormData();
     }, [
-        setValue, 
-        maritalStatusOptions.length, 
-        highestEduOptions.length, 
-        annualIncomeOptions.length, 
-        professionOptions.length, 
+        setValue,
+        maritalStatusOptions.length,
+        highestEduOptions.length,
+        annualIncomeOptions.length,
+        professionOptions.length,
         fieldOfStudyOptions.length,
         allStarOptions.length // Re-run when options or stars are loaded
     ]);
-    
+
     const onSubmit = async (data) => {
         try {
             const starArray = selectedStarIds.map(item => item.id);

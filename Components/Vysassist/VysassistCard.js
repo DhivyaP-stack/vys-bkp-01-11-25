@@ -19,6 +19,7 @@ import {
   getWishlistProfiles,
 } from "../../CommonApiCall/CommonApiCall";
 import { ProfileNotFound } from "../ProfileNotFound";
+import { TopAlignedImage } from "../ReuseImageAlign/TopAlignedImage";
 
 export const VysassistCard = ({ sortBy = "datetime" }) => {
   const [profiles, setProfiles] = useState([]);
@@ -273,9 +274,14 @@ export const VysassistCard = ({ sortBy = "datetime" }) => {
           style={styles.profileDiv}
         >
           <View style={styles.profileContainer}>
-            <Image
+            {/* <Image
               source={getImageSource(item.vys_Profile_img)}
               style={styles.profileImage}
+            /> */}
+            <TopAlignedImage
+              uri={Array.isArray(item.viwed_Profile_img) ? item.viwed_Profile_img[0] : item.viwed_Profile_img}
+              width={120}
+              height={120}
             />
             <TouchableOpacity
               onPress={() => handleSavePress(item.vys_profileid)}
@@ -293,15 +299,18 @@ export const VysassistCard = ({ sortBy = "datetime" }) => {
             </TouchableOpacity>
             <View style={styles.profileContent}>
               <Text style={styles.profileName}>
-                {item.vys_profile_name}{" "}
-                <Text style={styles.profileId}>({item.vys_profileid})</Text>
+                {item.vys_profile_name || "N/A"}{" "}
+                <Text style={styles.profileId}>({item.vys_profileid || "N/A"})</Text>
               </Text>
               <Text style={styles.profileAge}>
-                {item.vys_profile_age} Yrs <Text style={styles.line}>|</Text>{" "}
-                {item.vys_height} Cms
+                {item.vys_profile_age || "N/A"} Yrs <Text style={styles.line}>|</Text>{" "}
+                {item.vys_height || "N/A"} Cms
               </Text>
-              <Text style={styles.zodiac}>{item.vys_degree}</Text>
-              <Text style={styles.employed}>{item.vys_profession}</Text>
+              <Text style={styles.zodiac}>{item.vys_degree || "N/A"}</Text>
+              <Text style={styles.employed}>{item.vys_profession || "N/A"}</Text>
+              <Text style={styles.lastVisit}>
+                Last visit on {item.vys_lastvisit || "N/A"}
+              </Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -399,6 +408,10 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   employed: {
+    fontSize: 14,
+    color: "#4F515D",
+  },
+  lastVisit: {
     fontSize: 14,
     color: "#4F515D",
   },

@@ -160,7 +160,7 @@ export const GalleryCard = () => {
   const loadProfilesCallback = useCallback(() => {
     // Reset to page 1 and load initially when the screen is focused
     loadProfiles(1, true);
-  }, [sortBy]); // Dependency array should include sortBy
+  }, []); // Dependency array should include sortBy
 
   // Use useFocusEffect to call loadProfiles every time the screen is focused
   useFocusEffect(loadProfilesCallback);

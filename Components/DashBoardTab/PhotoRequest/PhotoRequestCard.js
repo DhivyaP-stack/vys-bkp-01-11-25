@@ -28,6 +28,7 @@ import {
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { TopAlignedImage } from "../../ReuseImageAlign/TopAlignedImage";
 
 export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
     const navigation = useNavigation();
@@ -299,9 +300,14 @@ export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
                                 }
                                 style={styles.profileImage}
                             /> */}
-                            <Image
+                            {/* <Image
                                 source={getImageSource(profile.req_Profile_img)}
                                 style={styles.profileImage}
+                            /> */}
+                            <TopAlignedImage
+                                uri={Array.isArray(profile.req_Profile_img) ? profile.req_Profile_img[0] : profile.req_Profile_img}
+                                width={120}
+                                height={120}
                             />
                             <TouchableOpacity onPress={() => handleSavePress(profile.req_profileid)}>
                                 <MaterialIcons
@@ -314,18 +320,20 @@ export const PhotoRequestCard = ({ sortBy = "datetime" }) => {
 
                             <View style={styles.profileContent}>
                                 <Text style={styles.profileName}>
-                                    {profile.req_profile_name}{" "}
+                                    {profile.req_profile_name || "N/A"}
                                     <Text style={styles.profileId}>
-                                        ({profile.req_profileid})
+                                        ({profile.req_profileid || "N/A"})
                                     </Text>
                                 </Text>
                                 <Text style={styles.profileAge}>
-                                    {profile.req_profile_age} Yrs{" "}
-                                    <Text style={styles.line}>|</Text> {profile.req_height} Cms
+                                    {profile.req_profile_age || "N/A"} Yrs
+                                    <Text style={styles.line}>|</Text> {profile.req_height || "N/A"} Cms
                                 </Text>
-                                <Text style={styles.zodiac}>{profile.req_star}</Text>
-                                <Text style={styles.employed}>{profile.req_profession}</Text>
-
+                                <Text style={styles.zodiac}>{profile.req_star || "N/A"}</Text>
+                                <Text style={styles.employed}>{profile.req_profession || "N/A"}</Text>
+                                <Text style={styles.lastVisit}>
+                                    Last visit on {profile.req_lastvisit || "N/A"}
+                                </Text>
                                 {/* Buttons */}
                                 <View style={styles.buttonContainer}>
                                     {/* Conditionally render Accept and Reject buttons if req_status is not 2 or 3 */}
@@ -516,7 +524,11 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#4F515D",
     },
-
+    lastVisit: {
+        fontSize: 14,
+        color: "#4F515D",
+        marginTop: 5,
+    },
     buttonContainer: {
         flexDirection: "row",
         justifyContent: "flex-start",

@@ -13,6 +13,7 @@ import {
   Ionicons,
 } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import Toast from "react-native-toast-message";
 
 export const FeaturedOrSuggestProfiles = ({ route }) => {
   const navigation = useNavigation();
@@ -143,8 +144,8 @@ export const FeaturedOrSuggestProfiles = ({ route }) => {
   const ListHeader = () => (
     <View style={styles.contentConatiner}>
       <Text style={styles.profileName}>
-        {type === "featured" ? "Featured Profiles" : "Suggested Profiles"}
-        <Text style={styles.profileId}> ({profiles.length})</Text>
+        {/* {type === "featured" ? "Featured Profiles" : "Suggested Profiles"}
+        <Text style={styles.profileId}> ({profiles.length})</Text> */}
       </Text>
     </View>
   );

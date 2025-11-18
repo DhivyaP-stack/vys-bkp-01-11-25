@@ -21,6 +21,7 @@ import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
 import { FeaturedProfiles } from "../../HomeTab/FeaturedProfiles";
 import Toast from "react-native-toast-message";
+import { TopAlignedImage } from "../../ReuseImageAlign/TopAlignedImage";
 
 export const InterestSentCard = ({ sortBy = "datetime" }) => {
   const navigation = useNavigation();
@@ -105,13 +106,13 @@ export const InterestSentCard = ({ sortBy = "datetime" }) => {
   // useEffect(() => {
   //   loadProfiles(1, true);
   // }, [sortBy]);
-    const loadProfilesCallback = useCallback(() => {
-        // Reset to page 1 and load initially when the screen is focused
-        loadProfiles(1, true);
-    }, [sortBy]); // Dependency array should include sortBy
+  const loadProfilesCallback = useCallback(() => {
+    // Reset to page 1 and load initially when the screen is focused
+    loadProfiles(1, true);
+  }, [sortBy]); // Dependency array should include sortBy
 
-    // Use useFocusEffect to call loadProfiles every time the screen is focused
-    useFocusEffect(loadProfilesCallback);
+  // Use useFocusEffect to call loadProfiles every time the screen is focused
+  useFocusEffect(loadProfilesCallback);
 
   const handleEndReached = () => {
     if (!isLoadingMore && currentPage < totalPages) {
@@ -238,9 +239,14 @@ export const InterestSentCard = ({ sortBy = "datetime" }) => {
       onPress={() => handleProfileClick(profile.myint_profileid)}
     >
       <View style={styles.profileContainer}>
-        <Image
+        {/* <Image
           source={getImageSource(profile.myint_Profile_img)}
           style={styles.profileImage}
+        /> */}
+        <TopAlignedImage
+          uri={Array.isArray(profile.myint_Profile_img) ? profile.myint_Profile_img[0] : profile.myint_Profile_img}
+          width={120}
+          height={120}
         />
         <TouchableOpacity
           onPress={() => handleSavePress(profile.myint_profileid)}
@@ -258,15 +264,18 @@ export const InterestSentCard = ({ sortBy = "datetime" }) => {
         </TouchableOpacity>
         <View style={styles.profileContent}>
           <Text style={styles.profileName}>
-            {profile.myint_profile_name}{" "}
-            <Text style={styles.profileId}>({profile.myint_profileid})</Text>
+            {profile.myint_profile_name || "N/A"}
+            <Text style={styles.profileId}>({profile.myint_profileid || "N/A"})</Text>
           </Text>
           <Text style={styles.profileAge}>
-            {profile.myint_profile_age} Yrs <Text style={styles.line}>|</Text>{" "}
-            {profile.myint_height} Cms
+            {profile.myint_profile_age || "N/A"} Yrs <Text style={styles.line}>|</Text>{" "}
+            {profile.myint_height || "N/A"} Cms
           </Text>
-          <Text style={styles.zodiac}> {profile.myint_star}</Text>
-          <Text style={styles.employed}> {profile.myint_profession}</Text>
+          <Text style={styles.zodiac}> {profile.myint_star || "N/A"}</Text>
+          <Text style={styles.employed}> {profile.myint_profession || "N/A"}</Text>
+          <Text style={styles.lastVisit}>
+            Last visit on {profile.myint_lastvisit || "N/A"}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -420,6 +429,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: "#666",
+    marginTop: 5,
+  },
+  lastVisit: {
+    fontSize: 14,
+    color: "#4F515D",
     marginTop: 5,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback} from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -14,6 +14,7 @@ import { fetchPersonalNotes, handleBookmark, logProfileVisit, fetchProfileDataCh
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
+import { TopAlignedImage } from "../../ReuseImageAlign/TopAlignedImage";
 
 export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
   const navigation = useNavigation();
@@ -103,13 +104,13 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
   // useEffect(() => {
   //   loadPersonalNotes(1, true);
   // }, [sortBy]);
-    const loadProfilesCallback = useCallback(() => {
-        // Reset to page 1 and load initially when the screen is focused
-        loadPersonalNotes(1, true);
-    }, [sortBy]); // Dependency array should include sortBy
+  const loadProfilesCallback = useCallback(() => {
+    // Reset to page 1 and load initially when the screen is focused
+    loadPersonalNotes(1, true);
+  }, [sortBy]); // Dependency array should include sortBy
 
-    // Use useFocusEffect to call loadProfiles every time the screen is focused
-    useFocusEffect(loadProfilesCallback);
+  // Use useFocusEffect to call loadProfiles every time the screen is focused
+  useFocusEffect(loadProfilesCallback);
 
   const handleSavePress = async (profileId) => {
     const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";
@@ -212,9 +213,14 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
       <View style={styles.cardContainer}>
         <View style={styles.profileContainer}>
           <View style={styles.imageContainer}>
-            <Image
+            {/* <Image
               source={getImageSource(profile.notes_Profile_img)}
               style={styles.profileImage}
+            /> */}
+            <TopAlignedImage
+              uri={Array.isArray(profile.notes_Profile_img) ? profile.notes_Profile_img[0] : profile.notes_Profile_img}
+              width={120}
+              height={130}
             />
             <TouchableOpacity
               style={styles.saveIcon} // This style will be updated below
@@ -235,17 +241,18 @@ export const PersonalNotesCard = ({ sortBy = "datetime" }) => {
           <View style={styles.profileContent}>
             <View>
               <Text style={styles.profileName}>
-                {profile.notes_profile_name}{" "}
+                {profile.notes_profile_name || "N/A"}{" "}
                 <Text style={styles.profileId}>
-                  ({profile.notes_profileid})
+                  ({profile.notes_profileid || "N/A"})
                 </Text>
               </Text>
               <Text style={styles.profileAge}>
-                {profile.notes_profile_age} Yrs{" "}
-                <Text style={styles.line}>|</Text> {profile.notes_height} Cms
+                {profile.notes_profile_age || "N/A"} Yrs{" "}
+                <Text style={styles.line}>|</Text> {profile.notes_height || "N/A"} Cms
               </Text>
-              <Text style={styles.zodiac}>{profile.notes_star}</Text>
-              <Text style={styles.employed}>{profile.notes_profession}</Text>
+              <Text style={styles.zodiac}>{profile.notes_star || "N/A"}</Text>
+              <Text style={styles.employed}>{profile.notes_profession || "N/A"}</Text>
+              <Text style={styles.lastVisit}>Last visit on {profile.notes_lastvisit || "N/A"}</Text>
             </View>
           </View>
         </View>
@@ -392,7 +399,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4F515D",
   },
-
+  lastVisit: {
+    fontSize: 14,
+    color: "#4F515D",
+    marginTop: 5,
+  },
   notesContainer: {
     width: "100%",
     padding: 8,
@@ -444,8 +455,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   imageContainer: {
-    width: 100,   // Should match your profileImage width
-    height: 100,  // Should match your profileImage height
+    width: 120,
+    height: 130,
+    overflow: "hidden",
+    borderRadius: 4,
   },
   saveIcon: {
     position: "absolute",

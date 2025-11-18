@@ -14,6 +14,7 @@ import { fetchVisitorProfiles, handleBookmark, logProfileVisit, fetchProfileData
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
+import { TopAlignedImage } from "../../ReuseImageAlign/TopAlignedImage";
 
 export const MyVisitorsCard = ({ sortBy = "datetime" }) => {
   const navigation = useNavigation();
@@ -100,13 +101,13 @@ export const MyVisitorsCard = ({ sortBy = "datetime" }) => {
   // useEffect(() => {
   //   loadProfiles(1, true);
   // }, [sortBy]);
-    const loadProfilesCallback = useCallback(() => {
-        // Reset to page 1 and load initially when the screen is focused
-        loadProfiles(1, true);
-    }, [sortBy]); // Dependency array should include sortBy
+  const loadProfilesCallback = useCallback(() => {
+    // Reset to page 1 and load initially when the screen is focused
+    loadProfiles(1, true);
+  }, [sortBy]); // Dependency array should include sortBy
 
-    // Use useFocusEffect to call loadProfiles every time the screen is focused
-    useFocusEffect(loadProfilesCallback);
+  // Use useFocusEffect to call loadProfiles every time the screen is focused
+  useFocusEffect(loadProfilesCallback);
 
   const handleSavePress = async (profileId) => {
     const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";
@@ -212,9 +213,14 @@ export const MyVisitorsCard = ({ sortBy = "datetime" }) => {
       onPress={() => handleProfileClick(profile.viwed_profileid)}
     >
       <View style={styles.profileContainer}>
-        <Image
+        {/* <Image
           source={getImageSource(profile.viwed_Profile_img)}
           style={styles.profileImage}
+        /> */}
+        <TopAlignedImage
+          uri={Array.isArray(profile.viwed_Profile_img) ? profile.viwed_Profile_img[0] : profile.viwed_Profile_img}
+          width={120}
+          height={120}
         />
         <TouchableOpacity
           onPress={() => handleSavePress(profile.viwed_profileid)}
@@ -232,15 +238,18 @@ export const MyVisitorsCard = ({ sortBy = "datetime" }) => {
         </TouchableOpacity>
         <View style={styles.profileContent}>
           <Text style={styles.profileName}>
-            {profile.viwed_profile_name}{" "}
-            <Text style={styles.profileId}>({profile.viwed_profileid})</Text>
+            {profile.viwed_profile_name || "N/A"}
+            <Text style={styles.profileId}>({profile.viwed_profileid || "N/A"})</Text>
           </Text>
           <Text style={styles.profileAge}>
-            {profile.viwed_profile_age} Yrs <Text style={styles.line}>|</Text>{" "}
-            {profile.viwed_height} Cms
+            {profile.viwed_profile_age || "N/A"} Yrs <Text style={styles.line}>|</Text>{" "}
+            {profile.viwed_height || "N/A"} Cms
           </Text>
-          <Text style={styles.zodiac}>{profile.viwed_star}</Text>
-          <Text style={styles.employed}>{profile.viwed_profession}</Text>
+          <Text style={styles.zodiac}>{profile.viwed_star || "N/A"}</Text>
+          <Text style={styles.employed}>{profile.viwed_profession || "N/A"}</Text>
+          <Text style={styles.lastVisit}>
+            Last visit on {profile.viwed_lastvisit || "N/A"}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -379,7 +388,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4F515D",
   },
-
+  lastVisit: {
+    fontSize: 14,
+    color: "#4F515D",
+    marginTop: 5,
+  },
   centerContainer: {
     flex: 1,
     justifyContent: "center",

@@ -14,6 +14,7 @@ import { fetchViewedProfiles, markProfileWishlist, logProfileVisit, fetchProfile
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
+import { TopAlignedImage } from "../../ReuseImageAlign/TopAlignedImage";
 
 export const ViewedProfileCard = ({ sortBy = "datetime" }) => {
     const navigation = useNavigation();
@@ -232,9 +233,14 @@ export const ViewedProfileCard = ({ sortBy = "datetime" }) => {
             onPress={() => handleProfileClick(profile.visited_profileid)}
         >
             <View style={styles.profileContainer}>
-                <Image
+                {/* <Image
                     source={getImageSource(profile.visited_Profile_img)}
                     style={styles.profileImage}
+                /> */}
+                <TopAlignedImage
+                    uri={Array.isArray(profile.visited_Profile_img) ? profile.visited_Profile_img[0] : profile.visited_Profile_img}
+                    width={120}
+                    height={120}
                 />
                 <TouchableOpacity onPress={() => handleSavePress(profile.visited_profileid)}>
                     <MaterialIcons
@@ -247,15 +253,16 @@ export const ViewedProfileCard = ({ sortBy = "datetime" }) => {
 
                 <View style={styles.profileContent}>
                     <Text style={styles.profileName}>
-                        {profile.visited_profile_name}{" "}
-                        <Text style={styles.profileId}>({profile.visited_profileid})</Text>
+                        {profile.visited_profile_name || "N/A"}
+                        <Text style={styles.profileId}>({profile.visited_profileid || "N/A"})</Text>
                     </Text>
                     <Text style={styles.profileAge}>
-                        {profile.visited_profile_age} Yrs <Text style={styles.line}>|</Text>
-                        {profile.visited_height} Cms
+                        {profile.visited_profile_age || "N/A"} Yrs <Text style={styles.line}>|</Text>
+                        {profile.visited_height || "N/A"} Cms
                     </Text>
-                    <Text style={styles.zodiac}>{profile.visited_star}</Text>
-                    <Text style={styles.employed}>{profile.visited_profession}</Text>
+                    <Text style={styles.zodiac}>{profile.visited_star || "N/A"}</Text>
+                    <Text style={styles.employed}>{profile.visited_profession || "N/A"}</Text>
+                    <Text style={styles.lastVisit}>Last visit on {profile.visited_datetime || "N/A"}</Text>
                 </View>
             </View>
         </TouchableOpacity>
@@ -412,5 +419,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFDE594D',
         paddingTop: 10,
         marginTop: 20,
+    },
+    lastVisit: {
+        fontSize: 14,
+        color: "#4F515D",
+        marginTop: 5,
     },
 });

@@ -12,6 +12,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { ProfileNotFound } from "../../ProfileNotFound";
 import { SuggestedProfiles } from "../../HomeTab/SuggestedProfiles";
 import Toast from "react-native-toast-message";
+import { TopAlignedImage } from "../../../Components/ReuseImageAlign/TopAlignedImage"
 
 export const WishlistCard = ({ sortBy = "datetime" }) => {
     const [profiles, setProfiles] = useState([]);
@@ -239,9 +240,14 @@ export const WishlistCard = ({ sortBy = "datetime" }) => {
                     <TouchableOpacity style={styles.profileDiv}
                         onPress={() => handleProfileClick(item.wishlist_profileid)}>
                         <View style={styles.profileContainer}>
-                            <Image
+                            {/* <Image
                                 source={getImageSource(item.wishlist_Profile_img)}
                                 style={styles.profileImage}
+                            /> */}
+                            <TopAlignedImage
+                                uri={Array.isArray(item.wishlist_Profile_img) ? item.wishlist_Profile_img[0] : item.wishlist_Profile_img}
+                                width={120}
+                                height={120}
                             />
                             <TouchableOpacity
                                 onPress={() => handleSavePress(item.wishlist_profileid)}
@@ -256,14 +262,17 @@ export const WishlistCard = ({ sortBy = "datetime" }) => {
                             </TouchableOpacity>
                             <View style={styles.profileContent}>
                                 <Text style={styles.profileName}>
-                                    {item.wishlist_profile_name} <Text style={styles.profileId}>({item.wishlist_profileid})</Text>
+                                    {item.wishlist_profile_name || "N/A"} <Text style={styles.profileId}>({item.wishlist_profileid || "N/A"})</Text>
                                 </Text>
                                 <Text style={styles.profileAge}>
-                                    {item.wishlist_profile_age} Yrs <Text style={styles.line}>|</Text>
-                                    {item.wishlist_height} Cms
+                                    {item.wishlist_profile_age || "N/A"} Yrs <Text style={styles.line}>|</Text>
+                                    {item.wishlist_height || "N/A"} Cms
                                 </Text>
-                                <Text style={styles.zodiac}>{item.wishlist_star}</Text>
-                                <Text style={styles.employed}>{item.wishlist_profession}</Text>
+                                <Text style={styles.zodiac}>{item.wishlist_star || "N/A"}</Text>
+                                <Text style={styles.employed}>{item.wishlist_profession || "N/A"}</Text>
+                                <Text style={styles.lastVisit}>
+                                    Last visit on {item.wishlist_lastvisit || "N/A"}
+                                </Text>
                             </View>
                         </View>
                     </TouchableOpacity>
@@ -300,8 +309,10 @@ const styles = StyleSheet.create({
 
     profileImage: {
         width: 100,
-        height: 100,
+        height: 120,
         borderRadius: 0,
+        resizeMode: "cover",   // ensures the image starts from the top
+        alignSelf: "flex-start"
     },
 
     profileContent: {
@@ -363,4 +374,15 @@ const styles = StyleSheet.create({
         paddingTop: 10,
         marginTop: 20,
     },
+    lastVisit: {
+        fontSize: 14,
+        color: "#4F515D",
+        marginTop: 5,
+    },
+    profileImageWrapper: {
+        width: 100,
+        height: 120,
+        overflow: "hidden",
+    },
+
 });

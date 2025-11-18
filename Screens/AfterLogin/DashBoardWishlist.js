@@ -29,7 +29,7 @@ export const DashBoardWishlist = () => {
     try {
       // Simulate the time it takes to fetch/update data
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsEnabled(previousState => !previousState);
+      setIsEnabled(previousState => !previousState);m
     } catch (error) {
       console.error('Error toggling sort:', error);
     } finally {
