@@ -3,7 +3,7 @@ import {
   View,
   StyleSheet,
   Text,
-  ScrollView,
+  FlatList,
   Image,
   TouchableOpacity,
   TextInput,
@@ -12,7 +12,7 @@ import {
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { fetchSearchProfiles, handleBookmark } from "../CommonApiCall/CommonApiCall";
+import { handleBookmark, fetchSearchProfiles } from "../CommonApiCall/CommonApiCall";
 import config from "../API/Apiurl";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -33,7 +33,13 @@ const MatchingProfileSearch = () => {
   const [searchProfileId, setSearchProfileId] = useState("");
   const [showSearchFields, setShowSearchFields] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [allProfileIds, setAllProfileIds] = useState({});
 
   // Fetch Professional Preference
   useEffect(() => {
@@ -61,38 +67,79 @@ const MatchingProfileSearch = () => {
     fetchStates();
   }, []);
 
-  // Search Profiles
-  const searchProfiles = async () => {
-    setIsLoading(true);
-    setError(null);
+  // Modified Search Profiles with pagination
+  const searchProfiles = async (page = 1, isInitialLoad = true) => {
+    if ((isLoading && isInitialLoad) || (isLoadingMore && !isInitialLoad)) return;
+
+    if (isInitialLoad) {
+      setIsLoading(true);
+      setError(null);
+    } else {
+      setIsLoadingMore(true);
+    }
 
     try {
-      if (!searchProfileId && !profession && !selectAge && !selectedLocation)
-        throw new Error("Please select at least one search criteria");
+      const perPage = 10;
 
+      // Call COMMON API FUNCTION
       const result = await fetchSearchProfiles(
-        searchProfileId,
-        profession,
-        selectAge,
-        selectedLocation
+        searchProfileId || "",
+        profession || "",
+        selectAge || "",
+        selectedLocation || "",
+        page,
+        perPage
       );
-      console.log("total matching profiles", result)
-      if (!result || !result.profiles) throw new Error("No profiles found");
 
-      setProfiles(result.profiles);
-      setTotalProfiles(result.total_count);
-      const initialBookmarks = new Set(
-        result.profiles
-          .filter(profile => profile.wish_list === 1)
-          .map(profile => profile.profile_id)
-      );
-      setBookmarkedProfiles(initialBookmarks);
-      setShowSearchFields(false);
+      console.log("🔵 API RESPONSE:", result);
+
+      if (result?.Status === 1 && result?.profiles) {
+
+        if (isInitialLoad) {
+          setProfiles(result.profiles);
+        } else {
+          setProfiles(prev => [...prev, ...result.profiles]);
+        }
+
+        // Map profile IDs
+        setAllProfileIds(prev => ({
+          ...prev,
+          ...(result.all_profile_ids || {})
+        }));
+
+        setTotalProfiles(result.total_count || 0);
+        setTotalPages(Math.ceil((result.total_count || 0) / perPage));
+        setCurrentPage(page);
+
+        // Bookmarks
+        const newBookmarks = new Set(
+          result.profiles.filter(p => p.wish_list === 1).map(p => p.profile_id)
+        );
+
+        setBookmarkedProfiles(prev =>
+          isInitialLoad ? newBookmarks : new Set([...prev, ...newBookmarks])
+        );
+
+        setShowSearchFields(false);
+      } else {
+        throw new Error(result?.message || "No profiles found");
+      }
     } catch (error) {
-      setError(error.message || "Error searching profiles");
-      setProfiles([]);
+      console.error("❌ Search error:", error);
+      setError(error.message);
+      if (isInitialLoad) setProfiles([]);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
+
+  // Handle end reached for pagination
+  const handleEndReached = () => {
+    console.log("🔄 End reached. Current page:", currentPage, "Total pages:", totalPages);
+    if (!isLoadingMore && currentPage < totalPages) {
+      console.log("📥 Loading page:", currentPage + 1);
+      searchProfiles(currentPage + 1, false);
     }
   };
 
@@ -104,12 +151,15 @@ const MatchingProfileSearch = () => {
     setSearchProfileId("");
     setProfiles([]);
     setShowSearchFields(true);
+    setCurrentPage(1);
+    setTotalPages(1);
+    setAllProfileIds({});
+    setError(null);
   };
 
   // Bookmark toggle
   const handleSavePress = async (profileId) => {
     const newStatus = bookmarkedProfiles.has(profileId) ? "0" : "1";
-
     const success = await handleBookmark(profileId, newStatus);
 
     if (success) {
@@ -127,7 +177,7 @@ const MatchingProfileSearch = () => {
         updatedBookmarkedProfiles.delete(profileId);
         Toast.show({
           type: "info",
-          text1: "UNsaved",
+          text1: "Unsaved",
           text2: "Profile has been removed from bookmarks.",
           position: "bottom",
         });
@@ -135,11 +185,10 @@ const MatchingProfileSearch = () => {
 
       setBookmarkedProfiles(updatedBookmarkedProfiles);
 
-      // Update UI immediately for MatchingProfileSearch list
       setProfiles(prevProfiles =>
         prevProfiles.map(profile =>
           profile.profile_id === profileId
-            ? { ...profile, profile_wishlist: newStatus === "1" ? 1 : 0 }
+            ? { ...profile, wish_list: newStatus === "1" ? 1 : 0 }
             : profile
         )
       );
@@ -152,7 +201,6 @@ const MatchingProfileSearch = () => {
       });
     }
   };
-
 
   const getImageSource = (image) => {
     if (!image) return { uri: "https://example.com/default.png" };
@@ -190,6 +238,55 @@ const MatchingProfileSearch = () => {
             </View>
           ))}
         </View>
+      </View>
+    );
+  };
+
+  // Render profile item
+  const renderItem = ({ item }) => (
+    <View style={styles.profileDiv}>
+      <View style={styles.profileContainer}>
+        <Image
+          source={getImageSource(item.profile_img)}
+          style={styles.profileImage}
+        />
+        <TouchableOpacity onPress={() => handleSavePress(item.profile_id)}>
+          <MaterialIcons
+            name={
+              bookmarkedProfiles.has(item.profile_id)
+                ? "bookmark"
+                : "bookmark-border"
+            }
+            size={20}
+            color="red"
+            style={styles.saveIcon}
+          />
+        </TouchableOpacity>
+
+        <View style={styles.profileContent}>
+          <Text style={styles.profileName}>
+            {item.profile_name}{" "}
+            <Text style={styles.profileId}>({item.profile_id})</Text>
+          </Text>
+
+          <Text style={styles.profileAge}>
+            {item.profile_age} Yrs | {item.height} Cms
+          </Text>
+
+          <Text style={styles.zodiac}>{item.star}</Text>
+          <Text style={styles.employed}>{item.profession}</Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  // Render footer loading indicator
+  const renderFooter = () => {
+    if (!isLoadingMore) return null;
+    return (
+      <View style={styles.footer}>
+        <ActivityIndicator size="large" color="#FF6666" />
+        <Text style={styles.footerText}>Loading more profiles...</Text>
       </View>
     );
   };
@@ -258,7 +355,7 @@ const MatchingProfileSearch = () => {
 
           {/* Search / Clear */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={searchProfiles} style={styles.button}>
+            <TouchableOpacity onPress={() => searchProfiles(1, true)} style={styles.button}>
               <LinearGradient colors={["#BD1225", "#FF4050"]} style={styles.linearGradient}>
                 <Text style={styles.buttonText}>Search Profiles</Text>
               </LinearGradient>
@@ -275,7 +372,7 @@ const MatchingProfileSearch = () => {
         <>
           {renderSelectedFilters()}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={searchProfiles} style={styles.button}>
+            <TouchableOpacity onPress={() => searchProfiles(1, true)} style={styles.button}>
               <LinearGradient colors={["#BD1225", "#FF4050"]} style={styles.linearGradient}>
                 <Text style={styles.buttonText}>Search Profiles</Text>
               </LinearGradient>
@@ -291,68 +388,42 @@ const MatchingProfileSearch = () => {
       )}
 
       {/* Loading */}
-      {isLoading ? (
+      {isLoading && profiles.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FF6666" />
           <Text style={styles.loadingText}>Searching profiles...</Text>
         </View>
-      ) : error ? (
+      ) : error && profiles.length === 0 ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : (
-        <ScrollView style={styles.profileScrollView}>
-
-          {/* 👍 SHOW TOTAL COUNT ONLY ONCE */}
-          {profiles.length > 0 && (
-            <Text style={styles.totalProfiles}>
-              Total Matching Profiles:{" "}
-              <Text style={styles.totalProfilesCount}>({totalProfiles})</Text>
-            </Text>
-          )}
-
-          {/* Profile List */}
-          {profiles.length > 0 ? (
-            profiles.map((profile) => (
-              <View key={profile.profile_id} style={styles.profileDiv}>
-                <View style={styles.profileContainer}>
-                  <Image
-                    source={getImageSource(profile.profile_img)}
-                    style={styles.profileImage}
-                  />
-                  <TouchableOpacity onPress={() => handleSavePress(profile.profile_id)}>
-                    <MaterialIcons
-                      name={
-                        bookmarkedProfiles.has(profile.profile_id)
-                          ? "bookmark"
-                          : "bookmark-border"
-                      }
-                      size={20}
-                      color="red"
-                      style={styles.saveIcon}
-                    />
-                  </TouchableOpacity>
-
-                  <View style={styles.profileContent}>
-                    <Text style={styles.profileName}>
-                      {profile.profile_name}{" "}
-                      <Text style={styles.profileId}>({profile.profile_id})</Text>
-                    </Text>
-
-                    <Text style={styles.profileAge}>
-                      {profile.profile_age} Yrs | {profile.height} Cms
-                    </Text>
-
-                    <Text style={styles.zodiac}>{profile.star}</Text>
-                    <Text style={styles.employed}>{profile.profession}</Text>
-                  </View>
-                </View>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.loadingText}>No profiles found...</Text>
-          )}
-        </ScrollView>
+        <FlatList
+          data={profiles}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.profile_id}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+          contentContainerStyle={styles.profileScrollView}
+          showsVerticalScrollIndicator={true}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          ListHeaderComponent={
+            profiles.length > 0 ? (
+              <Text style={styles.totalProfiles}>
+                Total Matching Profiles:{" "}
+                <Text style={styles.totalProfilesCount}>({totalProfiles})</Text>
+              </Text>
+            ) : null
+          }
+          ListFooterComponent={renderFooter}
+          ListEmptyComponent={
+            !isLoading ? (
+              <Text style={styles.loadingText}>No profiles found...</Text>
+            ) : null
+          }
+        />
       )}
 
       <BottomTabBarComponent />
@@ -360,7 +431,6 @@ const MatchingProfileSearch = () => {
   );
 };
 
-// Styles remain EXACTLY the same as your code
 const styles = StyleSheet.create({
   container: {
     marginTop: 10,
@@ -389,7 +459,10 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     fontSize: 14,
   },
-  profileScrollView: { width: "100%" },
+  profileScrollView: {
+    width: "100%",
+    paddingBottom: 20,
+  },
   profileDiv: { width: "100%", paddingHorizontal: 10 },
   profileContainer: {
     flexDirection: "row",
@@ -402,7 +475,7 @@ const styles = StyleSheet.create({
   },
   profileImage: { width: 100, height: 100, borderRadius: 10 },
   saveIcon: { position: "absolute", left: -25, top: 5 },
-  profileContent: { paddingLeft: 10 },
+  profileContent: { paddingLeft: 10, flex: 1 },
   profileName: { fontSize: 16, fontWeight: "700", color: "#FF6666" },
   profileId: { fontSize: 14, color: "#85878C" },
   profileAge: { fontSize: 14, color: "#4F515D", marginBottom: 5 },
@@ -449,7 +522,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: { color: "white", fontSize: 16, fontWeight: "bold" },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
   errorContainer: { padding: 20, alignItems: "center" },
   errorText: { color: "#FF6666", fontSize: 16, textAlign: "center" },
   totalProfiles: {
@@ -464,6 +542,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  footer: {
+    paddingVertical: 20,
+    alignItems: "center",
+  },
+  footerText: {
+    color: "#666",
+    marginTop: 5,
+  },
 });
 
-export default MatchingProfileSearch;
+export default MatchingProfileSearch

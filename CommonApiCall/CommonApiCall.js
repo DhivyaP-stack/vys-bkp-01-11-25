@@ -1985,39 +1985,46 @@ export const uploadImageToServer = async (formData) => {
     }
 };
 
-export const fetchSearchProfiles = async (search_profile_id, profession, age, location) => {
-    const profileId = await retrieveProfileId(); // Implement this to retrieve the profile ID
+export const fetchSearchProfiles = async (
+    search_profile_id,
+    profession,
+    age,
+    location,
+    page_number,
+    per_page
+) => {
+    const profileId = await retrieveProfileId();
+
     if (!profileId) {
-        console.warn('Profile ID is empty, skipping API call.');
+        console.warn("⚠️ No profile id found!");
         return null;
     }
+
+    const requestBody = {
+        profile_id: profileId,
+        search_profile_id: search_profile_id,
+        search_profession: profession,
+        search_age: age,
+        search_location: location,
+        page_number: page_number,
+        per_page: per_page
+    };
+
+    console.log("📌 RAW API REQUEST BODY (Common Function):", JSON.stringify(requestBody, null, 2));
+
     try {
+        const response = await axios.post(
+            `${BASE_URL}/Get_prof_list_match/`,
+            requestBody,
+            { headers: { "Content-Type": "application/json" } }
+        );
 
-        const response = await axios.post(`${BASE_URL}/Get_prof_list_match/`, {
-            profile_id: profileId,
-            search_profile_id: search_profile_id,
-            search_profession: profession,
-            search_age: age,
-            search_location: location,
-        });
-
-        if (response.data.Status === 1) {
-            return response.data;
-        } else {
-            return response.data;
-        }
+        return response.data;
     } catch (error) {
-        console.error("Error fetching profiles:", error.message);
+        console.error("❌ Error in fetchSearchProfiles:", error);
         throw error;
     }
 };
-
-
-
-
-
-
-
 
 export const downloadPdfPorutham = async () => {
     const profileId = await retrieveProfileId(); // Implement this to retrieve the profile ID
