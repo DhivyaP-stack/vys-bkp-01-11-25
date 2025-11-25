@@ -8,11 +8,12 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import config from '../../API/Apiurl';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { BottomTabBarComponent } from '../../Navigation/ReuseTabNavigation';
+import Toast from "react-native-toast-message";
 
 export const NotificationsCard = () => {
   const navigation = useNavigation();
@@ -24,8 +25,56 @@ export const NotificationsCard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-
   const onEndReachedCalledDuringMomentum = useRef(true);
+
+  const clearAllNotificationsAPI = async () => {
+    const profileId =
+      (await AsyncStorage.getItem("loginuser_profileId")) ||
+      (await AsyncStorage.getItem("profile_id_new"));
+    console.log("clear all profileId params ", profileId)
+    try {
+      const response = await axios.post(
+        `${config.apiUrl}/auth/Clear_notifications/`,
+        {
+          profile_id: profileId
+        }
+      );
+
+      console.log("Clear All API Response:", response.data);
+
+      if (response.data.Status === 1) {
+        // Alert.alert("Success", "All notifications cleared.");
+        Toast.show({
+          type: "success",
+          text1: "All notifications cleared.",
+          // text2: "Profile has been saved to bookmarks.",
+          position: "bottom",
+        });
+      } else {
+        // Alert.alert("Info", response.data.message || "No unread notifications found");
+        Toast.show({
+          type: "error",
+          text1: "Error",
+          text2: response.data.message,
+        });
+      }
+      getNotifications(1, true);
+
+      // After clearing update UI
+      // setNotifications([]);
+      // setTotalRecords(0);
+      // setHasMore(false);
+
+    } catch (error) {
+      console.error("Clear All Error:", error);
+      // Alert.alert("Error", "Failed to clear notifications.");
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to clear notifications."
+      });
+    }
+  };
 
   const handleClearNotifications = async () => {
     Alert.alert(
@@ -40,26 +89,11 @@ export const NotificationsCard = () => {
           text: 'Clear All',
           onPress: async () => {
             setLoading(true);
-            const profileId = await AsyncStorage.getItem("loginuser_profileId");
 
-            try {
-              // **TODO: Implement your actual Clear All Notifications API call here**
-              // Example API call (replace endpoint as needed):
-              // await axios.post(`${config.apiUrl}/auth/Clear_all_notifications/`, { profile_id: profileId });
+            // 🔥 Call API here
+            await clearAllNotificationsAPI();
 
-              // On success, update state and refresh the list
-              setNotifications([]);
-              setTotalRecords(0);
-              setCurrentPage(1);
-              setHasMore(false);
-              Alert.alert('Success', 'All notifications cleared.');
-              // You might want to call getNotifications(1, true) here if you have a separate API for marking all as read/cleared
-            } catch (error) {
-              console.error('Clear Notifications Error:', error);
-              Alert.alert('Error', 'Failed to clear notifications.');
-            } finally {
-              setLoading(false);
-            }
+            setLoading(false);
           },
         },
       ],
@@ -130,7 +164,7 @@ export const NotificationsCard = () => {
         per_page: 10,
         page_number: page,
       });
-
+      console.log("Get_notification_list/", response)
       const newNotifications = response?.data?.data ?? [];
       const total = response?.data?.total_records ?? 0;
 
@@ -153,15 +187,21 @@ export const NotificationsCard = () => {
     }
   };
 
-  useEffect(() => {
-    getNotifications(1, true);
-  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setLoading(true);
+      getNotifications(1, true);
+      return () => {
+      };
+    }, [])
+  );
 
   useEffect(() => {
     // Custom component for the Clear All button
     const ClearAllButton = () => (
       <TouchableOpacity
-        // onPress={handleClearNotifications}
+        onPress={handleClearNotifications}
         // Use inline styles to match the desired web button look:
         // className="bg-main text-white text-xs font-semibold px-3 py-1 rounded-md shadow hover:opacity-90"
         style={{
@@ -225,6 +265,29 @@ export const NotificationsCard = () => {
     });
   }, [totalRecords, navigation]);
 
+  const markNotificationRead = async (notificationId) => {
+    const profileId = await AsyncStorage.getItem("loginuser_profileId");
+    console.log("clear all profileId, notification id  params ", profileId, notificationId)
+    try {
+      const response = await axios.post(
+        `${config.apiUrl}/auth/Read_notifications_induvidual/`,
+        {
+          profile_id: profileId,
+          notification_id: notificationId,
+        }
+      );
+
+      console.log("individual Read Notification Response:", response.data);
+
+      if (response.data.Status === 1) {
+        console.log("Notification updated successfully");
+        getNotifications(1, true);
+      }
+    } catch (error) {
+      console.error("Read Notification Error:", error);
+    }
+  };
+
   const renderItem = ({ item }) => (
     <View
       style={{
@@ -262,7 +325,13 @@ export const NotificationsCard = () => {
           </TouchableOpacity>
         ) : item.notification_type === 'Profile_update' ? (
           <TouchableOpacity
-            onPress={() => navigation.navigate('ProfileDetails', { viewedProfileId: item.from_profile_id })}
+            // onPress={() => navigation.navigate('ProfileDetails', { viewedProfileId: item.from_profile_id })}
+            onPress={async () => {
+              await markNotificationRead(item.id);   // 🔥 new line
+              navigation.navigate('ProfileDetails', {
+                viewedProfileId: item.from_profile_id
+              });
+            }}
             style={{
               marginTop: 8,
               padding: 6,
@@ -275,7 +344,8 @@ export const NotificationsCard = () => {
               View Profile
             </Text>
           </TouchableOpacity>
-        ) : item.notification_type === 'photo_request' ? (
+          // ) : item.notification_type === 'Call_request' ? (
+        ) : (item.notification_type === "Call_request" || item.notification_type === "Vys_assists") ? (
           <TouchableOpacity
             onPress={() => navigation.navigate('MyProfile')}
             style={{
@@ -303,6 +373,17 @@ export const NotificationsCard = () => {
       </View>
     );
   };
+
+  if (!loading && notifications.length === 0 && !refreshing) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f0f0' }}>
+        <Text style={{ fontSize: 18, color: '#666', fontWeight: '500' }}>
+          No notifications found
+        </Text>
+        <BottomTabBarComponent />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#f0f0f0', paddingBottom: 80 }}>

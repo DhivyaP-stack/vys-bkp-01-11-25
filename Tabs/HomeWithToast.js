@@ -784,7 +784,7 @@ export const HomeWithToast = () => {
                 color: '#b40101ff',
                 marginHorizontal: 8
               }}>
-                Sort by:
+                Sort by Date:
               </Text>
               <Switch
                 style={styles.toggleSwitchcontainer}

@@ -343,7 +343,7 @@ import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchNotifications } from '../CommonApiCall/CommonApiCall'; // Import the function from commonApi.js
+import { fetchNotifications, markNotificationsAsRead } from '../CommonApiCall/CommonApiCall'; // Import the function from commonApi.js
 import { LinearGradient } from 'expo-linear-gradient';
 
 
@@ -355,8 +355,14 @@ export const Header = (props) => {
   useEffect(() => {
     const getNotificationCount = async () => {
       try {
-        const data = await fetchNotifications();
-        setNotifyCount(data.total_records);
+        const responseData = await fetchNotifications();
+        if (responseData && typeof responseData.notifiy_count === 'number') {
+          setNotifyCount(responseData.notifiy_count);
+        } else if (responseData && typeof responseData.total_records === 'number') {
+          setNotifyCount(responseData.total_records);
+        } else {
+          setNotifyCount(0);
+        }
       } catch (error) {
         console.error(error.message);
       }
@@ -370,17 +376,17 @@ export const Header = (props) => {
       try {
         const currentPlanId = await AsyncStorage.getItem("current_plan_id");
         const validityDate = await AsyncStorage.getItem("valid_till_date"); // You need to store this during login
-        
+
         const allowedPremiumIds = [1, 2, 3, 14, 15, 17, 10, 11, 12, 13];
         const planId = parseInt(currentPlanId || "0");
-        
+
         let buttonType = "Upgrade";
-        
+
         if (allowedPremiumIds.includes(planId)) {
           if (validityDate) {
             const validDate = new Date(validityDate);
             const currentDate = new Date();
-            
+
             if (validDate.getTime() > currentDate.getTime()) {
               buttonType = "Add-On"; // validity still active
             } else {
@@ -391,7 +397,7 @@ export const Header = (props) => {
             buttonType = "Upgrade";
           }
         }
-        
+
         setButtonText(buttonType);
       } catch (error) {
         console.error("Error determining button type:", error);
@@ -402,10 +408,10 @@ export const Header = (props) => {
     determineButtonType();
   }, []);
 
-  
+
   const handleNotificationClick = async () => {
     try {
-      // await markNotificationsAsRead(); // Call the common API function
+      await markNotificationsAsRead(); // Call the common API function
 
       // Reset the notification count after marking as read
       setNotifyCount(0);
@@ -433,12 +439,12 @@ export const Header = (props) => {
         style={styles.logo}
         source={require("../assets/img/VysyamalaLogo.png")}
       />
-      
+
       <TouchableOpacity
-        onPress={handleNotificationClick}  
+        onPress={handleNotificationClick}
         style={styles.notificationContainer}
       >
-        <MaterialIcons name="notifications" size={24} color="#535665"  />
+        <MaterialIcons name="notifications" size={24} color="#535665" />
         {notifyCount > 0 && (
           <View style={styles.notificationBadge}>
             <Text style={styles.notificationText}>{notifyCount}</Text>
@@ -472,8 +478,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingVertical: 7,
     paddingHorizontal: 7,
-    width : '100%',
-    marginTop : 1
+    width: '100%',
+    marginTop: 1
   },
   textUpgrade: {
     color: '#ffffff',
@@ -498,7 +504,7 @@ const styles = StyleSheet.create({
   notificationContainer: {
     position: "relative",
     padding: 10,
-    left :59
+    left: 59
   },
   notificationBadge: {
     position: "absolute",
