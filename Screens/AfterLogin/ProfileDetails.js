@@ -1420,11 +1420,14 @@ export const ProfileDetails = () => {
                 {/* <Text style={styles.label}>About: <Text style={styles.value}>{basic_details.about}</Text></Text> */}
                 <Text style={styles.label}>Degree: <Text style={styles.value}>{basic_details.degeree}</Text></Text>
               </View>
-              <View style={{ position: 'absolute', top: 0, right: 10 }}>
-                <MatchingScore scorePercentage={parseInt(basic_details.matching_score)} viewedProfileId={viewedProfileId} />
-                {/* <Image source={{ uri: 'http://matrimonyapp.rainyseasun.com/assets/MatchingScore.png' }} /> */}
-              </View>
-
+              {basic_details?.matching_score !== undefined &&
+                basic_details.matching_score > 50 &&
+                basic_details.matching_score !== 100 && (
+                  <View style={{ position: 'absolute', top: 0, right: 10 }}>
+                    <MatchingScore scorePercentage={parseInt(basic_details.matching_score)} viewedProfileId={viewedProfileId} />
+                    {/* <Image source={{ uri: 'http://matrimonyapp.rainyseasun.com/assets/MatchingScore.png' }} /> */}
+                  </View>
+                )}
             </View>
             <View style={styles.detailsMeterFlex1}>
               <View style={styles.filterTag}>

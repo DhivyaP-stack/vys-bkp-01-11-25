@@ -25,6 +25,16 @@ import { Dropdown, MultiSelect } from "react-native-element-dropdown";
 import config from "../API/Apiurl";
 import RNPickerSelect from 'react-native-picker-select';
 
+const staticStates = [
+  { id: [2, 7], name: "TamilNadu and Pondhicherry" },
+  { id: 4, name: "Karnataka" },
+  { id: 1, name: "Andhra Pradesh" },
+  { id: 3, name: "Telangana" },
+  { id: 5, name: "Kerala" },
+  { id: 6, name: "Others" },
+];
+
+
 export const Search = () => {
   const navigation = useNavigation();
   const { control } = useForm(); // Initialize useForm and get control
@@ -60,11 +70,11 @@ export const Search = () => {
   const [chevvaiDhosam, setChevvaiDhosam] = useState(null);
   const [rahuKetuDhosam, setRahuKetuDhosam] = useState(null);
   const [bookmarkedProfiles, setBookmarkedProfiles] = useState(new Set());
-  const [workLocation, setWorkLocation] = useState(''); // ✨ NEW: For Work Location
+  const [workLocation, setWorkLocation] = useState('');
+  const [selectedWorkLocationId, setSelectedWorkLocationId] = useState(''); // New state for selected Work Location ID
   const [selectedIncomeMinLabel, setSelectedIncomeMinLabel] = useState('Select min Annual Income'); // ✨ NEW: For min income placeholder
   const [selectedIncomeMaxLabel, setSelectedIncomeMaxLabel] = useState('Select Max Annual Income'); // ✨ NEW: For max income placeholder
   const [btnLoading, setBtnLoading] = useState(false);
-
 
   const handleSavePress = async (viewedProfileId) => {
     const newStatus = bookmarkedProfiles.has(viewedProfileId) ? "0" : "1";
@@ -370,6 +380,7 @@ export const Search = () => {
       search_chevvai_dosham: chevvaiDhosam,
       search_rahu_dosham: rahuKetuDhosam,
       people_withphoto: peopleWithPhotoParam,
+      search_worklocation: selectedWorkLocationId,
       // from_reg_date: fromRegDate,
       // to_reg_date: toRegDate,
     };
@@ -585,6 +596,9 @@ export const Search = () => {
     setSelectedBirthStarIds([]);
     setWorkLocation('');
     ppSetChecked(false);
+    setWorkLocation('');
+    setSelectedWorkLocationId('');
+    ppSetChecked(false);
 
     fetchMaritalStatuses();
     fetchProfessions();
@@ -700,7 +714,7 @@ export const Search = () => {
               borderRadius: 5,
               alignItems: "center",
               justifyContent: "center",
-          
+
             },
           ]}
           onPress={handleFilterPress}
@@ -1157,30 +1171,27 @@ export const Search = () => {
           )}
         </View>
 
-
-
-
         <View style={styles.checkContainer}>
           <Text style={styles.checkRedText}>Native States</Text>
 
           <View style={styles.checkboxDivFlex}>
             <View style={styles.checkboxRow}>
-              {states.map((state) => (
-                <View key={state.State_Pref_id} style={styles.checkboxContainer}>
+              {staticStates.map((state) => (
+                <View key={state.id} style={styles.checkboxContainer}>
                   <Pressable
                     style={[
                       styles.checkboxBase,
-                      checkedStates.has(state.State_Pref_id) && styles.checkboxChecked,
+                      checkedStates.has(state.id) && styles.checkboxChecked,
                     ]}
-                    onPress={() => handleStateToggle(state.State_Pref_id)}
+                    onPress={() => handleStateToggle(state.id)}
                   >
-                    {checkedStates.has(state.State_Pref_id) && (
+                    {checkedStates.has(state.id) && (
                       <Ionicons name="checkmark" size={14} color="white" />
                     )}
                   </Pressable>
 
-                  <Pressable onPress={() => handleStateToggle(state.State_Pref_id)}>
-                    <Text style={styles.checkboxLabel}>{state.State_name}</Text>
+                  <Pressable onPress={() => handleStateToggle(state.id)}>
+                    <Text style={styles.checkboxLabel}>{state.name}</Text>
                   </Pressable>
                 </View>
               ))}
@@ -1188,18 +1199,26 @@ export const Search = () => {
           </View>
         </View>
 
-
         <View style={styles.searchContainer}>
           <Text style={styles.redText}>Work Location</Text>
-
           <View style={styles.formContainer}>
-            <View style={styles.inputFlexContainer}>
-              <View style={styles.inputFlex}>
-                <TextInput placeholder="Work Location"
-                  value={workLocation}
-                  onChangeText={setWorkLocation}
-                />
-              </View>
+            <View style={styles.inputContainer}>
+              <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                // Map the fetched states data to { label: name, value: id }
+                data={states.map(state => ({
+                  label: state.State_name,
+                  value: state.State_Pref_id.toString()
+                }))}
+                maxHeight={180}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Work Location"
+                value={selectedWorkLocationId} // Use the new state variable
+                onChange={(item) => setSelectedWorkLocationId(item.value)} // Update the new state variable
+              />
             </View>
           </View>
         </View>
@@ -1340,7 +1359,7 @@ const styles = StyleSheet.create({
   filterIcon: {
     position: "absolute",
     right: 20,
-    bottom:9,
+    bottom: 9,
   },
 
   searchContainer: {

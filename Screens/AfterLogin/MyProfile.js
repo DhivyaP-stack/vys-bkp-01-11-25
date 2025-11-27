@@ -53,8 +53,9 @@ export const MyProfile = () => {
     const [profileDetails, setProfileDetails] = useState(null); // State for profile details
     const [loading, setLoading] = useState(false);
     const [educationalDetails, setEducationalDetails] = useState(null);
-    const currentPlanId = AsyncStorage.getItem("current_plan_id");
-    const allowedPremiumIds = [1, 2, 3, 14, 15, 17, 10, 11, 12, 13];
+    // const currentPlanId = AsyncStorage.getItem("current_plan_id");
+    const [currentPlanId, setCurrentPlanId] = useState(null);
+    const allowedPremiumIds = [1, 2, 3, 10, 11, 13, 14, 15, 16, 17];
     // Fetch images from API
     // useEffect(() => {
     //     const fetchAndSetImages = async () => {
@@ -84,6 +85,7 @@ export const MyProfile = () => {
     useEffect(() => {
         fetchAndSetImages();
     }, []);
+
 
     const fetchAndSetImages = async () => {
         try {
@@ -322,19 +324,47 @@ export const MyProfile = () => {
         }
     };
 
+    // useEffect(() => {
+    //     const fetchProfileDetails = async () => {
+    //         try {
+    //             const result = await getMyProfilePersonal(); // Pass profile_id and user_profile_id
+    //             console.log("dddfd", result);
+    //             await AsyncStorage.setItem("selectedPlanName", result.data.package_name || "Gold"); // Store the selected plan name in AsyncStorage
+    //             setProfileDetails(result.data); // Update the state with profile details
+    //         } catch (error) {
+    //             console.error('Error fetching profile details:', error);
+    //         }
+    //     };
+
+    //     fetchProfileDetails();
+    // }, []);
+
     useEffect(() => {
-        const fetchProfileDetails = async () => {
+        const fetchProfileAndPlanDetails = async () => {
             try {
-                const result = await getMyProfilePersonal(); // Pass profile_id and user_profile_id
-                console.log("dddfd", result);
+                // 1. Fetch Profile Details
+                const result = await getMyProfilePersonal();
+                console.log("Profile Details fetched:", result);
+
                 await AsyncStorage.setItem("selectedPlanName", result.data.package_name || "Gold"); // Store the selected plan name in AsyncStorage
                 setProfileDetails(result.data); // Update the state with profile details
+
+                // 2. Fetch and set current plan ID correctly
+                const planIdStr = await AsyncStorage.getItem("current_plan_id");
+                if (planIdStr) {
+                    // Convert the string ID from AsyncStorage to an integer
+                    setCurrentPlanId(parseInt(planIdStr, 10));
+                } else {
+                    // Default to 0 or another indicator if not set
+                    setCurrentPlanId(0);
+                }
+
             } catch (error) {
-                console.error('Error fetching profile details:', error);
+                console.error('Error fetching profile details or plan ID:', error);
             }
         };
 
-        fetchProfileDetails();
+        fetchProfileAndPlanDetails();
     }, []);
 
     // const renderItem = ({ item, index }) => (
@@ -745,16 +775,16 @@ export const MyProfile = () => {
                                                 styles.goldText,
                                                 profileDetails.package_name === "Diamond" && { color: "#fff" }
                                             ]}>
-                                                {profileDetails.package_name || "Gold"}
+                                                {profileDetails.package_name}
                                             </Text>
                                         </LinearGradient>
-                                        {profileDetails.valid_upto && (
-                                            <Text style={styles.date}>
-                                                Valid Upto :
-                                                {profileDetails.valid_upto}
-                                            </Text>
-                                        )}
                                     </View>
+                                )}
+                                {profileDetails.valid_upto && (
+                                    <Text style={[styles.date, { marginBottom: 8, marginLeft: 10 }]}>
+                                        Valid Upto :
+                                        {profileDetails.valid_upto}
+                                    </Text>
                                 )}
                             </View>
 

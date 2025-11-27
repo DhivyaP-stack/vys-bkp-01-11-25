@@ -377,7 +377,7 @@ export const Header = (props) => {
         const currentPlanId = await AsyncStorage.getItem("current_plan_id");
         const validityDate = await AsyncStorage.getItem("valid_till_date"); // You need to store this during login
 
-        const allowedPremiumIds = [1, 2, 3, 14, 15, 17, 10, 11, 12, 13];
+        const allowedPremiumIds = [1, 2, 3, 10, 11, 13, 14, 15, 16, 17];
         const planId = parseInt(currentPlanId || "0");
 
         let buttonType = "Upgrade";

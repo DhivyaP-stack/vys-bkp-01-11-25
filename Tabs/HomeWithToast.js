@@ -1927,7 +1927,7 @@ export const HomeWithToast = () => {
                   ({searchProfileId.length > 0 ? searchResults.length : totalCount})
                 </Text>
               </Text>
-              
+
               <Text style={{
                 fontSize: 15,
                 fontWeight: 'bold',
@@ -1973,41 +1973,42 @@ export const HomeWithToast = () => {
                 <MaterialIcons name="filter-list" size={18} color="#FF6666" />
               </TouchableOpacity>
             </View>
-<View style={styles.viewToggleContainer}>
-                <TouchableOpacity
-                  onPress={() => setViewMode('list')}
-                  style={[
-                    styles.viewToggleButton,
-                    viewMode === 'list' && styles.activeViewButton
-                  ]}
-                >
-                  <MaterialIcons
-                    name="view-list"
-                    size={24}
-                    color={viewMode === 'list' ? '#BD1225' : '#85878C'}
-                  />
-                </TouchableOpacity>
+            <View style={styles.viewToggleContainer}>
+              <TouchableOpacity
+                onPress={() => setViewMode('list')}
+                style={[
+                  styles.viewToggleButton,
+                  viewMode === 'list' && styles.activeViewButton
+                ]}
+              >
+                <MaterialIcons
+                  name="view-list"
+                  size={24}
+                  color={viewMode === 'list' ? '#BD1225' : '#85878C'}
+                />
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={() => setViewMode('grid')}
-                  style={[
-                    styles.viewToggleButton,
-                    viewMode === 'grid' && styles.activeViewButton
-                  ]}
-                >
-                  <MaterialIcons
-                    name="view-module"
-                    size={24}
-                    color={viewMode === 'grid' ? '#BD1225' : '#85878C'}
-                  />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                onPress={() => setViewMode('grid')}
+                style={[
+                  styles.viewToggleButton,
+                  viewMode === 'grid' && styles.activeViewButton
+                ]}
+              >
+                <MaterialIcons
+                  name="view-module"
+                  size={24}
+                  color={viewMode === 'grid' ? '#BD1225' : '#85878C'}
+                />
+              </TouchableOpacity>
+            </View>
             {/* Profile Cards Section */}
             <View style={styles.profileCardContainer}>
               <ProfileCard
                 searchProfiles={searchProfileId.length > 0 ? searchResults : null}
                 isLoadingNew={isSearching || isProfilesLoading}
                 orderBy={getOrderBy()}
+                viewMode={viewMode}
               />
             </View>
           </View>

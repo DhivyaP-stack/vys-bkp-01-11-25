@@ -139,13 +139,18 @@ export const ProfileCompletionForm = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#ED1E24" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>{"Profile Completion Form"}</Text>
+        {/* <Text style={styles.headerText}>{"Your perfect match is waiting. Complete your profile now!"}</Text> */}
+        {/* <Text style={styles.subtitleText}>Complete Your Profile</Text> */}
       </View>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ padding: 20 }}>
           {/* <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>
             Profile Completion
           </Text> */}
+          <Text style={styles.headerText}>
+            Your perfect match is waiting.{"\n"}Complete your profile now!
+          </Text>
+
 
           {emptyFields.length > 0 ? (
             emptyFields.map((field, index) => (
@@ -160,7 +165,7 @@ export const ProfileCompletionForm = () => {
                         : field === "property_worth"
                           ? "Property Worth"
                           : field === "about_self"
-                            ? "About Self"
+                            ? "About Myself"
                             : field === "about_family"
                               ? "About Family"
                               : field === "career_plans"
@@ -241,5 +246,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginLeft: 10,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  subtitleText: {
+    color: "#ED1E24", // Use the red color from the back button
+    fontSize: 14,
+    fontWeight: "600",
+    // You can adjust margins/padding here if needed
   },
 });

@@ -271,7 +271,7 @@ export const WishlistCard = ({ sortBy = "datetime" }) => {
                                 <Text style={styles.zodiac}>{item.wishlist_star || "N/A"}</Text>
                                 <Text style={styles.employed}>{item.wishlist_profession || "N/A"}</Text>
                                 <Text style={styles.lastVisit}>
-                                    Last visit on {item.wishlist_lastvisit || "N/A"}
+                                    Bookmarked on {item.wishlist_lastvisit || "N/A"}
                                 </Text>
                             </View>
                         </View>

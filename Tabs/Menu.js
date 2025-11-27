@@ -54,6 +54,9 @@ export const Menu = () => {
   const [profileDetails, setProfileDetails] = useState(null);
   const [educationalDetails, setEducationalDetails] = useState(null);
   const [buttonText, setButtonText] = useState("Upgrade");
+  // const activePlanId = AsyncStorage.getItem("current_plan_id");
+  const [activePlanId, setActivePlanId] = useState(null);
+  const allowedPremiumIds = [1, 2, 3, 10, 11, 13, 14, 15, 16, 17];
 
   useEffect(() => {
     const determineButtonType = async () => {
@@ -66,6 +69,7 @@ export const Menu = () => {
 
         const allowedPremiumIds = [1, 2, 3, 14, 15, 17, 10, 11, 12, 13];
         const planId = parseInt(currentPlanId || "0");
+        setActivePlanId(planId);
 
         let buttonType = "Upgrade";
 
@@ -408,7 +412,7 @@ export const Menu = () => {
                   </Text>
 
                   {/* Plan flex */}
-                  <View style={styles.planFlex}>
+                  {/* <View style={styles.planFlex}>
                     <LinearGradient
                       colors={
                         profileDetails.package_name === "Platinum"
@@ -431,11 +435,59 @@ export const Menu = () => {
                         styles.goldText,
                         profileDetails.package_name === "Diamond" && { color: "#fff" }
                       ]}>
-                        {profileDetails.package_name || "Gold"}
+                        {profileDetails.package_name}
                       </Text>
                     </LinearGradient>
                     {profileDetails.valid_upto && (
                       <Text style={styles.date}>
+                        Valid Upto :
+                        {profileDetails.valid_upto}
+                      </Text>
+                    )}
+                  </View> */}
+                  <View style={styles.planFlex}>
+                    {profileDetails.valid_upto &&
+                      new Date(profileDetails.valid_upto) < new Date() &&
+                      allowedPremiumIds.includes(activePlanId) ? (
+                      // RENDER RENEW BUTTON (IF EXPIRED AND PREMIUM)
+                      <TouchableOpacity
+                        style={styles.renewButtonWrapper}
+                        onPress={() => navigation.navigate('MembershipPlan')} // Navigates to your upgrade screen
+                      >
+                        <LinearGradient
+                          colors={["#BD1225", "#FF4050"]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.renewButton}
+                        >
+                          <Text style={styles.renewButtonText}>Renew</Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.planFlex}>
+                        <LinearGradient
+                          colors={
+                            profileDetails.package_name === "Platinum"
+                              ? ["#E5E4E2", "#C0C0C0", "#FFFFFF"]
+                              : profileDetails.package_name === "Gold"
+                                ? ["#D79D32", "#FFB800", "#FDE166"]
+                                : profileDetails.package_name === "Diamond"
+                                  ? ["#B9F2FF", "#FFFFFF", "#B9F2FF"]
+                                  : ["#D79D32", "#FFB800", "#FDE166"] // Fallback to Gold colors
+                          }
+                          locations={[0, 0.5, 1]}
+                          start={{ x: 1, y: 1 }}
+                          end={{ x: 0, y: 0 }}
+                          style={[styles.goldLinearGradient]}
+                        >
+                          <Text style={[styles.goldText]}>
+                            {profileDetails.package_name}
+                          </Text>
+                        </LinearGradient>
+                      </View>
+                    )}
+                    {profileDetails.valid_upto && (
+                      <Text style={[styles.date, { marginLeft: 10 }]}>
                         Valid Upto :
                         {profileDetails.valid_upto}
                       </Text>
@@ -979,5 +1031,19 @@ const styles = StyleSheet.create({
     borderStyle: "dotted",
     marginVertical: hp(0.3),
     width: wp(60),
+  },
+  renewButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: "inter",
+  },
+  renewButton: {
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    minWidth: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
