@@ -201,8 +201,8 @@ export const FilterScreen = () => {
                                                 /> */}
                                                 <TopAlignedImage
                                                     uri={Array.isArray(profile.profile_img) ? profile.profile_img[0] : profile.profile_img}
-                                                    width={120}
-                                                    height={120}
+                                                    width={100}
+                                                    height={100}
                                                 />
                                                 <TouchableOpacity
                                                     onPress={() => handleSavePress(profile.profile_id)}

@@ -39,7 +39,7 @@ export const ProfileCard = ({ searchProfiles, isLoadingNew, orderBy = "1", viewM
   const [currentOrderBy, setCurrentOrderBy] = useState(orderBy);
   const navigation = useNavigation();
   const [allProfileIds, setAllProfileIds] = useState({});
-  const numColumns = viewMode === 'grid' ? 2 : 1;
+  const numColumns = viewMode === 'grid' ? 1 : 1;
   const key = `flatlist-${viewMode}`;
   const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -327,9 +327,14 @@ export const ProfileCard = ({ searchProfiles, isLoadingNew, orderBy = "1", viewM
     >
       <View style={styles.profileDiv}>
         <View style={styles.profileContainer}>
-          <Image
+          {/* <Image
             source={getImageSource(item.profile_img)}
             style={styles.profileImage}
+          /> */}
+          <TopAlignedImage
+            uri={Array.isArray(item.profile_img) ? item.profile_imgg[0] : item.profile_img}
+            width={100}
+            height={100}
           />
           <TouchableOpacity
             onPress={() => handleSavePress(item.profile_id)}

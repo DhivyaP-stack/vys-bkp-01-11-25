@@ -224,8 +224,8 @@ export const SearchCard = () => {
                             /> */}
                             <TopAlignedImage
                                 uri={Array.isArray(item.profile_img) ? item.profile_img[0] : item.profile_img}
-                                width={120}
-                                height={120}
+                                width={100}
+                                height={100}
                             />
                             <TouchableOpacity onPress={() => handleSavePress(item.profile_id)}>
                                 <MaterialIcons

@@ -367,7 +367,7 @@ export const Search = () => {
   const handleSubmit = async () => {
     const peopleWithPhotoParam = ppChecked ? 1 : 0;
     const params = {
-      profile_id: loginuser_profileId,
+      // profile_id: loginuser_profileId,
       from_age: fromAge,
       to_age: toAge,
       from_height: fromHeight,
