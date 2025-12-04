@@ -1068,8 +1068,8 @@ export const fetchPartnerProfilenew = async () => {
         const safeSplit = (value) => {
             // Check if value is null/undefined or an empty string, if so return an empty array.
             // Otherwise, split the string.
-            return (value && typeof value === 'string' && value.trim() !== '') 
-                ? value.split(',').map((id) => id.trim()) 
+            return (value && typeof value === 'string' && value.trim() !== '')
+                ? value.split(',').map((id) => id.trim())
                 : [];
         };
 
@@ -1086,15 +1086,15 @@ export const fetchPartnerProfilenew = async () => {
             fromHeight: data.partner_height_from || '',
             toHeight: data.partner_height_to || '',
             // Now these fields are guaranteed to be Arrays (or empty Arrays)
-            education: selectedEducation, 
-            fieldofstudy: selectedFieldofStudy, 
+            education: selectedEducation,
+            fieldofstudy: selectedFieldofStudy,
             maritalStatus: selectedStatus,
-            profession: selectedProfession, 
-            
+            profession: selectedProfession,
+
             // Income should be passed as the first element of the array if it exists, or empty string if array is empty
             // We use [0] because your original code mapped income to a single selection value
             income: selectedIncome[0] || '',
-            incomeStatusMax: selectedIncomeMax[0] || '', 
+            incomeStatusMax: selectedIncomeMax[0] || '',
 
             rahuKetuDhosam: data.partner_rahu_kethu || '',
             chevvaiDhosam: data.partner_chev_dho || '',
@@ -1103,7 +1103,7 @@ export const fetchPartnerProfilenew = async () => {
         };
     } catch (error) {
         console.error('Error fetching partner profile:', error);
-        throw error; 
+        throw error;
     }
 };
 
@@ -2856,15 +2856,13 @@ export const callRequestDetails = async (formdata) => {
 };
 
 export const downloadPdfPoruthamNew = async (idparam) => {
-    const profileId = await retrieveProfileId(); // Implement this to retrieve the profile ID
+    const profileId = await retrieveProfileId();
     if (!profileId) {
         console.warn('Profile ID is empty, skipping API call.');
         return null;
     }
 
-    // const url = `http://apiupg.rainyseasun.com/auth/generate-pdf/${profileId}/${idparam}`;
-    // const url = `https://vysyamaladevnew-aehaazdxdzegasfb.westus2-01.azurewebsites.net/auth/generate-porutham-pdf-mobile/${profileId}/${idparam}`;
-    const url = `${BASE_URL}/generate-porutham-pdf-mobile/${profileId}/${idparam}`
+    const url = `${BASE_URL}/generate-porutham-pdf-mobile/${profileId}/${idparam}`;
     const fileName = `pdf_${idparam}.pdf`;
 
     // Request storage permission
@@ -2878,7 +2876,6 @@ export const downloadPdfPoruthamNew = async (idparam) => {
     const notificationPermission = await Notifications.requestPermissionsAsync();
     if (!notificationPermission.granted) {
         console.warn('Notification permission not granted');
-        return;
     }
 
     // Show initial download notification
@@ -2892,77 +2889,106 @@ export const downloadPdfPoruthamNew = async (idparam) => {
     });
 
     try {
-        let fileUri;
-        let progress = 0;
-
-        // Use Storage Access Framework (SAF) for Android 10+
-        if (Platform.OS === 'android' && Platform.Version >= 29) {
-            const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-            if (!permissions.granted) {
-                console.warn('Permission to access the Documents folder was denied.');
-                return null;
-            }
-
-            // Create the file in the user-selected directory
-            fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
-                permissions.directoryUri,
-                fileName,
-                'application/pdf'
-            );
-
-            // Download the file with progress tracking
-            const downloadResumable = FileSystem.createDownloadResumable(
-                url,
-                FileSystem.documentDirectory + fileName,
-                {},
-                (downloadProgress) => {
-                    progress = Math.round(
-                        (downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite) * 100
-                    );
-                    updateDownloadNotification(notificationId, progress); // Update progress notification
-                }
-            );
-
-            const { uri } = await downloadResumable.downloadAsync();
-            const pdfData = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-
-            // Write the PDF to the selected folder via SAF
-            await FileSystem.StorageAccessFramework.writeAsStringAsync(fileUri, pdfData, {
-                encoding: FileSystem.EncodingType.Base64,
-            });
-
-        } else {
-            const downloadResumable = FileSystem.createDownloadResumable(
-                url,
-                FileSystem.documentDirectory + fileName,
-                {},
-                (downloadProgress) => {
-                    progress = Math.round(
-                        (downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite) * 100
-                    );
-                    updateDownloadNotification(notificationId, progress); // Update progress notification
-                }
-            );
-
-            const { uri } = await downloadResumable.downloadAsync();
-            fileUri = uri;
-        }
-
-        // Complete notification
-        await Notifications.scheduleNotificationAsync({
-            content: {
-                title: 'Download Complete',
-                body: `File saved to: ${fileUri}`,
+        // First, make a fetch request to check the response type
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/pdf, application/json',
             },
-            trigger: null,
         });
 
-        console.log('PDF downloaded successfully:', fileUri);
+        const contentType = response.headers.get('content-type');
 
-        // Automatically open the downloaded PDF
-        openPdf(fileUri);
+        // Check if response is JSON (error response)
+        if (contentType && contentType.includes('application/json')) {
+            const jsonData = await response.json();
 
-        return fileUri;
+            // Cancel the notification for error case
+            await Notifications.dismissNotificationAsync(notificationId);
+
+            // Return the error response
+            return jsonData;
+        }
+
+        // If it's a PDF, proceed with download
+        if (response.ok && contentType && contentType.includes('application/pdf')) {
+            let fileUri;
+            let progress = 0;
+
+            // Use Storage Access Framework (SAF) for Android 10+
+            if (Platform.OS === 'android' && Platform.Version >= 29) {
+                const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+                if (!permissions.granted) {
+                    console.warn('Permission to access the Documents folder was denied.');
+                    await Notifications.dismissNotificationAsync(notificationId);
+                    return null;
+                }
+
+                // Create the file in the user-selected directory
+                fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+                    permissions.directoryUri,
+                    fileName,
+                    'application/pdf'
+                );
+
+                // Download the file with progress tracking
+                const downloadResumable = FileSystem.createDownloadResumable(
+                    url,
+                    FileSystem.documentDirectory + fileName,
+                    {},
+                    (downloadProgress) => {
+                        progress = Math.round(
+                            (downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite) * 100
+                        );
+                        updateDownloadNotification(notificationId, progress);
+                    }
+                );
+
+                const { uri } = await downloadResumable.downloadAsync();
+                const pdfData = await FileSystem.readAsStringAsync(uri, {
+                    encoding: FileSystem.EncodingType.Base64
+                });
+
+                // Write the PDF to the selected folder via SAF
+                await FileSystem.StorageAccessFramework.writeAsStringAsync(fileUri, pdfData, {
+                    encoding: FileSystem.EncodingType.Base64,
+                });
+
+            } else {
+                const downloadResumable = FileSystem.createDownloadResumable(
+                    url,
+                    FileSystem.documentDirectory + fileName,
+                    {},
+                    (downloadProgress) => {
+                        progress = Math.round(
+                            (downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite) * 100
+                        );
+                        updateDownloadNotification(notificationId, progress);
+                    }
+                );
+
+                const { uri } = await downloadResumable.downloadAsync();
+                fileUri = uri;
+            }
+
+            // Complete notification
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: 'Download Complete',
+                    body: `File saved to: ${fileUri}`,
+                },
+                trigger: null,
+            });
+
+            console.log('PDF downloaded successfully:', fileUri);
+
+            // Automatically open the downloaded PDF
+            openPdf(fileUri);
+
+            return fileUri;
+        }
+
+        throw new Error('Unexpected response format');
 
     } catch (error) {
         console.log('Error downloading PDF:', error.message);
@@ -2976,7 +3002,6 @@ export const downloadPdfPoruthamNew = async (idparam) => {
         return null;
     }
 };
-
 // Fetch profile data API call
 export const fetchProfileDataCheck = async (viewedProfileId, pageID) => {
     try {

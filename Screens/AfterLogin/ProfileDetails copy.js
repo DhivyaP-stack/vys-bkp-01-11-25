@@ -1920,7 +1920,7 @@ export const ProfileDetails = () => {
                 {/* Description */}
                 <Text style={styles.description}>
                   You have not activated VysAssist for your plan. You can opt for 3
-                  matching profiles for Rs.999/-
+                  matching profiles for Rs.900/-
                 </Text>
 
                 {/* Process List */}

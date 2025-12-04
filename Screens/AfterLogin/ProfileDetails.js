@@ -154,7 +154,7 @@ export const ProfileDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { viewedProfileId, interestParam, allProfileIds } = route.params;
-
+  console.log("viewedProfileId", viewedProfileId)
   // Add state for profile navigation
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [profileIds, setProfileIds] = useState([]);
@@ -318,6 +318,7 @@ export const ProfileDetails = () => {
   const bottomSheetRef = useRef();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [responseMsg, setResponseMsg] = useState('');
+  console.log("responseMsg", responseMsg)
   const [showPersonalDetails, setShowPersonalDetails] = useState(true);
   const [showEducationDetails, setShowEducationDetails] = useState(false);
   const [showFamilyDetails, setShowFamilyDetails] = useState(false);
@@ -325,6 +326,8 @@ export const ProfileDetails = () => {
   const [showContactDetails, setShowContactDetails] = useState(false);
   const [planId, setPlanId] = useState(null);
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
+  const [showMatchingReportUpgrade, setShowMatchingReportUpgrade] = useState(false);
+  const [matchingReportMessage, setMatchingReportMessage] = useState('');
   const restrictedPlanIds = ["1", "2", "3", "14", "15", "17"];
 
   const togglePersonalDetails = () => {
@@ -888,6 +891,7 @@ export const ProfileDetails = () => {
     // Proceed with the download if permission is granted
     try {
       const filePath = await downloadPdf(viewedProfileId);
+      console.log("handleDownloadPdf", filePath)
       setLoading(false)
       // Alert.alert("Download Complete", `File saved to: ${filePath}`);
     } catch (error) {
@@ -899,33 +903,259 @@ export const ProfileDetails = () => {
 
   // Inside ProfileDetails functional component (before the return statement)
 
+  // const handleDownloadMatchingReport = async () => {
+  //   console.log("handleDownloadMatchingReport called for:", viewedProfileId);
+  //   bottomSheetRef.current.close(); // Close the bottom sheet
+  //   setLoading(true); // Start loading indicator
+
+  //   try {
+  //     // Call the new API function
+  //     const filePath = await downloadMatchingReportPdf(viewedProfileId);
+  //     console.log("downloadMatchingReportPdf", filePath)
+  //     // if (filePath) {
+  //     //   // Optional: Show a toast/alert for success if the internal function didn't already
+  //     //   Toast.show({
+  //     //     type: 'success',
+  //     //     text1: 'Success',
+  //     //     text2: 'Matching Report Download Complete!',
+  //     //     position: "bottom",
+  //     //   });
+  //     // } else {
+  //     //   // Error handling from the API function
+  //     //   Alert.alert("Error", "Failed to download the Matching Report file.");
+  //     // }
+  //   } catch (error) {
+  //     console.error("Error initiating Matching Report download:", error);
+  //     Alert.alert("Error", "An unexpected error occurred during download.");
+  //   } finally {
+  //     setLoading(false); // Stop loading indicator
+  //   }
+  // };
+  // const handleDownloadMatchingReport = async () => {
+  //   console.log("handleDownloadMatchingReport called for:", viewedProfileId);
+  //   bottomSheetRef.current.close();
+  //   setLoading(true);
+
+  //   try {
+  //     const loginuser_profileId = await AsyncStorage.getItem("loginuser_profileId");
+  //     const url = `https://app.vysyamala.com/auth/generate-porutham-pdf-mobile/${loginuser_profileId}/${viewedProfileId}/`;
+
+  //     const response = await fetch(url, {
+  //       method: 'GET',
+  //       headers: {
+  //         'Accept': 'application/pdf, application/json',
+  //       },
+  //     });
+
+  //     const contentType = response.headers.get('content-type');
+
+  //     // Check if response is JSON (error response)
+  //     if (contentType && contentType.includes('application/json')) {
+  //       const jsonData = await response.json();
+
+  //       if (jsonData.status === 'failure' && jsonData.message) {
+  //         // Show upgrade popup with the API message
+  //         setMatchingReportMessage(jsonData.message);
+  //         setShowMatchingReportUpgrade(true);
+  //         return;
+  //       }
+  //     }
+
+  //     // Check if response is PDF (success response)
+  //     if (response.ok && contentType && contentType.includes('application/pdf')) {
+  //       const blob = await response.blob();
+
+  //       // For Android, save and open the PDF
+  //       if (Platform.OS === 'android') {
+  //         const fileName = `matching_report_${viewedProfileId}.pdf`;
+  //         const filePath = `${FileSystem.documentDirectory}${fileName}`;
+
+  //         // Convert blob to base64
+  //         const reader = new FileReader();
+  //         reader.onloadend = async () => {
+  //           const base64data = reader.result.split(',')[1];
+
+  //           try {
+  //             // Save the PDF file
+  //             await FileSystem.writeAsStringAsync(filePath, base64data, {
+  //               encoding: FileSystem.EncodingType.Base64,
+  //             });
+
+  //             // Open the PDF
+  //             await Linking.openURL(filePath);
+
+  //             Toast.show({
+  //               type: 'success',
+  //               text1: 'Success',
+  //               text2: 'Matching Report downloaded successfully!',
+  //               position: "bottom",
+  //             });
+  //           } catch (error) {
+  //             console.error('Error saving/opening PDF:', error);
+  //             Toast.show({
+  //               type: 'error',
+  //               text1: 'Error',
+  //               text2: 'Failed to save/open PDF',
+  //               position: "bottom",
+  //             });
+  //           }
+  //         };
+  //         reader.readAsDataURL(blob);
+  //       } else {
+  //         // For iOS or other platforms
+  //         Toast.show({
+  //           type: 'success',
+  //           text1: 'Success',
+  //           text2: 'Matching Report generated successfully!',
+  //           position: "bottom",
+  //         });
+  //       }
+  //     } else {
+  //       throw new Error('Unexpected response format');
+  //     }
+
+  //   } catch (error) {
+  //     console.error("Error downloading matching report:", error);
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Error',
+  //       text2: 'Failed to download matching report',
+  //       position: "bottom",
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleDownloadMatchingReport = async () => {
     console.log("handleDownloadMatchingReport called for:", viewedProfileId);
-    bottomSheetRef.current.close(); // Close the bottom sheet
-    setLoading(true); // Start loading indicator
+    bottomSheetRef.current.close();
+    setLoading(true);
 
     try {
-      // Call the new API function
-      const filePath = await downloadMatchingReportPdf(viewedProfileId);
-      console.log("downloadMatchingReportPdf", filePath)
-      // if (filePath) {
-      //   // Optional: Show a toast/alert for success if the internal function didn't already
-      //   Toast.show({
-      //     type: 'success',
-      //     text1: 'Success',
-      //     text2: 'Matching Report Download Complete!',
-      //     position: "bottom",
-      //   });
-      // } else {
-      //   // Error handling from the API function
-      //   Alert.alert("Error", "Failed to download the Matching Report file.");
-      // }
+      const loginuser_profileId = AsyncStorage.getItem("loginuser_profileId") || AsyncStorage.getItem("profile_id_new");
+
+      if (!loginuser_profileId) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'User profile not found',
+          position: "bottom",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const url = `https://app.vysyamala.com/auth/generate-porutham-pdf-mobile/${loginuser_profileId}/${viewedProfileId}/`;
+
+      console.log("Fetching matching report from:", url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/pdf, application/json',
+        },
+      });
+      console.log("generate-porutham-pdf", response)
+      const contentType = response.headers.get('content-type');
+
+      // Check if response is JSON (error/upgrade message)
+      if (contentType && contentType.includes('application/json')) {
+        const jsonData = await response.json();
+
+        if (jsonData.status === 'failure') {
+          // ✅ FIXED: Set the correct state variables
+          setResponseMsg(jsonData.message || 'No access to see the compatibility report');
+          setShowUpgradeModal(true); // Use the existing upgrade modal
+
+          // Toast.show({
+          //   type: 'info',
+          //   text1: 'Upgrade Required',
+          //   text2: jsonData.message || 'No access to see the compatibility report',
+          //   position: "bottom",
+          // });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Check if response is PDF (success)
+      if (response.ok && contentType && contentType.includes('application/pdf')) {
+        const blob = await response.blob();
+
+        const fileName = `matching_report_${viewedProfileId}_${Date.now()}.pdf`;
+        const filePath = `${FileSystem.documentDirectory}${fileName}`;
+
+        const reader = new FileReader();
+
+        reader.onloadend = async () => {
+          try {
+            const base64data = reader.result.split(',')[1];
+
+            await FileSystem.writeAsStringAsync(filePath, base64data, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+
+            console.log("PDF saved to:", filePath);
+
+            const canOpen = await Linking.canOpenURL(filePath);
+
+            if (canOpen) {
+              await Linking.openURL(filePath);
+            }
+
+            // Toast.show({
+            //   type: 'success',
+            //   text1: 'Success',
+            //   text2: 'Matching Report downloaded successfully!',
+            //   position: "bottom",
+            //   visibilityTime: 3000,
+            // });
+
+          } catch (error) {
+            console.error('Error saving/opening PDF:', error);
+            Toast.show({
+              type: 'error',
+              text1: 'Error',
+              text2: 'Failed to save/open PDF',
+              position: "bottom",
+            });
+          }
+        };
+
+        reader.onerror = () => {
+          console.error('Error reading blob');
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'Failed to process PDF file',
+            position: "bottom",
+          });
+        };
+
+        reader.readAsDataURL(blob);
+
+      } else {
+        throw new Error('Unexpected response format');
+      }
+
     } catch (error) {
-      console.error("Error initiating Matching Report download:", error);
-      Alert.alert("Error", "An unexpected error occurred during download.");
+      console.error("Error downloading matching report:", error);
+
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to download matching report. Please try again.',
+        position: "bottom",
+      });
     } finally {
-      setLoading(false); // Stop loading indicator
+      setLoading(false);
     }
+  };
+
+  const handleMatchingScoreUpgrade = (message) => {
+    setResponseMsg(message);
+    setShowUpgradeModal(true);
   };
 
   const openPopup = () => {
@@ -1429,10 +1659,30 @@ export const ProfileDetails = () => {
               {basic_details?.matching_score !== undefined &&
                 basic_details.matching_score > 50 &&
                 basic_details.matching_score !== 100 && (
+                  // <View style={{ position: 'absolute', top: 0, right: 10 }}>
+                  //   <MatchingScore
+                  //     scorePercentage={parseInt(basic_details.matching_score)}
+                  //     viewedProfileId={viewedProfileId}
+                  //     onUpgradeRequired={handleMatchingScoreUpgrade}
+                  //   />
+                  // </View>
                   <View style={{ position: 'absolute', top: 0, right: 10 }}>
-                    <MatchingScore scorePercentage={parseInt(basic_details.matching_score)} viewedProfileId={viewedProfileId} />
-                    {/* <Image source={{ uri: 'http://matrimonyapp.rainyseasun.com/assets/MatchingScore.png' }} /> */}
+                    <MatchingScore
+                      scorePercentage={parseInt(basic_details.matching_score)}
+                      viewedProfileId={viewedProfileId}
+                      onUpgradeRequired={handleMatchingScoreUpgrade} // Correctly wired up
+                    />
                   </View>
+
+                  // <TouchableOpacity
+                  //   onPress={handleDownloadMatchingReport}
+                  //   style={{ position: 'absolute', top: 0, right: 10 }}
+                  // >
+                  //   <MatchingScore
+                  //     scorePercentage={parseInt(basic_details.matching_score)}
+                  //     viewedProfileId={viewedProfileId}
+                  //   />
+                  // </TouchableOpacity>
                 )}
             </View>
             <View style={styles.detailsMeterFlex1}>
@@ -1715,7 +1965,6 @@ export const ProfileDetails = () => {
                 </View>
               </View>
             </Modal>
-
             {/* </View> */}
 
             {/* <Text style={styles.details}>Details</Text> */}
@@ -1867,7 +2116,7 @@ export const ProfileDetails = () => {
             {showHoroscopeDetails && (
               <View style={styles.menuChanges}>
                 <View style={styles.editOptions}>
-                  <Text style={styles.titleNew}>Horoscope Details123</Text>
+                  <Text style={styles.titleNew}>Horoscope Details</Text>
                   <View style={styles.line} />
                   <Text style={styles.labelNew}>Rasi : <Text style={styles.valueNew}>{profileData.horoscope_details.rasi}</Text></Text>
                   <Text style={styles.labelNew}>Star : <Text style={styles.valueNew}>{profileData.horoscope_details.star_name}</Text></Text>
@@ -2199,7 +2448,7 @@ export const ProfileDetails = () => {
                 {/* Description */}
                 <Text style={styles.description}>
                   You have not activated VysAssist for your plan. You can opt for 3
-                  matching profiles for Rs.999/-
+                  matching profiles for Rs.900/-
                 </Text>
 
                 {/* Process List */}

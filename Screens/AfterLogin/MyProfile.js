@@ -83,6 +83,16 @@ export const MyProfile = () => {
     //     fetchAndSetImages(); // Call the renamed function
     // }, []);
 
+    // Add this new function inside your MyProfile component:
+    const handleAddOnPackagePress = () => {
+       if (profileDetails.package_name === "Free") {
+            navigation.navigate('MembershipPlan');
+        } else {
+            // If Plan ID is anything else, navigate to the direct payment screen
+            navigation.navigate('PayNow');
+        }
+    };
+
     useEffect(() => {
         fetchAndSetImages();
     }, []);
@@ -820,7 +830,7 @@ export const MyProfile = () => {
 
                             <Pressable
                                 style={styles.completeTextFlex}
-                                onPress={() => navigation.navigate('PayNow')} // Replace 'TargetScreen' with your target screen's name
+                                onPress={handleAddOnPackagePress} // Replace 'TargetScreen' with your target screen's name
                             >
                                 <Text style={styles.completeText}>Add on packages</Text>
                                 <Ionicons name="arrow-forward" size={18} color="#ED1E24" />

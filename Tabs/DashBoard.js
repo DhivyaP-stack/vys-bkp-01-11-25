@@ -462,9 +462,37 @@ export const DashBoard = () => {
                       size={24}
                       color="#FF3333"
                     />
+                    {/* <Image
+                      source={require("../assets/icons/photoReq.png")}  // your image path
+                      style={{ width: 24, height: 24, tintColor: "#FF3333" }}   // apply same red color
+                      resizeMode="contain"
+                    /> */}
                   </View>
 
                   <Text style={styles.blackNumbers}>{dashboardData?.photo_int_count || 0}</Text>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+
+          <TouchableWithoutFeedback
+            onPress={() => {
+              navigation.navigate("GalleryResults");
+            }}
+          >
+            <View style={styles.cardsIndicator}>
+              <View style={styles.whiteContainer}>
+                <View style={styles.whiteCard}>
+                  <View style={styles.blackTextIcons}>
+                    <Text style={styles.blackText}>Gallery</Text>
+                    <MaterialCommunityIcons
+                      name="image-multiple"
+                      size={24}
+                      color="#FF3333"
+                    />
+                  </View>
+
+                  <Text style={styles.blackNumbers}>{dashboardData?.gallery_count || 0}</Text>
                 </View>
               </View>
             </View>
@@ -512,7 +540,7 @@ export const DashBoard = () => {
           <View style={styles.flexCardsDiv}>
 
             {/* Reported Profiles */}
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => {
                 navigation.navigate("GalleryResults");
               }}
@@ -527,13 +555,13 @@ export const DashBoard = () => {
                 />
                 <Text style={styles.blackText}>Gallery</Text>
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {/* Vys Assist */}
             <TouchableOpacity
               onPress={() => {
                 navigation.navigate("VysassistResults");
-              }} style={styles.flexCards}
+              }} style={styles.halfCard}
             >
               <View>
                 <MaterialCommunityIcons
@@ -970,6 +998,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2, // Elevation for Android
     // marginHorizontal: 5, // Add margin between cards
+  },
+
+  halfCard: {
+    width: "48%",
+    paddingTop: 20,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   iconsFour: {

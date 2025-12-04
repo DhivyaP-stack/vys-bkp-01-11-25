@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Dimensions, Image, TouchableOpacity, ActivityIn
 import Svg, { Path, Circle } from "react-native-svg";
 import { downloadPdfPoruthamNew } from "../CommonApiCall/CommonApiCall";
 
-export default function MatchingScore({ scorePercentage, viewedProfileId }) {
+export default function MatchingScore({ scorePercentage, viewedProfileId, onScorePress, onUpgradeRequired }) {
   const [loading, setLoading] = useState(false);
   console.log("scorePercentage check ==>", scorePercentage);
   const screenWidth = Dimensions.get("window").width;
@@ -14,18 +14,31 @@ export default function MatchingScore({ scorePercentage, viewedProfileId }) {
 
   const getEmoji = () => {
     if (scorePercentage >= 75) return "😊"
-    if (scorePercentage >= 50  && scorePercentage <=74) return "🙂"
-    if (scorePercentage >= 25 && scorePercentage <=49) return "😐"
+    if (scorePercentage >= 50 && scorePercentage <= 74) return "🙂"
+    if (scorePercentage >= 25 && scorePercentage <= 49) return "😐"
     return "😞"
   }
 
   const handleDownloadPdf = async () => {
     try {
       setLoading(true);
-      const filePath = await downloadPdfPoruthamNew(viewedProfileId);
-      console.log("File path:", filePath);
-      // Alert.alert("Download Complete", `File saved to: ${filePath}`);
+      // This function MUST return either the file path on success, 
+      // OR the JSON failure object {status: "failure", message: "..."}
+      const result = await downloadPdfPoruthamNew(viewedProfileId);
+
+      // 1. Check for failure object returned by the utility
+      if (result && result.status === "failure") {
+        if (onUpgradeRequired) {
+          // Call the parent handler with the error message
+          onUpgradeRequired(result.message || "No access to see the compatibility report");
+        }
+        return; // Stop execution
+      }
+
+      // 2. Success case: Download/open handled by the utility.
+
     } catch (error) {
+      console.error("Error downloading PDF:", error);
       Alert.alert("Error", "Failed to download the file.");
     } finally {
       setLoading(false);
@@ -58,9 +71,8 @@ export default function MatchingScore({ scorePercentage, viewedProfileId }) {
               <Path
                 key={`segment-${index}`}
                 d={createArc(segment * Math.PI, (segment + 0.25) * Math.PI)}
-                stroke={`rgb(${74 + index * 1}, ${222 - index * 20}, ${
-                  128 - index * 20
-                })`}
+                stroke={`rgb(${74 + index * 1}, ${222 - index * 20}, ${128 - index * 20
+                  })`}
                 strokeWidth={strokeWidth}
                 strokeLinecap="butt"
                 fill="none"
