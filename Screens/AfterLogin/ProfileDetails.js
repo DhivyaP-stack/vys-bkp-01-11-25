@@ -46,6 +46,7 @@ import {
   logProfileVisit,
   getProfileListMatch,
   downloadMatchingReportPdf,
+  downloadPdfPoruthamNew
 } from '../../CommonApiCall/CommonApiCall';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { Picker } from '@react-native-picker/picker';
@@ -1033,125 +1034,53 @@ export const ProfileDetails = () => {
     setLoading(true);
 
     try {
-      const loginuser_profileId = AsyncStorage.getItem("loginuser_profileId") || AsyncStorage.getItem("profile_id_new");
+      // Call the API function from CommonApiCall
+      const result = await downloadPdfPoruthamNew(viewedProfileId);
+      console.log("matching pdf result", result);
 
-      if (!loginuser_profileId) {
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'User profile not found',
-          position: "bottom",
-        });
-        setLoading(false);
+      // Check if result is null or undefined (permission denied or other error)
+      // if (!result) {
+      //   Toast.show({
+      //     type: 'error',
+      //     text1: 'Error',
+      //     text2: 'Failed to download matching report',
+      //     position: "bottom",
+      //   });
+      //   return;
+      // }
+
+      // Check if result is JSON error response (upgrade required)
+      // Must check if it's an object first, then check for status property
+      if (typeof result === 'object' && result !== null && result.status === 'failure') {
+        setResponseMsg(result.message || 'No access to see the compatibility report');
+        setShowUpgradeModal(true);
         return;
       }
 
-      const url = `https://app.vysyamala.com/auth/generate-porutham-pdf-mobile/${loginuser_profileId}/${viewedProfileId}/`;
-
-      console.log("Fetching matching report from:", url);
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/pdf, application/json',
-        },
-      });
-      console.log("generate-porutham-pdf", response)
-      const contentType = response.headers.get('content-type');
-
-      // Check if response is JSON (error/upgrade message)
-      if (contentType && contentType.includes('application/json')) {
-        const jsonData = await response.json();
-
-        if (jsonData.status === 'failure') {
-          // ✅ FIXED: Set the correct state variables
-          setResponseMsg(jsonData.message || 'No access to see the compatibility report');
-          setShowUpgradeModal(true); // Use the existing upgrade modal
-
-          // Toast.show({
-          //   type: 'info',
-          //   text1: 'Upgrade Required',
-          //   text2: jsonData.message || 'No access to see the compatibility report',
-          //   position: "bottom",
-          // });
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Check if response is PDF (success)
-      if (response.ok && contentType && contentType.includes('application/pdf')) {
-        const blob = await response.blob();
-
-        const fileName = `matching_report_${viewedProfileId}_${Date.now()}.pdf`;
-        const filePath = `${FileSystem.documentDirectory}${fileName}`;
-
-        const reader = new FileReader();
-
-        reader.onloadend = async () => {
-          try {
-            const base64data = reader.result.split(',')[1];
-
-            await FileSystem.writeAsStringAsync(filePath, base64data, {
-              encoding: FileSystem.EncodingType.Base64,
-            });
-
-            console.log("PDF saved to:", filePath);
-
-            const canOpen = await Linking.canOpenURL(filePath);
-
-            if (canOpen) {
-              await Linking.openURL(filePath);
-            }
-
-            // Toast.show({
-            //   type: 'success',
-            //   text1: 'Success',
-            //   text2: 'Matching Report downloaded successfully!',
-            //   position: "bottom",
-            //   visibilityTime: 3000,
-            // });
-
-          } catch (error) {
-            console.error('Error saving/opening PDF:', error);
-            Toast.show({
-              type: 'error',
-              text1: 'Error',
-              text2: 'Failed to save/open PDF',
-              position: "bottom",
-            });
-          }
-        };
-
-        reader.onerror = () => {
-          console.error('Error reading blob');
-          Toast.show({
-            type: 'error',
-            text1: 'Error',
-            text2: 'Failed to process PDF file',
-            position: "bottom",
-          });
-        };
-
-        reader.readAsDataURL(blob);
-
-      } else {
-        throw new Error('Unexpected response format');
+      // If result is a file path (success case)
+      if (typeof result === 'string' && result.length > 0) {
+        console.log('Matching report downloaded successfully:', result);
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Matching report downloaded successfully!',
+          position: "bottom",
+        });
       }
 
     } catch (error) {
       console.error("Error downloading matching report:", error);
-
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Failed to download matching report. Please try again.',
+        text2: error.message || 'Failed to download matching report. Please try again.',
         position: "bottom",
       });
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleMatchingScoreUpgrade = (message) => {
     setResponseMsg(message);
